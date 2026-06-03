@@ -6,127 +6,393 @@
 <title>CASA</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Space+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#000; --border:#1e1e1e; --border-hi:#383838; --text:#fff; --dim:#555; --mid:#888; }
+  :root { --bg:#000; --border:#1a1a1a; --border-hi:#333; --text:#fff; --dim:#444; --mid:#777; }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  body{font-family:'Space Grotesk',sans-serif;background:#000;color:#fff;height:100dvh;overflow:hidden;display:flex;flex-direction:column;}
 
-  /* ── SETUP ── */
-  #setup{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;gap:32px;z-index:100;border-top:3px solid #fff;}
+  body {
+    font-family:'Space Grotesk',sans-serif;
+    background:#000;
+    color:#fff;
+    width:100vw;
+    height:100dvh;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* ══════════════════════════════
+     SETUP
+  ══════════════════════════════ */
+  #setup {
+    position:fixed;inset:0;background:#000;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:28px;gap:28px;z-index:200;
+    border-top:4px solid #fff;
+  }
   #setup.hidden{display:none;}
-  .s-title{font-family:'Space Mono',monospace;font-size:2.8rem;font-weight:700;text-align:center;}
-  .s-sub{font-size:.72rem;color:var(--dim);letter-spacing:.2em;text-transform:uppercase;margin-top:8px;text-align:center;}
-  .s-card{width:100%;max-width:400px;border:1px solid var(--border-hi);padding:28px 24px;}
-  .s-label{font-family:'Space Mono',monospace;font-size:.65rem;color:var(--dim);letter-spacing:.14em;text-transform:uppercase;display:block;margin-bottom:10px;}
-  .s-input{width:100%;background:#000;border:1px solid var(--border-hi);padding:14px;color:#fff;font-family:'Space Mono',monospace;font-size:.82rem;outline:none;margin-bottom:20px;transition:border-color .15s;}
+  .s-title{font-family:'Space Mono',monospace;font-size:3rem;font-weight:700;letter-spacing:-.02em;}
+  .s-sub{font-size:.68rem;color:var(--dim);letter-spacing:.22em;text-transform:uppercase;margin-top:6px;}
+  .s-card{width:100%;max-width:380px;border:1px solid var(--border-hi);padding:24px;}
+  .s-label{font-family:'Space Mono',monospace;font-size:.62rem;color:var(--dim);letter-spacing:.14em;text-transform:uppercase;display:block;margin-bottom:8px;}
+  .s-input{width:100%;background:#000;border:1px solid var(--border-hi);padding:13px;color:#fff;font-family:'Space Mono',monospace;font-size:.82rem;outline:none;margin-bottom:18px;transition:border-color .15s;}
   .s-input:focus{border-color:#fff;}
   .s-input::placeholder{color:var(--dim);}
-  .s-btn{width:100%;background:#fff;color:#000;border:none;padding:15px;font-family:'Space Mono',monospace;font-size:.8rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;}
-  .s-hint{font-size:.72rem;color:var(--dim);text-align:center;line-height:1.8;}
+  .s-btn{width:100%;background:#fff;color:#000;border:none;padding:14px;font-family:'Space Mono',monospace;font-size:.8rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;}
+  .s-hint{font-size:.7rem;color:var(--dim);text-align:center;line-height:1.8;}
   .s-hint a{color:var(--mid);}
 
-  /* ── HOME ── */
-  #home{flex:1;display:flex;flex-direction:column;overflow:hidden;}
-  #home::before{content:'';position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:140vmax;height:140vmax;background:conic-gradient(from 0deg,#ff2d5508 0deg,#ff6b0008 60deg,#ffd60a08 120deg,#30d15808 180deg,#0a84ff08 240deg,#bf5af208 300deg,#ff2d5508 360deg);border-radius:50%;animation:spin 60s linear infinite;pointer-events:none;z-index:0;}
+  /* ══════════════════════════════
+     HOME — LAYOUT LANDSCAPE
+     Diviso in 2 colonne:
+     LEFT: orologio + wake word
+     RIGHT: meteo + toolbar
+  ══════════════════════════════ */
+  #home {
+    flex:1;
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr auto;
+    overflow:hidden;
+    position:relative;
+  }
+
+  /* sfondo palette */
+  #home::before {
+    content:'';
+    position:fixed;top:50%;left:50%;
+    transform:translate(-50%,-50%);
+    width:140vmax;height:140vmax;
+    background:conic-gradient(from 0deg,#ff2d5506 0deg,#ff6b0006 60deg,#ffd60a06 120deg,#30d15806 180deg,#0a84ff06 240deg,#bf5af206 300deg,#ff2d5506 360deg);
+    border-radius:50%;
+    animation:spin 60s linear infinite;
+    pointer-events:none;z-index:0;
+  }
   @keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg);}}
 
-  .clock-block{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:20px;cursor:pointer;}
-  .clock-hm{font-family:'Space Mono',monospace;font-size:clamp(5rem,23vw,9.5rem);font-weight:700;line-height:1;letter-spacing:-.04em;color:#fff;transition:text-shadow 2s ease;}
-  .colon{animation:blink 1s step-start infinite;}
-  @keyframes blink{50%{opacity:.12;}}
-  .clock-ss{font-family:'Space Mono',monospace;font-size:1.1rem;color:var(--dim);letter-spacing:.1em;align-self:flex-end;margin-top:-10px;}
-  .clock-date{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--dim);letter-spacing:.18em;text-transform:uppercase;margin-top:8px;}
+  /* ── COLONNA SINISTRA: OROLOGIO ── */
+  .col-left {
+    position:relative;z-index:1;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    border-right:1px solid var(--border);
+    padding:20px 16px;
+    gap:0;
+  }
 
-  /* scadenze badge sull'orologio */
-  .due-badge{position:absolute;top:16px;right:16px;background:#ff2d55;color:#fff;font-family:'Space Mono',monospace;font-size:.62rem;padding:5px 10px;letter-spacing:.08em;cursor:pointer;animation:fadeUp .3s ease;}
+  /* etichetta brutalista in cima */
+  .col-label {
+    font-family:'Space Mono',monospace;
+    font-size:.55rem;
+    color:var(--dim);
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    align-self:flex-start;
+    margin-bottom:auto;
+  }
+
+  .clock-wrap {
+    display:flex;flex-direction:column;align-items:center;
+    flex:1;justify-content:center;
+  }
+
+  .clock-hm {
+    font-family:'Space Mono',monospace;
+    font-size:clamp(3.5rem, 12vw, 7rem);
+    font-weight:700;
+    line-height:1;
+    letter-spacing:-.04em;
+    color:#fff;
+    transition:text-shadow 2s ease;
+  }
+
+  .colon{animation:blink 1s step-start infinite;}
+  @keyframes blink{50%{opacity:.1;}}
+
+  .clock-row2 {
+    display:flex;align-items:center;gap:12px;
+    margin-top:6px;
+    align-self:stretch;
+    justify-content:space-between;
+  }
+
+  .clock-ss {
+    font-family:'Space Mono',monospace;
+    font-size:.9rem;
+    color:var(--dim);
+    letter-spacing:.1em;
+  }
+
+  .clock-date {
+    font-family:'Space Mono',monospace;
+    font-size:.62rem;
+    color:var(--mid);
+    letter-spacing:.1em;
+    text-transform:uppercase;
+  }
+
+  /* badge scadenze */
+  .due-badge {
+    align-self:flex-end;
+    background:#ff2d55;
+    color:#fff;
+    font-family:'Space Mono',monospace;
+    font-size:.55rem;
+    padding:4px 8px;
+    letter-spacing:.08em;
+    cursor:pointer;
+    margin-top:10px;
+    animation:fadeUp .3s ease;
+  }
   @keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 
-  /* ── WEATHER BAR ── */
-  .weather-bar{position:relative;z-index:1;border-top:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:14px;background:rgba(0,0,0,.75);backdrop-filter:blur(10px);}
-  .wb-accent{position:absolute;top:0;left:0;right:0;height:2px;background:var(--wc,#fff);transition:background 2s;}
-  .wb-icon{font-size:1.6rem;line-height:1;}
-  .wb-temp{font-family:'Space Mono',monospace;font-size:1.5rem;font-weight:700;line-height:1;}
-  .wb-desc{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--mid);text-transform:uppercase;letter-spacing:.1em;margin-top:3px;}
-  .wb-right{margin-left:auto;font-family:'Space Mono',monospace;font-size:.58rem;color:var(--dim);text-align:right;line-height:1.9;}
+  /* ── WAKE WORD BAR (fondo colonna sinistra) ── */
+  .wake-bar {
+    align-self:stretch;
+    border-top:1px solid var(--border);
+    padding:12px 0 0;
+    display:flex;flex-direction:column;align-items:center;gap:8px;
+  }
 
-  /* ── MIC ── */
-  .mic-wrap{position:relative;z-index:1;padding:14px 20px 18px;display:flex;flex-direction:column;align-items:center;gap:8px;border-top:1px solid var(--border);}
-  .mic-btn{width:68px;height:68px;border:2px solid var(--border-hi);background:transparent;color:var(--mid);font-size:1.7rem;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all .2s;}
-  .mic-btn.listening{border-color:#fff;background:#fff;color:#000;animation:pulse .8s infinite;}
-  .mic-btn.thinking{border-color:var(--mid);color:var(--mid);}
-  .mic-btn.speaking{border-color:#30d158;color:#30d158;animation:pg 1s infinite;}
-  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
-  @keyframes pg{0%,100%{box-shadow:0 0 0 0 #30d15830}50%{box-shadow:0 0 0 12px #30d15800}}
-  .mic-status{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--dim);letter-spacing:.14em;text-transform:uppercase;height:14px;}
+  .wake-btn {
+    width:56px;height:56px;
+    border-radius:50%;
+    border:2px solid var(--border-hi);
+    background:transparent;
+    color:var(--mid);
+    font-size:1.4rem;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:all .2s;
+    position:relative;
+  }
+
+  .wake-btn.idle { border-color:var(--border-hi); color:var(--dim); }
+
+  .wake-btn.wake-listening {
+    border-color:#fff;background:#fff;color:#000;
+    animation:pp .8s infinite;
+  }
+
+  .wake-btn.thinking {
+    border-color:var(--mid);color:var(--mid);
+  }
+
+  .wake-btn.speaking {
+    border-color:#30d158;color:#30d158;
+    animation:pg 1s infinite;
+  }
+
+  @keyframes pp{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+  @keyframes pg{0%,100%{box-shadow:0 0 0 0 #30d15828}50%{box-shadow:0 0 0 14px #30d15800}}
+
+  /* anello wake word */
+  .wake-ring {
+    position:absolute;inset:-6px;
+    border-radius:50%;
+    border:1px solid transparent;
+    transition:border-color .3s;
+  }
+  .wake-btn.wake-active .wake-ring { border-color:#fff; animation:ring 2s linear infinite; }
+  @keyframes ring{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+
+  .wake-label {
+    font-family:'Space Mono',monospace;
+    font-size:.58rem;
+    color:var(--dim);
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    text-align:center;
+    min-height:13px;
+  }
+
+  .wake-hint {
+    font-family:'Space Mono',monospace;
+    font-size:.52rem;
+    color:var(--border-hi);
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    margin-bottom:4px;
+  }
+
+  /* ── COLONNA DESTRA ── */
+  .col-right {
+    position:relative;z-index:1;
+    display:flex;flex-direction:column;
+    overflow:hidden;
+  }
+
+  /* ── METEO ── */
+  .weather-block {
+    flex:1;
+    display:flex;flex-direction:column;
+    justify-content:center;
+    padding:16px 20px;
+    position:relative;
+    border-bottom:1px solid var(--border);
+    gap:6px;
+  }
+
+  .wb-accent {
+    position:absolute;top:0;left:0;bottom:0;
+    width:3px;
+    background:var(--wc,#fff);
+    transition:background 2s;
+  }
+
+  .wb-row1 {
+    display:flex;align-items:baseline;gap:12px;
+    padding-left:16px;
+  }
+
+  .wb-icon { font-size:1.8rem;line-height:1; }
+
+  .wb-temp {
+    font-family:'Space Mono',monospace;
+    font-size:clamp(2rem,6vw,3.5rem);
+    font-weight:700;line-height:1;
+  }
+
+  .wb-desc {
+    font-family:'Space Mono',monospace;
+    font-size:.62rem;color:var(--mid);
+    text-transform:uppercase;letter-spacing:.1em;
+  }
+
+  .wb-row2 {
+    display:flex;gap:20px;
+    padding-left:16px;
+  }
+
+  .wb-stat {
+    font-family:'Space Mono',monospace;
+    font-size:.6rem;color:var(--dim);
+    letter-spacing:.08em;
+    line-height:1.8;
+  }
+
+  .wb-loc {
+    font-family:'Space Mono',monospace;
+    font-size:.52rem;color:var(--border-hi);
+    letter-spacing:.1em;text-transform:uppercase;
+    padding-left:16px;
+  }
 
   /* ── TOOLBAR ── */
-  .toolbar{position:relative;z-index:1;display:flex;border-top:1px solid var(--border);}
-  .tb-btn{flex:1;background:transparent;border:none;border-right:1px solid var(--border);padding:12px 4px;font-family:'Space Mono',monospace;font-size:.58rem;color:var(--dim);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .15s;}
+  .toolbar {
+    display:flex;
+    border-top:1px solid var(--border);
+    flex-shrink:0;
+  }
+
+  .tb-btn {
+    flex:1;background:transparent;border:none;
+    border-right:1px solid var(--border);
+    padding:14px 4px;
+    font-family:'Space Mono',monospace;
+    font-size:.55rem;color:var(--dim);
+    letter-spacing:.1em;text-transform:uppercase;
+    cursor:pointer;transition:all .15s;
+  }
   .tb-btn:last-child{border-right:none;}
   .tb-btn:active,.tb-btn.hi{background:#fff;color:#000;}
 
-  /* ── PANEL BASE ── */
-  .panel{position:fixed;inset:0;background:#000;z-index:40;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);}
+  /* ══════════════════════════════
+     PANELS
+  ══════════════════════════════ */
+  .panel{
+    position:fixed;inset:0;background:#000;z-index:40;
+    display:flex;flex-direction:column;
+    transform:translateY(100%);
+    transition:transform .3s cubic-bezier(.4,0,.2,1);
+  }
   .panel.open{transform:translateY(0);}
-  .panel-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);}
-  .panel-title{font-family:'Space Mono',monospace;font-size:.78rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;}
-  .panel-close{font-family:'Space Mono',monospace;font-size:.62rem;color:var(--dim);background:transparent;border:1px solid var(--border-hi);padding:6px 12px;cursor:pointer;letter-spacing:.1em;text-transform:uppercase;}
 
-  /* ── CHAT ── */
-  .chat-area{flex:1;padding:16px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;}
-  .msg{max-width:90%;padding:11px 14px;font-size:.88rem;line-height:1.65;animation:fadeUp .2s ease;}
-  .msg.ai{background:#0a0a0a;border:1px solid var(--border);border-left:2px solid #fff;align-self:flex-start;}
-  .msg.ai .lbl{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--dim);letter-spacing:.14em;text-transform:uppercase;margin-bottom:7px;}
+  .panel-hdr{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 20px;
+    border-bottom:1px solid var(--border);
+    flex-shrink:0;
+  }
+  .panel-title{
+    font-family:'Space Mono',monospace;
+    font-size:.75rem;font-weight:700;
+    letter-spacing:.14em;text-transform:uppercase;
+  }
+  .panel-close{
+    font-family:'Space Mono',monospace;font-size:.6rem;color:var(--dim);
+    background:transparent;border:1px solid var(--border-hi);
+    padding:6px 12px;cursor:pointer;letter-spacing:.1em;text-transform:uppercase;
+  }
+  .panel-close:active{background:#fff;color:#000;}
+
+  /* CHAT */
+  .chat-area{
+    flex:1;padding:14px 18px;overflow-y:auto;
+    display:flex;flex-direction:column;gap:10px;
+  }
+  .msg{max-width:88%;padding:10px 14px;font-size:.88rem;line-height:1.65;animation:fadeUp .2s ease;}
+  .msg.ai{background:#080808;border:1px solid var(--border);border-left:3px solid #fff;align-self:flex-start;}
+  .msg.ai .lbl{font-family:'Space Mono',monospace;font-size:.56rem;color:var(--dim);letter-spacing:.14em;text-transform:uppercase;margin-bottom:6px;}
   .msg.user{background:#fff;color:#000;align-self:flex-end;font-weight:500;}
-  .typing{display:none;align-items:center;gap:5px;padding:11px 14px;background:#0a0a0a;border:1px solid var(--border);border-left:2px solid var(--border-hi);width:fit-content;}
+  .typing{display:none;align-items:center;gap:5px;padding:10px 14px;background:#080808;border:1px solid var(--border);border-left:3px solid var(--border-hi);width:fit-content;}
   .typing.on{display:flex;}
   .dot{width:4px;height:4px;background:var(--dim);border-radius:50%;animation:b 1.2s infinite;}
   .dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
   @keyframes b{0%,60%,100%{transform:translateY(0);opacity:.3}30%{transform:translateY(-5px);opacity:1}}
-  .cp-input-row{display:flex;gap:8px;padding:12px 16px 24px;border-top:1px solid var(--border);}
-  .cp-input{flex:1;background:#0a0a0a;border:1px solid var(--border-hi);padding:12px 14px;color:#fff;font-family:'Space Grotesk',sans-serif;font-size:.9rem;font-weight:300;outline:none;resize:none;min-height:46px;max-height:110px;line-height:1.5;transition:border-color .15s;}
+  .cp-input-row{display:flex;gap:8px;padding:12px 16px 20px;border-top:1px solid var(--border);flex-shrink:0;}
+  .cp-input{flex:1;background:#080808;border:1px solid var(--border-hi);padding:12px 14px;color:#fff;font-family:'Space Grotesk',sans-serif;font-size:.9rem;font-weight:300;outline:none;resize:none;min-height:44px;max-height:100px;line-height:1.5;transition:border-color .15s;}
   .cp-input:focus{border-color:#fff;}
   .cp-input::placeholder{color:var(--dim);font-size:.8rem;}
-  .cp-send{width:46px;height:46px;background:#fff;color:#000;border:none;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .cp-send{width:44px;height:44px;background:#fff;color:#000;border:none;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 
-  /* ── ATTIVITÀ PANEL ── */
-  .att-list{flex:1;overflow-y:auto;padding:16px;}
-  .att-empty{text-align:center;color:var(--dim);font-family:'Space Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;margin-top:40px;}
-  .att-item{border:1px solid var(--border);padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden;}
+  /* ATTIVITÀ */
+  .att-list{flex:1;overflow-y:auto;padding:14px 16px;}
+  .att-empty{text-align:center;color:var(--dim);font-family:'Space Mono',monospace;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;margin-top:40px;line-height:2;}
+  .att-item{border:1px solid var(--border);padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;position:relative;overflow:hidden;}
   .att-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ic,var(--border-hi));}
-  .att-info{flex:1;}
-  .att-name{font-weight:500;font-size:.92rem;margin-bottom:4px;}
-  .att-meta{font-family:'Space Mono',monospace;font-size:.62rem;color:var(--mid);letter-spacing:.06em;line-height:1.7;}
-  .att-due{font-family:'Space Mono',monospace;font-size:.68rem;font-weight:700;}
-  .att-due.ok{color:#30d158;}
-  .att-due.soon{color:#ffd60a;}
-  .att-due.overdue{color:#ff2d55;}
-  .att-actions{display:flex;flex-direction:column;gap:6px;}
-  .att-btn{font-family:'Space Mono',monospace;font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;background:transparent;border:1px solid var(--border-hi);color:var(--mid);padding:5px 10px;cursor:pointer;white-space:nowrap;}
+  .att-info{flex:1;padding-left:4px;}
+  .att-name{font-weight:500;font-size:.9rem;margin-bottom:3px;}
+  .att-meta{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--mid);letter-spacing:.06em;line-height:1.7;}
+  .att-due{font-family:'Space Mono',monospace;font-size:.64rem;font-weight:700;margin-top:3px;}
+  .att-due.ok{color:#30d158;}.att-due.soon{color:#ffd60a;}.att-due.overdue{color:#ff2d55;}
+  .att-actions{display:flex;flex-direction:column;gap:5px;}
+  .att-btn{font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.08em;text-transform:uppercase;background:transparent;border:1px solid var(--border-hi);color:var(--mid);padding:5px 8px;cursor:pointer;white-space:nowrap;}
   .att-btn:active{background:#fff;color:#000;}
-  .att-add-bar{padding:12px 16px 24px;border-top:1px solid var(--border);display:flex;gap:8px;}
-  .att-add-input{flex:1;background:#0a0a0a;border:1px solid var(--border-hi);padding:12px 14px;color:#fff;font-family:'Space Grotesk',sans-serif;font-size:.88rem;outline:none;}
+  .att-add-bar{padding:12px 16px 20px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;}
+  .att-add-input{flex:1;background:#080808;border:1px solid var(--border-hi);padding:12px 14px;color:#fff;font-family:'Space Grotesk',sans-serif;font-size:.88rem;outline:none;transition:border-color .15s;}
   .att-add-input:focus{border-color:#fff;}
   .att-add-input::placeholder{color:var(--dim);font-size:.8rem;}
-  .att-add-btn{background:#fff;color:#000;border:none;padding:0 18px;font-family:'Space Mono',monospace;font-size:.72rem;font-weight:700;letter-spacing:.1em;cursor:pointer;}
+  .att-add-btn{background:#fff;color:#000;border:none;padding:0 16px;font-family:'Space Mono',monospace;font-size:.7rem;font-weight:700;letter-spacing:.1em;cursor:pointer;}
 
-  /* ── DIALOG ── */
-  #dialog-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:90;display:none;align-items:flex-end;}
+  /* DIALOG */
+  #dialog-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:90;display:none;align-items:flex-end;}
   #dialog-overlay.open{display:flex;}
-  .dialog-box{width:100%;background:#000;border-top:1px solid var(--border-hi);padding:28px 24px 36px;}
-  .dialog-title{font-family:'Space Mono',monospace;font-size:.78rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:20px;}
-  .dialog-field{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
-  .dialog-label{font-family:'Space Mono',monospace;font-size:.62rem;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;}
-  .dialog-input{background:#000;border:1px solid var(--border-hi);padding:12px 14px;color:#fff;font-family:'Space Mono',monospace;font-size:.82rem;outline:none;width:100%;}
+  .dialog-box{width:100%;background:#000;border-top:2px solid #fff;padding:24px 22px 32px;}
+  .dialog-title{font-family:'Space Mono',monospace;font-size:.75rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin-bottom:18px;}
+  .dialog-field{display:flex;flex-direction:column;gap:7px;margin-bottom:14px;}
+  .dialog-label{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;}
+  .dialog-input{background:#000;border:1px solid var(--border-hi);padding:11px 13px;color:#fff;font-family:'Space Mono',monospace;font-size:.8rem;outline:none;width:100%;transition:border-color .15s;}
   .dialog-input:focus{border-color:#fff;}
-  .dialog-select{background:#000;border:1px solid var(--border-hi);padding:12px 14px;color:#fff;font-family:'Space Mono',monospace;font-size:.82rem;outline:none;width:100%;appearance:none;}
-  .dialog-row{display:flex;gap:8px;margin-top:4px;}
-  .dialog-btn{flex:1;padding:14px;font-family:'Space Mono',monospace;font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border:none;}
+  .dialog-select{background:#000;border:1px solid var(--border-hi);padding:11px 13px;color:#fff;font-family:'Space Mono',monospace;font-size:.8rem;outline:none;width:100%;appearance:none;}
+  .dialog-row{display:flex;gap:8px;margin-top:6px;}
+  .dialog-btn{flex:1;padding:13px;font-family:'Space Mono',monospace;font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border:none;}
   .dialog-btn.cancel{background:transparent;border:1px solid var(--border-hi);color:var(--mid);}
   .dialog-btn.confirm{background:#fff;color:#000;}
 
-  /* ── TOAST ── */
-  .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(12px);background:#fff;color:#000;padding:9px 18px;font-family:'Space Mono',monospace;font-size:.68rem;letter-spacing:.08em;opacity:0;transition:all .2s;z-index:200;white-space:nowrap;}
+  /* TOAST */
+  .toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(12px);background:#fff;color:#000;padding:8px 18px;font-family:'Space Mono',monospace;font-size:.65rem;letter-spacing:.08em;opacity:0;transition:all .2s;z-index:300;white-space:nowrap;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ── PORTRAIT fallback ── */
+  @media (orientation: portrait) {
+    #home {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr auto auto auto;
+    }
+    .col-left { border-right: none; border-bottom: 1px solid var(--border); }
+    .col-right { border-top: none; }
+    .clock-hm { font-size: clamp(4rem, 20vw, 7rem); }
+  }
 </style>
 </head>
 <body>
@@ -144,32 +410,57 @@
 
 <!-- HOME -->
 <div id="home">
-  <div class="clock-block" id="clock-block">
-    <div style="display:flex;align-items:flex-end;gap:4px">
+
+  <!-- SINISTRA: orologio + microfono -->
+  <div class="col-left">
+    <div class="col-label">CASA / 01</div>
+
+    <div class="clock-wrap">
       <div class="clock-hm" id="clk-hm">00<span class="colon">:</span>00</div>
-      <div class="clock-ss" id="clk-ss">00</div>
+      <div class="clock-row2">
+        <div class="clock-ss" id="clk-ss">00s</div>
+        <div class="clock-date" id="clk-date"></div>
+      </div>
     </div>
-    <div class="clock-date" id="clk-date"></div>
+
+    <div id="due-badge-wrap"></div>
+
+    <div class="wake-bar">
+      <button class="wake-btn idle" id="wake-btn" onclick="toggleWake()">
+        <div class="wake-ring"></div>
+        🎤
+      </button>
+      <div class="wake-label" id="wake-label"></div>
+      <div class="wake-hint">di' "Claude..." per iniziare</div>
+    </div>
   </div>
 
-  <div class="weather-bar">
-    <div class="wb-accent" id="wb-accent"></div>
-    <div class="wb-icon" id="wb-icon">—</div>
-    <div><div class="wb-temp" id="wb-temp">—°</div><div class="wb-desc" id="wb-desc">Caricamento...</div></div>
-    <div class="wb-right" id="wb-right">Cervare · MC</div>
-  </div>
+  <!-- DESTRA: meteo + toolbar -->
+  <div class="col-right">
+    <div class="weather-block">
+      <div class="wb-accent" id="wb-accent"></div>
+      <div class="wb-row1">
+        <div class="wb-icon" id="wb-icon">—</div>
+        <div class="wb-temp" id="wb-temp">—°</div>
+        <div>
+          <div class="wb-desc" id="wb-desc">Caricamento...</div>
+        </div>
+      </div>
+      <div class="wb-row2">
+        <div class="wb-stat" id="wb-stat1">—</div>
+        <div class="wb-stat" id="wb-stat2">—</div>
+        <div class="wb-stat" id="wb-stat3">—</div>
+      </div>
+      <div class="wb-loc">Cervare · Macerata</div>
+    </div>
 
-  <div class="mic-wrap">
-    <button class="mic-btn" id="mic-btn" onclick="toggleMic()">🎤</button>
-    <div class="mic-status" id="mic-status"></div>
-  </div>
-
-  <div class="toolbar">
-    <button class="tb-btn" onclick="openPanel('chat-panel')">Chat</button>
-    <button class="tb-btn" onclick="openPanel('att-panel')">Attività</button>
-    <button class="tb-btn" onclick="quickAsk('Cosa devo fare oggi in casa?')">Oggi</button>
-    <button class="tb-btn" onclick="quickAsk('Meteo prossimi giorni')">Meteo</button>
-    <button class="tb-btn" onclick="resetApp()">Cfg</button>
+    <div class="toolbar">
+      <button class="tb-btn" onclick="openPanel('chat-panel')">Chat</button>
+      <button class="tb-btn" onclick="openPanel('att-panel')">Attività</button>
+      <button class="tb-btn" onclick="quickAsk('Cosa devo fare oggi in casa?')">Oggi</button>
+      <button class="tb-btn" onclick="quickAsk('Meteo prossimi giorni')">Meteo</button>
+      <button class="tb-btn" onclick="resetApp()">Cfg</button>
+    </div>
   </div>
 </div>
 
@@ -197,21 +488,20 @@
   </div>
   <div class="att-list" id="att-list"></div>
   <div class="att-add-bar">
-    <input class="att-add-input" id="att-input" placeholder="Nuova attività... (es. Pulizia filtri caldaia)" onkeydown="if(event.key==='Enter')addAttivitaFromInput()">
+    <input class="att-add-input" id="att-input" placeholder="Nuova attività... (es. Pulizia filtri caldaia)"
+      onkeydown="if(event.key==='Enter')addAttivitaFromInput()">
     <button class="att-add-btn" onclick="addAttivitaFromInput()">+</button>
   </div>
 </div>
 
-<!-- DIALOG NUOVA ATTIVITÀ -->
+<!-- DIALOG -->
 <div id="dialog-overlay">
   <div class="dialog-box">
-    <div class="dialog-title" id="dialog-title">Nuova Attività</div>
-
+    <div class="dialog-title">Nuova Attività</div>
     <div class="dialog-field">
-      <label class="dialog-label">Nome attività</label>
+      <label class="dialog-label">Nome</label>
       <input class="dialog-input" id="d-nome" placeholder="es. Pulizia filtri caldaia">
     </div>
-
     <div class="dialog-field">
       <label class="dialog-label">Frequenza</label>
       <select class="dialog-select" id="d-freq">
@@ -224,17 +514,14 @@
         <option value="365">Annuale</option>
       </select>
     </div>
-
     <div class="dialog-field">
-      <label class="dialog-label">Ultima volta eseguita</label>
+      <label class="dialog-label">Ultima esecuzione</label>
       <input class="dialog-input" type="date" id="d-ultima">
     </div>
-
     <div class="dialog-field">
       <label class="dialog-label">Note (opzionale)</label>
       <input class="dialog-input" id="d-note" placeholder="es. Usare prodotto specifico">
     </div>
-
     <div class="dialog-row">
       <button class="dialog-btn cancel" onclick="closeDialog()">Annulla</button>
       <button class="dialog-btn confirm" onclick="salvaAttivita()">Salva →</button>
@@ -245,464 +532,460 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ════════════════════════════════
-// STORAGE — salva dati persistenti
-// ════════════════════════════════
+// ════════════════════════════
+// STORAGE
+// ════════════════════════════
 const STORE_KEY = 'casa_attivita_v1';
+function loadAtt(){try{const r=localStorage.getItem(STORE_KEY);return r?JSON.parse(r):[]}catch{return[];}}
+function saveAtt(l){localStorage.setItem(STORE_KEY,JSON.stringify(l));}
+let attivita = loadAtt();
 
-function loadAttivita() {
-  try {
-    const raw = localStorage.getItem(STORE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
-}
-
-function saveAttivita(list) {
-  localStorage.setItem(STORE_KEY, JSON.stringify(list));
-}
-
-let attivita = loadAttivita();
-
-// ════════════════════════════════
+// ════════════════════════════
 // CONFIG
-// ════════════════════════════════
-const LAT = 43.2832, LON = 13.4534, CITY = 'Contrada Cervare, Macerata';
-let apiKey = '', history = [], weatherData = null;
-let isListening = false, isSpeaking = false, recognition = null;
-let dialogNome = '';
+// ════════════════════════════
+const LAT=43.2832,LON=13.4534,CITY='Contrada Cervare, Macerata';
+let apiKey='',chatHistory=[],weatherData=null;
+let isListening=false,isSpeaking=false,recognition=null;
+let wakeActive=false; // true = sempre in ascolto per wake word
 
-function saveAndStart() {
-  const k = document.getElementById('api-input').value.trim();
-  if (!k.startsWith('sk-ant-')) { showToast('CHIAVE NON VALIDA'); return; }
-  apiKey = k;
-  localStorage.setItem('casa_key', k);
-  boot();
+function saveAndStart(){
+  const k=document.getElementById('api-input').value.trim();
+  if(!k.startsWith('sk-ant-')){showToast('CHIAVE NON VALIDA');return;}
+  apiKey=k;localStorage.setItem('casa_key',k);boot();
 }
-
-function boot() {
+function boot(){
   document.getElementById('setup').classList.add('hidden');
-  startClock();
-  loadWeather();
-  renderAttivita();
-  checkScadenze();
+  startClock();loadWeather();renderAtt();checkScadenze();
+  // avvia wake word dopo 1 secondo
+  setTimeout(startWakeWord,1000);
 }
-
-function resetApp() {
-  if (confirm('Cambiare configurazione?')) { localStorage.removeItem('casa_key'); location.reload(); }
-}
-
-window.onload = () => {
-  const k = localStorage.getItem('casa_key');
-  if (k) { apiKey = k; boot(); }
-  // default oggi nel dialog
-  document.getElementById('d-ultima').value = new Date().toISOString().split('T')[0];
+function resetApp(){if(confirm('Cambiare configurazione?')){localStorage.removeItem('casa_key');location.reload();}}
+window.onload=()=>{
+  const k=localStorage.getItem('casa_key');
+  if(k){apiKey=k;boot();}
+  document.getElementById('d-ultima').value=new Date().toISOString().split('T')[0];
 };
 
-// ════════════════════════════════
+// ════════════════════════════
 // PANELS
-// ════════════════════════════════
-function openPanel(id) {
-  document.getElementById(id).classList.add('open');
-}
+// ════════════════════════════
+function openPanel(id){document.getElementById(id).classList.add('open');}
+function closePanel(id){document.getElementById(id).classList.remove('open');}
 
-function closePanel(id) {
-  document.getElementById(id).classList.remove('open');
-}
-
-// ════════════════════════════════
+// ════════════════════════════
 // CLOCK
-// ════════════════════════════════
-const GIORNI = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
-const MESI = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
-const PALETTE = ['#5e5ce6','#5e5ce6','#5e5ce6','#5e5ce6','#5e5ce6','#ffd60a','#ffd60a','#ff6b00','#30d158','#30d158','#30d158','#0a84ff','#0a84ff','#0a84ff','#0a84ff','#ff6b00','#ff6b00','#ff2d55','#ff2d55','#ff2d55','#bf5af2','#bf5af2','#bf5af2','#5e5ce6'];
+// ════════════════════════════
+const GG=['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+const MM=['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+const PAL=['#5e5ce6','#5e5ce6','#5e5ce6','#5e5ce6','#5e5ce6','#ffd60a','#ffd60a','#ff6b00','#30d158','#30d158','#30d158','#0a84ff','#0a84ff','#0a84ff','#0a84ff','#ff6b00','#ff6b00','#ff2d55','#ff2d55','#ff2d55','#bf5af2','#bf5af2','#bf5af2','#5e5ce6'];
 
-function startClock() { tick(); setInterval(tick, 1000); }
-
-function tick() {
-  const n = new Date();
-  const hh = String(n.getHours()).padStart(2,'0');
-  const mm = String(n.getMinutes()).padStart(2,'0');
-  const ss = String(n.getSeconds()).padStart(2,'0');
-  document.getElementById('clk-hm').innerHTML = `${hh}<span class="colon">:</span>${mm}`;
-  document.getElementById('clk-ss').textContent = ss;
-  document.getElementById('clk-date').textContent = `${GIORNI[n.getDay()]}  ${n.getDate()} ${MESI[n.getMonth()]} ${n.getFullYear()}`;
-  const col = PALETTE[n.getHours()];
-  document.querySelector('.clock-hm').style.textShadow = `0 0 80px ${col}55`;
+function startClock(){tick();setInterval(tick,1000);}
+function tick(){
+  const n=new Date();
+  const hh=String(n.getHours()).padStart(2,'0');
+  const mm=String(n.getMinutes()).padStart(2,'0');
+  const ss=String(n.getSeconds()).padStart(2,'0');
+  document.getElementById('clk-hm').innerHTML=`${hh}<span class="colon">:</span>${mm}`;
+  document.getElementById('clk-ss').textContent=`${ss}s`;
+  document.getElementById('clk-date').textContent=`${GG[n.getDay()]} ${n.getDate()} ${MM[n.getMonth()]}`;
+  document.querySelector('.clock-hm').style.textShadow=`0 0 80px ${PAL[n.getHours()]}55`;
 }
 
-// ════════════════════════════════
+// ════════════════════════════
 // WEATHER
-// ════════════════════════════════
-function wColor(c){if(c<=1)return'#ffd60a';if(c<=3)return'#888';if(c<=48)return'#636366';if(c<=82)return'#0a84ff';return'#ff453a';}
+// ════════════════════════════
+function wCol(c){if(c<=1)return'#ffd60a';if(c<=3)return'#777';if(c<=48)return'#555';if(c<=82)return'#0a84ff';return'#ff453a';}
 function wIcon(c){if(c===0)return'☀';if(c<=2)return'⛅';if(c<=3)return'☁';if(c<=48)return'≋';if(c<=67)return'⟁';if(c<=77)return'❄';if(c<=82)return'⟁';return'↯';}
 function wDesc(c){const m={0:'Sereno',1:'Prev. sereno',2:'Parz. nuvoloso',3:'Nuvoloso',45:'Nebbia',51:'Pioggerella',61:'Pioggia leggera',63:'Pioggia',65:'Pioggia intensa',71:'Neve leggera',73:'Neve',80:'Rovesci',95:'Temporale'};return m[c]||'Variabile';}
 
-async function loadWeather() {
-  try {
-    const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Europe%2FRome&forecast_days=3`);
-    const d = await r.json();
-    if (!d.current) throw new Error();
-    weatherData = d;
-    const c = d.current, dy = d.daily, col = wColor(c.weather_code);
-    document.getElementById('wb-accent').style.background = col;
-    document.getElementById('wb-icon').textContent = wIcon(c.weather_code);
-    document.getElementById('wb-temp').textContent = `${Math.round(c.temperature_2m)}°`;
-    document.getElementById('wb-desc').textContent = wDesc(c.weather_code).toUpperCase();
-    document.getElementById('wb-right').innerHTML = `${c.relative_humidity_2m}% HUM<br>${Math.round(c.wind_speed_10m)} KM/H<br>↑${Math.round(dy.temperature_2m_max[0])}° ↓${Math.round(dy.temperature_2m_min[0])}°`;
-    setTimeout(loadWeather, 30*60*1000);
-  } catch(e) { document.getElementById('wb-desc').textContent = 'NON DISPONIBILE'; }
+async function loadWeather(){
+  try{
+    const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Europe%2FRome&forecast_days=3`);
+    const d=await r.json();
+    if(!d.current)throw new Error();
+    weatherData=d;
+    const c=d.current,dy=d.daily,col=wCol(c.weather_code);
+    document.getElementById('wb-accent').style.background=col;
+    document.getElementById('wb-icon').textContent=wIcon(c.weather_code);
+    document.getElementById('wb-temp').textContent=`${Math.round(c.temperature_2m)}°`;
+    document.getElementById('wb-desc').textContent=wDesc(c.weather_code).toUpperCase();
+    document.getElementById('wb-stat1').innerHTML=`💧 ${c.relative_humidity_2m}%<br>UMIDITÀ`;
+    document.getElementById('wb-stat2').innerHTML=`🌬 ${Math.round(c.wind_speed_10m)} km/h<br>VENTO`;
+    document.getElementById('wb-stat3').innerHTML=`↑${Math.round(dy.temperature_2m_max[0])}° ↓${Math.round(dy.temperature_2m_min[0])}°<br>MIN/MAX`;
+    setTimeout(loadWeather,30*60*1000);
+  }catch(e){document.getElementById('wb-desc').textContent='NON DISPONIBILE';}
 }
 
-function weatherSummary() {
-  if (!weatherData) return 'Meteo non disponibile.';
-  const c = weatherData.current, d = weatherData.daily;
-  return `${wDesc(c.weather_code)}, ${Math.round(c.temperature_2m)}°C (max ${Math.round(d.temperature_2m_max[0])}°, min ${Math.round(d.temperature_2m_min[0])}°). Umidità ${c.relative_humidity_2m}%, vento ${Math.round(c.wind_speed_10m)} km/h. Domani max ${Math.round(d.temperature_2m_max[1])}°.`;
+function weatherSummary(){
+  if(!weatherData)return'Meteo non disponibile.';
+  const c=weatherData.current,d=weatherData.daily;
+  return`${wDesc(c.weather_code)}, ${Math.round(c.temperature_2m)}°C (max ${Math.round(d.temperature_2m_max[0])}°, min ${Math.round(d.temperature_2m_min[0])}°). Umidità ${c.relative_humidity_2m}%, vento ${Math.round(c.wind_speed_10m)} km/h. Domani max ${Math.round(d.temperature_2m_max[1])}°.`;
 }
 
-// ════════════════════════════════
-// ATTIVITÀ — LOGICA CORE
-// ════════════════════════════════
-function giorniAllaScadenza(att) {
-  if (!att.ultimaVolta) return 0;
-  const ultima = new Date(att.ultimaVolta);
-  const prossima = new Date(ultima.getTime() + att.frequenzaGiorni * 86400000);
-  const oggi = new Date();
-  oggi.setHours(0,0,0,0);
-  return Math.ceil((prossima - oggi) / 86400000);
+// ════════════════════════════
+// ATTIVITÀ
+// ════════════════════════════
+function giorniAlla(att){
+  if(!att.ultimaVolta)return 0;
+  const p=new Date(att.ultimaVolta).getTime()+att.frequenzaGiorni*86400000;
+  return Math.ceil((p-Date.now())/86400000);
 }
-
-function scadenzaLabel(giorni) {
-  if (giorni < 0) return { text: `Scaduta ${Math.abs(giorni)} gg fa`, cls: 'overdue' };
-  if (giorni === 0) return { text: 'Da fare oggi', cls: 'overdue' };
-  if (giorni <= 7) return { text: `Tra ${giorni} giorni`, cls: 'soon' };
-  return { text: `Tra ${giorni} giorni`, cls: 'ok' };
+function scadLbl(g){
+  if(g<0)return{text:`Scaduta ${Math.abs(g)} gg fa`,cls:'overdue'};
+  if(g===0)return{text:'Da fare oggi',cls:'overdue'};
+  if(g<=7)return{text:`Tra ${g} giorni`,cls:'soon'};
+  return{text:`Tra ${g} giorni`,cls:'ok'};
 }
+function attCol(g){if(g<0)return'#ff2d55';if(g<=7)return'#ffd60a';return'#30d158';}
+function freqLbl(g){const m={7:'Settimanale',14:'Ogni 2 sett.',30:'Mensile',60:'Ogni 2 mesi',90:'Trimestrale',180:'Semestrale',365:'Annuale'};return m[g]||`Ogni ${g} gg`;}
 
-function attivitaScadenteColor(giorni) {
-  if (giorni < 0) return '#ff2d55';
-  if (giorni <= 7) return '#ffd60a';
-  return '#30d158';
-}
-
-function freqLabel(g) {
-  if (g===7) return 'Settimanale';
-  if (g===14) return 'Ogni 2 sett.';
-  if (g===30) return 'Mensile';
-  if (g===60) return 'Ogni 2 mesi';
-  if (g===90) return 'Trimestrale';
-  if (g===180) return 'Semestrale';
-  if (g===365) return 'Annuale';
-  return `Ogni ${g} gg`;
-}
-
-function renderAttivita() {
-  const list = document.getElementById('att-list');
-  if (attivita.length === 0) {
-    list.innerHTML = '<div class="att-empty">Nessuna attività.<br>Aggiungine una qui sotto.</div>';
-    return;
-  }
-
-  // Ordina per scadenza
-  const sorted = [...attivita].sort((a,b) => giorniAllaScadenza(a) - giorniAllaScadenza(b));
-
-  list.innerHTML = sorted.map(att => {
-    const giorni = giorniAllaScadenza(att);
-    const lbl = scadenzaLabel(giorni);
-    const col = attivitaScadenteColor(giorni);
-    const ultimaStr = att.ultimaVolta
-      ? new Date(att.ultimaVolta).toLocaleDateString('it-IT')
-      : 'Mai eseguita';
-    return `
-      <div class="att-item" style="--ic:${col}">
-        <div class="att-info">
-          <div class="att-name">${att.nome}</div>
-          <div class="att-meta">${freqLabel(att.frequenzaGiorni)} · Ultima: ${ultimaStr}${att.note ? '<br>'+att.note : ''}</div>
-          <div class="att-due ${lbl.cls}">${lbl.text}</div>
-        </div>
-        <div class="att-actions">
-          <button class="att-btn" onclick="segnaFatta('${att.id}')">✓ Fatta</button>
-          <button class="att-btn" onclick="eliminaAtt('${att.id}')">✕</button>
-        </div>
-      </div>`;
+function renderAtt(){
+  const list=document.getElementById('att-list');
+  if(attivita.length===0){list.innerHTML='<div class="att-empty">Nessuna attività.<br>Aggiungine una qui sotto.</div>';return;}
+  const sorted=[...attivita].sort((a,b)=>giorniAlla(a)-giorniAlla(b));
+  list.innerHTML=sorted.map(att=>{
+    const g=giorniAlla(att),lbl=scadLbl(g),col=attCol(g);
+    const ul=att.ultimaVolta?new Date(att.ultimaVolta).toLocaleDateString('it-IT'):'Mai eseguita';
+    return`<div class="att-item" style="--ic:${col}">
+      <div class="att-info">
+        <div class="att-name">${att.nome}</div>
+        <div class="att-meta">${freqLbl(att.frequenzaGiorni)} · ${ul}${att.note?'<br>'+att.note:''}</div>
+        <div class="att-due ${lbl.cls}">${lbl.text}</div>
+      </div>
+      <div class="att-actions">
+        <button class="att-btn" onclick="segnaFatta('${att.id}')">✓ Fatta</button>
+        <button class="att-btn" onclick="eliminaAtt('${att.id}')">✕</button>
+      </div>
+    </div>`;
   }).join('');
 }
 
-function checkScadenze() {
-  const scadute = attivita.filter(a => giorniAllaScadenza(a) <= 0);
-  const imminenti = attivita.filter(a => { const g = giorniAllaScadenza(a); return g > 0 && g <= 7; });
-  const tot = scadute.length + imminenti.length;
-
-  const existing = document.getElementById('due-badge');
-  if (existing) existing.remove();
-
-  if (tot > 0) {
-    const badge = document.createElement('div');
-    badge.className = 'due-badge';
-    badge.id = 'due-badge';
-    badge.textContent = `${tot} ATTIVITÀ DA FARE`;
-    badge.onclick = () => openPanel('att-panel');
-    document.getElementById('clock-block').appendChild(badge);
-  }
+function checkScadenze(){
+  const wrap=document.getElementById('due-badge-wrap');
+  const tot=attivita.filter(a=>giorniAlla(a)<=7).length;
+  if(tot>0){
+    wrap.innerHTML=`<div class="due-badge" onclick="openPanel('att-panel')">${tot} ATTIVITÀ IN SCADENZA</div>`;
+  }else{wrap.innerHTML='';}
 }
 
-function addAttivitaFromInput() {
-  const input = document.getElementById('att-input');
-  const nome = input.value.trim();
-  if (!nome) return;
-  input.value = '';
-  openDialog(nome);
+function addAttivitaFromInput(){
+  const input=document.getElementById('att-input');
+  const nome=input.value.trim();if(!nome)return;
+  input.value='';openDialog(nome);
 }
-
-function openDialog(nome = '') {
-  dialogNome = nome;
-  document.getElementById('d-nome').value = nome;
-  document.getElementById('d-note').value = '';
-  document.getElementById('d-ultima').value = new Date().toISOString().split('T')[0];
-  document.getElementById('d-freq').value = '30';
+function openDialog(nome=''){
+  document.getElementById('d-nome').value=nome;
+  document.getElementById('d-note').value='';
+  document.getElementById('d-ultima').value=new Date().toISOString().split('T')[0];
+  document.getElementById('d-freq').value='30';
   document.getElementById('dialog-overlay').classList.add('open');
-  setTimeout(() => { if (!nome) document.getElementById('d-nome').focus(); }, 100);
+}
+function closeDialog(){document.getElementById('dialog-overlay').classList.remove('open');}
+function salvaAttivita(){
+  const nome=document.getElementById('d-nome').value.trim();
+  if(!nome){showToast('INSERISCI UN NOME');return;}
+  attivita.push({id:Date.now().toString(),nome,frequenzaGiorni:parseInt(document.getElementById('d-freq').value),ultimaVolta:document.getElementById('d-ultima').value||null,note:document.getElementById('d-note').value.trim(),creatoIl:new Date().toISOString()});
+  saveAtt(attivita);renderAtt();checkScadenze();closeDialog();showToast('ATTIVITÀ SALVATA');
+}
+function segnaFatta(id){
+  const a=attivita.find(x=>x.id===id);if(!a)return;
+  a.ultimaVolta=new Date().toISOString().split('T')[0];
+  saveAtt(attivita);renderAtt();checkScadenze();showToast('✓ '+a.nome.toUpperCase());
+}
+function eliminaAtt(id){
+  const a=attivita.find(x=>x.id===id);if(!a)return;
+  if(!confirm(`Eliminare "${a.nome}"?`))return;
+  attivita=attivita.filter(x=>x.id!==id);
+  saveAtt(attivita);renderAtt();checkScadenze();
 }
 
-function closeDialog() {
-  document.getElementById('dialog-overlay').classList.remove('open');
+function attContext(){
+  if(attivita.length===0)return'Nessuna attività registrata.';
+  const sc=attivita.filter(a=>giorniAlla(a)<=0).map(a=>a.nome);
+  const im=attivita.filter(a=>{const g=giorniAlla(a);return g>0&&g<=7;}).map(a=>`${a.nome} (tra ${giorniAlla(a)} gg)`);
+  const pr=attivita.filter(a=>giorniAlla(a)>7).map(a=>`${a.nome} (tra ${giorniAlla(a)} gg)`);
+  let ctx='';
+  if(sc.length)ctx+=`SCADUTE: ${sc.join(', ')}. `;
+  if(im.length)ctx+=`IMMINENTI: ${im.join(', ')}. `;
+  if(pr.length)ctx+=`Prossime: ${pr.join(', ')}.`;
+  return ctx||'Tutto in regola.';
 }
 
-function salvaAttivita() {
-  const nome = document.getElementById('d-nome').value.trim();
-  if (!nome) { showToast('INSERISCI UN NOME'); return; }
-
-  const nuova = {
-    id: Date.now().toString(),
-    nome,
-    frequenzaGiorni: parseInt(document.getElementById('d-freq').value),
-    ultimaVolta: document.getElementById('d-ultima').value || null,
-    note: document.getElementById('d-note').value.trim(),
-    creatoIl: new Date().toISOString()
-  };
-
-  attivita.push(nuova);
-  saveAttivita(attivita);
-  renderAttivita();
-  checkScadenze();
-  closeDialog();
-  showToast('ATTIVITÀ SALVATA');
-}
-
-function segnaFatta(id) {
-  const att = attivita.find(a => a.id === id);
-  if (!att) return;
-  att.ultimaVolta = new Date().toISOString().split('T')[0];
-  saveAttivita(attivita);
-  renderAttivita();
-  checkScadenze();
-  showToast('✓ ' + att.nome.toUpperCase());
-}
-
-function eliminaAtt(id) {
-  const att = attivita.find(a => a.id === id);
-  if (!att) return;
-  if (!confirm(`Eliminare "${att.nome}"?`)) return;
-  attivita = attivita.filter(a => a.id !== id);
-  saveAttivita(attivita);
-  renderAttivita();
-  checkScadenze();
-}
-
-// Attività in scadenza come contesto per l'AI
-function attivitaContext() {
-  if (attivita.length === 0) return 'Nessuna attività registrata.';
-  const scadute = attivita.filter(a => giorniAllaScadenza(a) <= 0).map(a => a.nome);
-  const imminenti = attivita.filter(a => { const g = giorniAllaScadenza(a); return g > 0 && g <= 7; }).map(a => `${a.nome} (tra ${giorniAllaScadenza(a)} giorni)`);
-  const prossime = attivita.filter(a => giorniAllaScadenza(a) > 7).map(a => `${a.nome} (tra ${giorniAllaScadenza(a)} giorni)`);
-  let ctx = '';
-  if (scadute.length) ctx += `SCADUTE/DA FARE ORA: ${scadute.join(', ')}. `;
-  if (imminenti.length) ctx += `IMMINENTI (entro 7 giorni): ${imminenti.join(', ')}. `;
-  if (prossime.length) ctx += `Prossime: ${prossime.join(', ')}.`;
-  return ctx || 'Tutte le attività sono in regola.';
-}
-
-// ════════════════════════════════
+// ════════════════════════════
 // AI
-// ════════════════════════════════
-function systemPrompt(breve = false) {
-  const n = new Date();
-  const stagioni = ['Inverno','Inverno','Primavera','Primavera','Primavera','Estate','Estate','Estate','Autunno','Autunno','Autunno','Inverno'];
-  return `Sei "Casa", assistente domestico intelligente per Leo a Contrada Cervare, Macerata.
-Data: ${n.toLocaleString('it-IT')} — Stagione: ${stagioni[n.getMonth()]}
+// ════════════════════════════
+function sysPrompt(breve=false){
+  const n=new Date();
+  const stag=['Inverno','Inverno','Primavera','Primavera','Primavera','Estate','Estate','Estate','Autunno','Autunno','Autunno','Inverno'];
+  return`Sei "Casa", assistente domestico per Leo a Contrada Cervare, Macerata.
+Data: ${n.toLocaleString('it-IT')} — ${stag[n.getMonth()]}
 Meteo: ${weatherSummary()}
-Attività domestiche registrate: ${attivitaContext()}
-
-Regole:
-- Parla sempre in italiano, tono diretto e amichevole
-- Considera meteo e stagione per i suggerimenti
-- Se l'utente vuole aggiungere un'attività, aiutalo a definire frequenza e dettagli, poi digli di usare il pulsante + nel pannello Attività
-- Segnala sempre le attività scadute o imminenti quando rilevante
-${breve ? '- Rispondi in massimo 2-3 frasi brevi perché la risposta verrà letta ad alta voce' : ''}`;
+Attività: ${attContext()}
+Rispondi in italiano, tono diretto. Considera meteo e stagione.${breve?'\nRispondi in MAX 2 frasi brevi perché la risposta verrà letta ad alta voce.':''}`;
 }
 
-async function askAI(text, speak = false) {
-  history.push({ role:'user', content: text });
+async function askAI(text,speak=false){
+  chatHistory.push({role:'user',content:text});
   setTyping(true);
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: speak ? 200 : 600,
-        system: systemPrompt(speak),
-        messages: history
-      })
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:speak?150:600,system:sysPrompt(speak),messages:chatHistory})
     });
-    const d = await res.json();
-    if (d.error) throw new Error(d.error.message);
-    const reply = d.content[0].text;
+    const d=await res.json();
+    if(d.error)throw new Error(d.error.message);
+    const reply=d.content[0].text;
+    setTyping(false);addMsg(reply,'ai');
+    chatHistory.push({role:'assistant',content:reply});
+    if(chatHistory.length>20)chatHistory=chatHistory.slice(-16);
+    if(speak)speakText(reply);
+  }catch(e){
     setTyping(false);
-    addMsg(reply, 'ai');
-    history.push({ role:'assistant', content: reply });
-    if (history.length > 20) history = history.slice(-16);
-    if (speak) speakText(reply);
-  } catch(e) {
-    setTyping(false);
-    addMsg(e.message.includes('401') ? '[ API KEY NON VALIDA ]' : `[ ERRORE: ${e.message} ]`, 'ai');
+    addMsg(e.message.includes('401')?'[ API KEY NON VALIDA ]':`[ ERRORE: ${e.message} ]`,'ai');
+    setWakeState('idle');
   }
 }
 
-function addMsg(text, who) {
-  const area = document.getElementById('chat-area');
-  const typing = document.getElementById('typing');
-  const d = document.createElement('div');
-  d.className = `msg ${who}`;
-  if (who === 'ai') d.innerHTML = `<div class="lbl">CASA /</div>${fmt(text)}`;
-  else d.textContent = text;
-  area.insertBefore(d, typing);
-  area.scrollTop = area.scrollHeight;
+function addMsg(text,who){
+  const area=document.getElementById('chat-area'),typing=document.getElementById('typing');
+  const d=document.createElement('div');d.className=`msg ${who}`;
+  if(who==='ai')d.innerHTML=`<div class="lbl">CASA /</div>${fmt(text)}`;
+  else d.textContent=text;
+  area.insertBefore(d,typing);area.scrollTop=area.scrollHeight;
+}
+function fmt(t){return t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>').replace(/\n/g,'<br>');}
+function setTyping(on){document.getElementById('typing').className=on?'typing on':'typing';if(on)document.getElementById('chat-area').scrollTop=999999;}
+
+async function sendMessage(){
+  const el=document.getElementById('cp-input'),t=el.value.trim();if(!t)return;
+  addMsg(t,'user');el.value='';autoResize(el);await askAI(t,false);
+}
+async function quickAsk(t){openPanel('chat-panel');addMsg(t,'user');await askAI(t,false);}
+function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}
+function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,100)+'px';}
+
+// ════════════════════════════
+// WAKE WORD + MIC + TTS
+// ════════════════════════════
+
+// Stati: idle | wake-active | wake-listening | thinking | speaking
+let currentState = 'idle';
+
+function setWakeState(state){
+  currentState = state;
+  const btn=document.getElementById('wake-btn');
+  const lbl=document.getElementById('wake-label');
+  btn.className='wake-btn';
+
+  if(state==='idle'){
+    btn.classList.add('idle');
+    btn.innerHTML='<div class="wake-ring"></div>🎤';
+    lbl.textContent='';
+  } else if(state==='wake-active'){
+    btn.classList.add('wake-active');
+    btn.innerHTML='<div class="wake-ring"></div>◉';
+    lbl.textContent='In ascolto...';
+  } else if(state==='wake-listening'){
+    btn.classList.add('wake-listening');
+    btn.innerHTML='<div class="wake-ring"></div>■';
+    lbl.textContent='Parla ora';
+  } else if(state==='thinking'){
+    btn.classList.add('thinking');
+    btn.innerHTML='<div class="wake-ring"></div>…';
+    lbl.textContent='Sto pensando...';
+  } else if(state==='speaking'){
+    btn.classList.add('speaking');
+    btn.innerHTML='<div class="wake-ring"></div>◎';
+    lbl.textContent='Sto parlando...';
+  }
 }
 
-function fmt(t) {
-  return t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>').replace(/\n/g,'<br>');
+// Tocco manuale sul bottone
+function toggleWake(){
+  if(currentState==='speaking'){window.speechSynthesis.cancel();isSpeaking=false;startWakeWord();return;}
+  if(currentState==='wake-active'||currentState==='wake-listening'){stopWakeWord();return;}
+  if(currentState==='idle'){startWakeWord();return;}
 }
 
-function setTyping(on) {
-  document.getElementById('typing').className = on ? 'typing on' : 'typing';
-  if (on) document.getElementById('chat-area').scrollTop = 999999;
+// ── WAKE WORD ENGINE ──
+// Ascolta continuamente, cerca "claude" nel testo riconosciuto
+let wakeRecognition=null;
+let wakeEnabled=false;
+
+function startWakeWord(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){showToast('MICROFONO NON SUPPORTATO');return;}
+  wakeEnabled=true;
+  setWakeState('wake-active');
+  listenForWake();
 }
 
-async function sendMessage() {
-  const el = document.getElementById('cp-input');
-  const t = el.value.trim();
-  if (!t) return;
-  addMsg(t, 'user');
-  el.value = '';
-  autoResize(el);
-  await askAI(t, false);
+function stopWakeWord(){
+  wakeEnabled=false;
+  if(wakeRecognition){try{wakeRecognition.stop();}catch(e){}}
+  wakeRecognition=null;
+  setWakeState('idle');
 }
 
-async function quickAsk(t) {
-  openPanel('chat-panel');
-  addMsg(t, 'user');
-  await askAI(t, false);
-}
+function listenForWake(){
+  if(!wakeEnabled)return;
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  wakeRecognition=new SR();
+  wakeRecognition.lang='it-IT';
+  wakeRecognition.continuous=false;
+  wakeRecognition.interimResults=false;
+  wakeRecognition.maxAlternatives=3;
 
-function handleKey(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} }
-function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,110)+'px'; }
+  wakeRecognition.onresult=(e)=>{
+    const results=Array.from(e.results);
+    let detected=false;
+    let fullText='';
 
-// ════════════════════════════════
-// MICROFONO + TTS
-// ════════════════════════════════
-function setMicStatus(state) {
-  const btn = document.getElementById('mic-btn');
-  const lbl = document.getElementById('mic-status');
-  btn.className = 'mic-btn';
-  if (state==='listening') { btn.classList.add('listening'); btn.textContent='■'; lbl.textContent='In ascolto...'; }
-  else if (state==='thinking') { btn.classList.add('thinking'); btn.textContent='…'; lbl.textContent='Sto pensando...'; }
-  else if (state==='speaking') { btn.classList.add('speaking'); btn.textContent='◎'; lbl.textContent='Sto parlando...'; }
-  else { btn.textContent='🎤'; lbl.textContent=''; }
-}
+    for(const result of results){
+      for(let i=0;i<result.length;i++){
+        const t=result[i].transcript.toLowerCase();
+        fullText+=t+' ';
+        // Cerca varianti di "claude"
+        if(t.includes('claude')||t.includes('clod')||t.includes('klod')||t.includes('clau')){
+          detected=true;
+        }
+      }
+    }
 
-function toggleMic() {
-  if (isSpeaking) { window.speechSynthesis.cancel(); isSpeaking=false; setMicStatus('idle'); return; }
-  if (isListening) { if(recognition) recognition.stop(); return; }
-
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { showToast('MICROFONO NON SUPPORTATO'); return; }
-
-  recognition = new SR();
-  recognition.lang = 'it-IT';
-  recognition.continuous = false;
-  recognition.interimResults = false;
-
-  recognition.onstart = () => { isListening=true; setMicStatus('listening'); };
-
-  recognition.onresult = async (e) => {
-    const t = e.results[0][0].transcript;
-    isListening = false;
-    setMicStatus('thinking');
-    addMsg(t, 'user');
-    history.push({ role:'user', content: t });
-    try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 200,
-          system: systemPrompt(true),
-          messages: history
-        })
-      });
-      const d = await res.json();
-      if (d.error) throw new Error(d.error.message);
-      const reply = d.content[0].text;
-      addMsg(reply, 'ai');
-      history.push({ role:'assistant', content: reply });
-      speakText(reply);
-    } catch(err) { setMicStatus('idle'); showToast('ERRORE CONNESSIONE'); }
+    if(detected){
+      // Estrai il comando dopo "claude"
+      const cmd=fullText.replace(/claude\w*/i,'').replace(/clod\w*/i,'').replace(/klod\w*/i,'').trim();
+      if(cmd.length>2){
+        // Ha già detto il comando insieme
+        handleVoiceCommand(cmd);
+      } else {
+        // Aspetta il comando
+        listenForCommand();
+      }
+    } else {
+      // Riprende ad ascoltare per wake word
+      if(wakeEnabled)setTimeout(listenForWake,300);
+    }
   };
 
-  recognition.onerror = (e) => { isListening=false; setMicStatus('idle'); if(e.error!=='aborted') showToast('MICROFONO: '+e.error.toUpperCase()); };
-  recognition.onend = () => { isListening=false; if(!isSpeaking) setMicStatus('idle'); };
-  recognition.start();
+  wakeRecognition.onerror=(e)=>{
+    if(e.error==='no-speech'||e.error==='aborted'){
+      if(wakeEnabled)setTimeout(listenForWake,500);
+    } else {
+      if(wakeEnabled)setTimeout(listenForWake,2000);
+    }
+  };
+
+  wakeRecognition.onend=()=>{
+    if(wakeEnabled&&currentState==='wake-active')setTimeout(listenForWake,300);
+  };
+
+  try{wakeRecognition.start();}catch(e){if(wakeEnabled)setTimeout(listenForWake,1000);}
 }
 
-function speakText(text) {
-  if (!window.speechSynthesis) { setMicStatus('idle'); return; }
+function listenForCommand(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  const r=new SR();
+  r.lang='it-IT';r.continuous=false;r.interimResults=false;
+
+  setWakeState('wake-listening');
+  // Feedback sonoro leggero
+  beep();
+
+  r.onresult=async(e)=>{
+    const cmd=e.results[0][0].transcript;
+    handleVoiceCommand(cmd);
+  };
+
+  r.onerror=()=>{
+    setWakeState('wake-active');
+    if(wakeEnabled)setTimeout(listenForWake,300);
+  };
+
+  r.onend=()=>{
+    if(currentState==='wake-listening'){
+      setWakeState('wake-active');
+      if(wakeEnabled)setTimeout(listenForWake,300);
+    }
+  };
+
+  try{r.start();}catch(e){setWakeState('wake-active');if(wakeEnabled)setTimeout(listenForWake,500);}
+}
+
+async function handleVoiceCommand(cmd){
+  setWakeState('thinking');
+  // Mostra in chat
+  if(!document.getElementById('chat-panel').classList.contains('open')){
+    // non aprire il pannello, mostra solo il risultato
+  }
+  addMsg(cmd,'user');
+  chatHistory.push({role:'user',content:cmd});
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:150,system:sysPrompt(true),messages:chatHistory})
+    });
+    const d=await res.json();
+    if(d.error)throw new Error(d.error.message);
+    const reply=d.content[0].text;
+    addMsg(reply,'ai');
+    chatHistory.push({role:'assistant',content:reply});
+    if(chatHistory.length>20)chatHistory=chatHistory.slice(-16);
+    speakText(reply, ()=>{
+      // Dopo aver parlato, riprende ascolto wake word
+      if(wakeEnabled)setTimeout(listenForWake,500);
+    });
+  }catch(err){
+    setWakeState('wake-active');
+    showToast('ERRORE CONNESSIONE');
+    if(wakeEnabled)setTimeout(listenForWake,1000);
+  }
+}
+
+function speakText(text,onEnd=null){
+  if(!window.speechSynthesis){setWakeState('idle');if(onEnd)onEnd();return;}
   window.speechSynthesis.cancel();
-  const clean = text.replace(/\*\*(.*?)\*\*/g,'$1').replace(/\*(.*?)\*/g,'$1').replace(/#+\s/g,'').replace(/<[^>]+>/g,'');
-  const utt = new SpeechSynthesisUtterance(clean);
-  utt.lang = 'it-IT'; utt.rate = 1.05; utt.pitch = 1.0;
-  const voices = window.speechSynthesis.getVoices();
-  const itVoice = voices.find(v => v.lang.startsWith('it'));
-  if (itVoice) utt.voice = itVoice;
-  utt.onstart = () => { isSpeaking=true; setMicStatus('speaking'); };
-  utt.onend = () => { isSpeaking=false; setMicStatus('idle'); };
-  utt.onerror = () => { isSpeaking=false; setMicStatus('idle'); };
+  const clean=text.replace(/\*\*(.*?)\*\*/g,'$1').replace(/\*(.*?)\*/g,'$1').replace(/#+\s/g,'').replace(/<[^>]+>/g,'');
+  const utt=new SpeechSynthesisUtterance(clean);
+  utt.lang='it-IT';utt.rate=1.05;utt.pitch=1.0;
+  const voices=window.speechSynthesis.getVoices();
+  const itVoice=voices.find(v=>v.lang.startsWith('it'));
+  if(itVoice)utt.voice=itVoice;
+  utt.onstart=()=>{isSpeaking=true;setWakeState('speaking');};
+  utt.onend=()=>{isSpeaking=false;setWakeState(wakeEnabled?'wake-active':'idle');if(onEnd)onEnd();};
+  utt.onerror=()=>{isSpeaking=false;setWakeState(wakeEnabled?'wake-active':'idle');if(onEnd)onEnd();};
   window.speechSynthesis.speak(utt);
 }
 
-if (window.speechSynthesis) {
-  window.speechSynthesis.getVoices();
-  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+// Beep di conferma wake word
+function beep(){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const o=ctx.createOscillator();
+    const g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    o.frequency.value=880;o.type='sine';
+    g.gain.setValueAtTime(.15,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.15);
+    o.start(ctx.currentTime);o.stop(ctx.currentTime+.15);
+  }catch(e){}
 }
 
-// ════════════════════════════════
+if(window.speechSynthesis){
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged=()=>window.speechSynthesis.getVoices();
+}
+
+// ════════════════════════════
 // TOAST
-// ════════════════════════════════
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
+// ════════════════════════════
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
 }
 </script>
 </body>

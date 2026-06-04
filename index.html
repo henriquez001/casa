@@ -4,135 +4,120 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>CASA</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════
-   DESIGN SYSTEM — ispirato a Aeonik Fono
-   Sfondo nero, elementi bianchi, card arrotondate,
-   tipografia gerarchica: label piccola + valore grande
+   DESIGN SYSTEM
+   Sfondo: nero puro
+   Box: trasparenti con solo contorno bianco 1px
+   Font: Roboto Mono
+   Stile: pulito, gerarchico, label piccola + valore grande
 ═══════════════════════════════════════════════ */
 :root {
-  --bg:   #000000;       /* sfondo principale */
-  --c1:   #111111;       /* card / superfici */
-  --c2:   #1a1a1a;       /* bordi card */
-  --c3:   #2a2a2a;       /* bordi secondari */
-  --c4:   #444444;       /* elementi disabilitati */
-  --mid:  #888888;       /* testo secondario */
-  --text: #ffffff;       /* testo principale */
-  --r:    16px;          /* border-radius base — cambia per più/meno arrotondamento */
-  --sans: 'DM Sans', system-ui, sans-serif;
+  --bg:   #000000;               /* sfondo */
+  --brd:  rgba(255,255,255,.18); /* bordo box — bianco 18% */
+  --brd2: rgba(255,255,255,.08); /* bordo secondario più sottile */
+  --mid:  rgba(255,255,255,.45); /* testo secondario */
+  --dim:  rgba(255,255,255,.2);  /* testo dimesso */
+  --text: #ffffff;               /* testo principale */
+  --r:    14px;                  /* border-radius base */
+  --mono: 'Roboto Mono', monospace;
 }
 
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
 html, body {
-  font-family: var(--sans);
+  font-family: var(--mono);
   background: var(--bg);
   color: var(--text);
-  width: 100vw;
-  height: 100dvh;
+  width: 100vw; height: 100dvh;
   overflow: hidden;
   user-select: none;
   -webkit-font-smoothing: antialiased;
 }
 
-/* ══════════════════════════════════════
-   SETUP — schermata di configurazione
-══════════════════════════════════════ */
+/* ══════════════════════════════
+   SETUP
+══════════════════════════════ */
 #setup {
   position: fixed; inset: 0;
   background: var(--bg);
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  padding: 28px; gap: 24px;
-  z-index: 200;
+  padding: 28px; gap: 24px; z-index: 200;
 }
 #setup.hidden { display: none; }
 
 .s-logo {
-  font-size: 2.2rem;
-  font-weight: 700;
-  letter-spacing: -.02em;
-  text-align: center;
-  color: var(--text);
+  font-size: 1.8rem; font-weight: 700;
+  letter-spacing: -.02em; text-align: center;
 }
 .s-logo small {
-  display: block;
-  font-size: .65rem;
-  font-weight: 400;
-  color: var(--mid);
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  margin-top: 6px;
+  display: block; font-size: .6rem; font-weight: 300;
+  color: var(--mid); letter-spacing: .2em;
+  text-transform: uppercase; margin-top: 6px;
 }
 
-/* Card setup con bordo arrotondato come reference */
+/* Box setup: trasparente con solo contorno */
 .s-box {
   width: 100%; max-width: 360px;
-  background: var(--c1);
-  border: 1px solid var(--c2);
+  background: transparent;
+  border: 1px solid var(--brd);
   border-radius: var(--r);
   padding: 24px 22px;
 }
 
 .s-lbl {
-  font-size: .6rem; font-weight: 500;
-  color: var(--mid);
-  letter-spacing: .1em; text-transform: uppercase;
+  font-size: .58rem; font-weight: 400;
+  color: var(--mid); letter-spacing: .16em;
+  text-transform: uppercase;
   display: block; margin-bottom: 7px;
 }
 
+/* Input: trasparente, solo bordo */
 .s-inp {
   width: 100%;
-  background: var(--bg);
-  border: 1px solid var(--c3);
-  border-radius: 10px;
-  padding: 13px 14px;
-  color: var(--text);
-  font-family: var(--sans); font-size: .9rem; font-weight: 400;
+  background: transparent;
+  border: 1px solid var(--brd);
+  border-radius: 8px;
+  padding: 12px 14px; color: var(--text);
+  font-family: var(--mono); font-size: .82rem; font-weight: 300;
   outline: none; margin-bottom: 14px;
   transition: border-color .15s;
 }
 .s-inp:focus { border-color: var(--text); }
-.s-inp::placeholder { color: var(--c4); }
+.s-inp::placeholder { color: var(--dim); }
 
 .s-btn {
-  width: 100%;
-  background: var(--text); color: var(--bg);
-  border: none; border-radius: 10px; padding: 14px;
-  font-family: var(--sans); font-size: .85rem;
-  font-weight: 600; cursor: pointer;
-  transition: opacity .15s;
+  width: 100%; background: var(--text); color: var(--bg);
+  border: none; border-radius: 8px; padding: 14px;
+  font-family: var(--mono); font-size: .78rem;
+  font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; cursor: pointer;
 }
 .s-btn:active { opacity: .85; }
 
 .s-note {
-  font-size: .65rem; font-weight: 400;
-  color: var(--c4); text-align: center; line-height: 2;
+  font-size: .62rem; font-weight: 300;
+  color: var(--dim); text-align: center; line-height: 2;
 }
 .s-note a { color: var(--mid); }
 
-/* ══════════════════════════════════════
-   HOME — layout principale
-══════════════════════════════════════ */
+/* ══════════════════════════════
+   HOME
+══════════════════════════════ */
 #home {
   position: fixed; inset: 0;
-  display: none;
-  flex-direction: column;
+  display: none; flex-direction: column;
 }
 
-/* ── BARRA METEO TOP ──
-   Ticker scorrevole con info meteo
-   Altezza e font modificabili qui */
+/* ── BARRA METEO TOP ── */
 .weather-bar {
-  flex-shrink: 0;
-  height: 38px;
-  background: var(--c1);
-  border-bottom: 1px solid var(--c2);
+  flex-shrink: 0; height: 36px;
+  background: transparent;
+  border-bottom: 1px solid var(--brd2);
   overflow: hidden;
-  position: relative;
 }
-
 .weather-scroll {
   display: flex; align-items: center;
   height: 100%; white-space: nowrap;
@@ -140,39 +125,32 @@ html, body {
   will-change: transform;
 }
 .weather-scroll:hover { animation-play-state: paused; }
-
 @keyframes scroll-left {
   from { transform: translateX(0); }
   to   { transform: translateX(-50%); }
 }
-
-/* Ogni elemento nella barra: icona + location + temp + desc */
 .w-item {
   display: inline-flex; align-items: center;
   gap: 8px; margin-right: 48px;
-  font-size: .72rem; font-weight: 400; color: var(--mid);
+  font-size: .7rem; font-weight: 300; color: var(--mid);
 }
-.w-item .w-loc  { font-weight: 600; color: var(--text); }
-.w-item .w-temp { font-weight: 600; color: var(--text); font-size: .8rem; }
+.w-item .w-loc  { font-weight: 700; color: var(--text); }
+.w-item .w-temp { font-weight: 700; color: var(--text); font-size: .78rem; }
 .w-item .w-desc { color: var(--mid); }
 .w-item .w-icon { display: flex; align-items: center; }
-
 .w-sep {
-  display: inline-block;
-  width: 1px; height: 14px;
-  background: var(--c3); margin-right: 48px;
+  display: inline-block; width: 1px; height: 12px;
+  background: var(--brd); margin-right: 48px;
   vertical-align: middle;
 }
 
 /* ── CORPO — orologio centrato ── */
 .clock-body {
-  flex: 1;
-  display: flex; flex-direction: column;
+  flex: 1; display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   position: relative; overflow: hidden;
 }
-
-/* Glow palette colorata in background — sottile, 4% opacità */
+/* Glow palette sottile */
 .clock-body::before {
   content: '';
   position: absolute; top: 50%; left: 50%;
@@ -181,8 +159,7 @@ html, body {
   background: conic-gradient(
     from 0deg,
     #ff2d5504, #ff6b0004 60deg, #ffd60a04 120deg,
-    #30d15804 180deg, #0a84ff04 240deg, #bf5af204 300deg,
-    #ff2d5504
+    #30d15804 180deg, #0a84ff04 240deg, #bf5af204 300deg, #ff2d5504
   );
   border-radius: 50%;
   animation: spin 90s linear infinite;
@@ -190,273 +167,231 @@ html, body {
 }
 @keyframes spin { to { transform: translate(-50%,-50%) rotate(360deg); } }
 
-/* ── OROLOGIO ──
-   Tre cifre affiancate: HH : MM : SS
-   Font size in portrait: clamp(min, vw, max)
-   Modifica 22vw per cambiare la dimensione base */
+/* Orologio HH:MM:SS */
 .clock-digits {
   display: flex; align-items: baseline;
   position: relative; z-index: 1;
 }
-
 .clock-hms {
   font-size: clamp(2.4rem, 22vw, 10rem);
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -.04em;
-  color: var(--text);
+  font-weight: 700; line-height: 1;
+  letter-spacing: -.04em; color: var(--text);
   transition: text-shadow 3s ease;
 }
-
-/* I due punti separatori lampeggiano ogni secondo */
 .clock-sep {
   font-size: clamp(1.8rem, 16vw, 7.5rem);
-  font-weight: 300;
-  color: var(--c3);
-  line-height: 1;
-  padding: 0 3px;
+  font-weight: 300; color: var(--brd);
+  line-height: 1; padding: 0 3px;
   animation: blink 1s step-start infinite;
 }
 @keyframes blink { 50% { opacity: .1; } }
 
-/* Data in formato "Giovedì 4 Giugno 2026" */
 .clock-date {
-  font-size: clamp(.8rem, 2.2vw, 1.1rem);
-  font-weight: 400;
-  color: var(--mid);
-  letter-spacing: .01em;
-  margin-top: 16px;
+  font-size: clamp(.75rem, 2.2vw, 1rem);
+  font-weight: 300; color: var(--mid);
+  letter-spacing: .04em; margin-top: 14px;
   position: relative; z-index: 1;
 }
 
-/* ── BADGE SCADENZE ──
-   Appare in alto a destra quando ci sono interventi in scadenza */
+/* Badge scadenze */
 .due-badge {
   position: absolute; top: 14px; right: 16px;
-  background: #ff3b30; color: #fff;
-  font-size: .6rem; font-weight: 600;
+  background: transparent;
+  border: 1px solid #ff3b30; color: #ff3b30;
+  font-size: .58rem; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
   padding: 5px 12px; border-radius: 20px;
   cursor: pointer; z-index: 2;
   animation: fadeIn .3s ease;
 }
 @keyframes fadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
 
-/* ── AREA MICROFONO ──
-   Pulsante circolare sotto la data */
+/* ── MICROFONO ── */
 .mic-area {
   display: flex; flex-direction: column;
   align-items: center; gap: 8px;
-  margin-top: 28px;
-  position: relative; z-index: 1;
+  margin-top: 28px; position: relative; z-index: 1;
 }
-
-.mic-ring-wrap {
-  position: relative; width: 56px; height: 56px;
-}
-
+.mic-ring-wrap { position: relative; width: 54px; height: 54px; }
 .mic-ring {
   position: absolute; inset: -6px;
-  border-radius: 50%;
-  border: 1px solid transparent;
+  border-radius: 50%; border: 1px solid transparent;
   pointer-events: none;
 }
-
-/* Il pulsante mic usa un'icona SVG — il cerchio cambia stile per ogni stato */
 .mic-btn {
   position: absolute; inset: 0;
   border-radius: 50%;
-  border: 1.5px solid var(--c3);
-  background: var(--c1);
-  color: var(--c4);
+  border: 1px solid var(--brd);
+  background: transparent; color: var(--dim);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: all .2s;
 }
-
-/* STATI MICROFONO — modifica colori qui */
-.state-wake-active .mic-btn  { border-color: var(--c3); color: var(--mid); background: var(--c1); }
-.state-wake-active .mic-ring { border-color: var(--c2); animation: ringrot 4s linear infinite; }
+/* stati microfono */
+.state-wake-active .mic-btn  { border-color: var(--brd); color: var(--mid); }
+.state-wake-active .mic-ring { border-color: var(--brd2); animation: ringrot 4s linear infinite; }
 .state-listening  .mic-btn   { border-color: var(--text); background: var(--text); color: var(--bg); }
 .state-thinking   .mic-btn   { border-color: var(--mid); color: var(--mid); }
-.state-speaking   .mic-btn   { border-color: #30d158; color: #30d158; background: #30d15810; }
+.state-speaking   .mic-btn   { border-color: #30d158; color: #30d158; }
 .state-speaking   .mic-ring  { border-color: #30d15830; animation: ringrot 1.2s linear infinite; }
-
 @keyframes ringrot { to { transform: rotate(360deg); } }
 
 .mic-lbl {
-  font-size: .58rem; font-weight: 500;
-  color: var(--mid); letter-spacing: .08em;
-  text-transform: uppercase; min-height: 12px;
-  text-align: center;
+  font-size: .54rem; font-weight: 400;
+  color: var(--mid); letter-spacing: .12em;
+  text-transform: uppercase; min-height: 12px; text-align: center;
 }
 .mic-hint {
-  font-size: .55rem; font-weight: 400;
-  color: var(--c3); letter-spacing: .04em;
+  font-size: .5rem; font-weight: 300;
+  color: var(--dim); letter-spacing: .08em;
 }
 
-/* ── NAVBAR BOTTOM ──
-   Barra navigazione con icone SVG + label
-   Altezza: 58px. Cambia per più/meno spazio */
+/* ── NAVBAR BOTTOM ── */
 .navbar {
-  flex-shrink: 0; height: 58px;
-  background: var(--c1);
-  border-top: 1px solid var(--c2);
+  flex-shrink: 0; height: 56px;
+  background: transparent;
+  border-top: 1px solid var(--brd2);
   display: flex; align-items: stretch;
 }
-
 .nb-btn {
   flex: 1; background: transparent; border: none;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  gap: 4px; cursor: pointer;
-  color: var(--mid);
-  transition: color .15s, background .15s;
-  border-radius: 0;
+  gap: 4px; cursor: pointer; color: var(--dim);
+  transition: color .15s;
 }
-.nb-btn:active { color: var(--text); background: var(--c2); }
-
+.nb-btn:active { color: var(--text); }
 .nb-icon { width: 20px; height: 20px; color: inherit; }
-.nb-lbl  {
-  font-size: .5rem; font-weight: 500;
-  letter-spacing: .08em; text-transform: uppercase;
-}
+.nb-lbl  { font-size: .48rem; font-weight: 400; letter-spacing: .1em; text-transform: uppercase; }
 
-/* ══════════════════════════════════════
-   PANELS — pannelli slide-up
-   (Chat e Archivio)
-══════════════════════════════════════ */
+/* ══════════════════════════════
+   PANELS
+══════════════════════════════ */
 .panel {
   position: fixed; inset: 0;
   background: var(--bg); z-index: 50;
   display: flex; flex-direction: column;
   transform: translateY(100%);
-  transition: transform .3s cubic-bezier(.4,0,.2,1);
+  transition: transform .28s cubic-bezier(.4,0,.2,1);
 }
 .panel.open { transform: translateY(0); }
 
 .panel-hdr {
   display: flex; align-items: center; justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid var(--c2);
+  border-bottom: 1px solid var(--brd2);
   flex-shrink: 0;
 }
-
 .panel-title {
-  font-size: .75rem; font-weight: 600;
-  letter-spacing: .08em; text-transform: uppercase;
+  font-size: .72rem; font-weight: 700;
+  letter-spacing: .14em; text-transform: uppercase;
 }
-
 .panel-close {
-  font-family: var(--sans); font-size: .65rem; font-weight: 500;
-  color: var(--mid); background: var(--c1);
-  border: 1px solid var(--c2); border-radius: 8px;
-  padding: 7px 14px; cursor: pointer;
+  font-family: var(--mono); font-size: .6rem; font-weight: 400;
+  color: var(--mid); background: transparent;
+  border: 1px solid var(--brd); border-radius: 6px;
+  padding: 6px 14px; cursor: pointer;
+  letter-spacing: .08em; text-transform: uppercase;
   transition: all .15s;
 }
 .panel-close:active { background: var(--text); color: var(--bg); border-color: var(--text); }
 
-/* ── CHAT ── */
+/* Chat */
 .chat-area {
   flex: 1; padding: 16px 18px;
   overflow-y: auto;
   display: flex; flex-direction: column; gap: 10px;
 }
-
 .msg {
-  max-width: 88%; padding: 12px 16px;
-  font-size: .88rem; font-weight: 400; line-height: 1.65;
+  max-width: 88%; padding: 11px 15px;
+  font-size: .86rem; font-weight: 300; line-height: 1.7;
   animation: fadeIn .2s ease;
 }
-
-/* Messaggio AI: card con bordo sinistro bianco */
+/* Messaggio AI: contorno bianco, trasparente */
 .msg.ai {
-  background: var(--c1);
-  border: 1px solid var(--c2);
-  border-radius: 6px 16px 16px 6px;
+  background: transparent;
+  border: 1px solid var(--brd);
+  border-radius: 4px 14px 14px 4px;
   align-self: flex-start;
 }
 .msg.ai .lbl {
-  font-size: .58rem; font-weight: 600;
-  color: var(--c4); letter-spacing: .1em;
+  font-size: .54rem; font-weight: 400;
+  color: var(--dim); letter-spacing: .14em;
   text-transform: uppercase; margin-bottom: 6px;
 }
-
-/* Messaggio utente: bolla bianca destra */
+/* Messaggio utente: sfondo bianco pieno */
 .msg.user {
   background: var(--text); color: var(--bg);
   align-self: flex-end; font-weight: 500;
-  border-radius: 16px 6px 6px 16px;
+  border-radius: 14px 4px 4px 14px;
 }
-
-/* Animazione "sta scrivendo" */
 .typing {
   display: none; align-items: center; gap: 5px;
-  padding: 12px 16px;
-  background: var(--c1); border: 1px solid var(--c2);
-  border-radius: 6px 16px 16px 6px;
+  padding: 11px 15px;
+  background: transparent; border: 1px solid var(--brd2);
+  border-radius: 4px 14px 14px 4px;
   width: fit-content;
 }
 .typing.on { display: flex; }
 .dot {
-  width: 5px; height: 5px;
-  background: var(--c4); border-radius: 50%;
+  width: 4px; height: 4px;
+  background: var(--dim); border-radius: 50%;
   animation: db 1.2s infinite;
 }
 .dot:nth-child(2){animation-delay:.2s}
 .dot:nth-child(3){animation-delay:.4s}
 @keyframes db {
-  0%,60%,100%{ transform:translateY(0); opacity:.3 }
-  30%{ transform:translateY(-5px); opacity:1 }
+  0%,60%,100%{transform:translateY(0);opacity:.3}
+  30%{transform:translateY(-5px);opacity:1}
 }
 
-/* Input chat */
 .cp-row {
   display: flex; gap: 10px;
   padding: 12px 16px 22px;
-  border-top: 1px solid var(--c2);
+  border-top: 1px solid var(--brd2);
   flex-shrink: 0;
 }
 .cp-inp {
-  flex: 1; background: var(--c1);
-  border: 1px solid var(--c2); border-radius: 12px;
-  padding: 12px 16px; color: var(--text);
-  font-family: var(--sans); font-size: .9rem; font-weight: 400;
+  flex: 1; background: transparent;
+  border: 1px solid var(--brd); border-radius: 10px;
+  padding: 12px 14px; color: var(--text);
+  font-family: var(--mono); font-size: .86rem; font-weight: 300;
   outline: none; resize: none;
   min-height: 44px; max-height: 110px; line-height: 1.5;
   transition: border-color .15s;
 }
-.cp-inp:focus { border-color: var(--c4); }
-.cp-inp::placeholder { color: var(--c4); font-size: .85rem; }
+.cp-inp:focus { border-color: var(--text); }
+.cp-inp::placeholder { color: var(--dim); font-size: .8rem; }
 .cp-send {
   width: 44px; height: 44px;
   background: var(--text); color: var(--bg);
-  border: none; border-radius: 12px;
-  cursor: pointer; font-size: 1.1rem;
+  border: none; border-radius: 10px;
+  cursor: pointer; font-size: 1.1rem; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; font-weight: 700;
+  flex-shrink: 0;
 }
 
-/* ── ARCHIVIO ── */
+/* Archivio */
 .arch-toolbar {
   display: flex; gap: 8px;
   padding: 14px 16px 0; flex-shrink: 0;
 }
 .arch-search {
-  flex: 1; background: var(--c1);
-  border: 1px solid var(--c2); border-radius: 10px;
-  padding: 10px 14px; color: var(--text);
-  font-family: var(--sans); font-size: .85rem; font-weight: 400;
+  flex: 1; background: transparent;
+  border: 1px solid var(--brd); border-radius: 8px;
+  padding: 9px 13px; color: var(--text);
+  font-family: var(--mono); font-size: .78rem; font-weight: 300;
   outline: none; transition: border-color .15s;
 }
-.arch-search:focus { border-color: var(--c4); }
-.arch-search::placeholder { color: var(--c4); }
+.arch-search:focus { border-color: var(--text); }
+.arch-search::placeholder { color: var(--dim); }
 
 .arch-filter {
-  background: var(--c1); border: 1px solid var(--c2);
-  border-radius: 10px; padding: 0 12px;
-  color: var(--mid); font-family: var(--sans);
-  font-size: .65rem; font-weight: 600;
-  letter-spacing: .06em; text-transform: uppercase;
+  background: transparent; border: 1px solid var(--brd);
+  border-radius: 8px; padding: 0 12px;
+  color: var(--mid); font-family: var(--mono);
+  font-size: .6rem; font-weight: 400;
+  letter-spacing: .1em; text-transform: uppercase;
   cursor: pointer; white-space: nowrap;
   transition: all .15s;
 }
@@ -465,202 +400,182 @@ html, body {
 .arch-list { flex: 1; overflow-y: auto; padding: 14px 16px; }
 
 .arch-empty {
-  text-align: center; color: var(--c4);
-  font-size: .7rem; font-weight: 400;
-  letter-spacing: .06em;
-  margin-top: 60px; line-height: 2.2;
+  text-align: center; color: var(--dim);
+  font-size: .66rem; font-weight: 300;
+  letter-spacing: .1em; margin-top: 60px; line-height: 2.4;
 }
 
-/* Entry archivio — card ispirata alla reference Aeonik Fono:
-   label piccola in alto, valore grande, bordo colorato */
+/* Entry archivio: trasparente con contorno bianco */
 .arch-entry {
-  background: var(--c1);
-  border: 1px solid var(--c2);
+  background: transparent;
+  border: 1px solid var(--brd);
   border-radius: var(--r);
   padding: 14px 16px; margin-bottom: 10px;
   position: relative; overflow: hidden;
-  transition: border-color .15s;
+  transition: border-color .2s;
 }
-/* Bordo colorato in alto (come le card nella reference) */
+/* Linea colorata in cima alla card */
 .arch-entry::before {
   content: '';
   position: absolute; top: 0; left: 0; right: 0;
-  height: 2px;
-  background: var(--ic, var(--c3));
+  height: 2px; background: var(--ic, var(--brd));
 }
-.arch-entry:active { border-color: var(--c4); }
+.arch-entry:active { border-color: var(--text); }
 
 .arch-entry-top {
   display: flex; align-items: flex-start;
   justify-content: space-between; gap: 12px;
 }
-/* Label piccola come nella reference */
-.arch-entry-title {
-  font-size: .95rem; font-weight: 600;
-  line-height: 1.2;
-}
+.arch-entry-title { font-size: .92rem; font-weight: 700; line-height: 1.2; }
 .arch-entry-date {
-  font-size: .6rem; font-weight: 400;
+  font-size: .58rem; font-weight: 300;
   color: var(--mid); white-space: nowrap;
   margin-top: 2px; text-align: right;
 }
-/* Badge categoria */
 .arch-entry-cat {
   display: inline-block;
-  font-size: .55rem; font-weight: 600;
-  letter-spacing: .1em; text-transform: uppercase;
-  padding: 3px 9px; border-radius: 20px;
-  margin-top: 8px;
+  font-size: .52rem; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase;
+  padding: 3px 9px;
+  border: 1px solid var(--ic, var(--brd));
+  border-radius: 20px; margin-top: 8px;
+  background: transparent;
 }
 .arch-entry-note {
-  font-size: .78rem; font-weight: 400;
-  color: var(--mid); line-height: 1.6;
-  margin-top: 8px;
+  font-size: .76rem; font-weight: 300;
+  color: var(--mid); line-height: 1.6; margin-top: 8px;
 }
 .arch-entry-del {
-  font-family: var(--sans); font-size: .58rem; font-weight: 500;
-  letter-spacing: .06em; text-transform: uppercase;
-  background: transparent; border: 1px solid var(--c2);
-  border-radius: 8px; color: var(--c4);
+  font-family: var(--mono); font-size: .54rem; font-weight: 400;
+  letter-spacing: .08em; text-transform: uppercase;
+  background: transparent;
+  border: 1px solid var(--brd2);
+  border-radius: 6px; color: var(--dim);
   padding: 5px 10px; cursor: pointer; margin-top: 10px;
   transition: all .15s;
 }
-.arch-entry-del:active { background: #ff3b30; color: #fff; border-color: #ff3b30; }
+.arch-entry-del:active { border-color: #ff3b30; color: #ff3b30; }
 
 .arch-add-bar {
   padding: 12px 16px 22px;
-  border-top: 1px solid var(--c2);
+  border-top: 1px solid var(--brd2);
   display: flex; gap: 8px; flex-shrink: 0;
 }
 .arch-add-inp {
-  flex: 1; background: var(--c1);
-  border: 1px solid var(--c2); border-radius: 12px;
+  flex: 1; background: transparent;
+  border: 1px solid var(--brd); border-radius: 10px;
   padding: 12px 14px; color: var(--text);
-  font-family: var(--sans); font-size: .88rem; font-weight: 400;
+  font-family: var(--mono); font-size: .82rem; font-weight: 300;
   outline: none; transition: border-color .15s;
 }
-.arch-add-inp:focus { border-color: var(--c4); }
-.arch-add-inp::placeholder { color: var(--c4); font-size: .82rem; }
+.arch-add-inp:focus { border-color: var(--text); }
+.arch-add-inp::placeholder { color: var(--dim); font-size: .78rem; }
 .arch-add-btn {
   background: var(--text); color: var(--bg);
-  border: none; border-radius: 12px; padding: 0 20px;
-  font-family: var(--sans); font-size: .9rem;
+  border: none; border-radius: 10px; padding: 0 20px;
+  font-family: var(--mono); font-size: .82rem;
   font-weight: 700; cursor: pointer;
-  transition: opacity .15s;
 }
-.arch-add-btn:active { opacity: .85; }
 
-/* ── DIALOG ARCHIVIO ──
-   Sheet dal basso, bordi arrotondati come reference */
+/* Dialog archivio */
 #arch-dialog {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,.8);
+  background: rgba(0,0,0,.88);
   z-index: 80; display: none; align-items: flex-end;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(6px);
 }
 #arch-dialog.open { display: flex; }
-
 .adlg-box {
-  width: 100%; background: var(--c1);
-  border-top: 1px solid var(--c3);
-  border-radius: 20px 20px 0 0;
+  width: 100%; background: var(--bg);
+  border-top: 1px solid var(--brd);
+  border-radius: 18px 18px 0 0;
   padding: 14px 18px 36px;
 }
 .adlg-handle {
-  width: 40px; height: 4px;
-  background: var(--c3); border-radius: 2px;
-  margin: 0 auto 16px;
+  width: 38px; height: 3px;
+  background: var(--brd); border-radius: 2px;
+  margin: 0 auto 18px;
 }
 .adlg-title {
-  font-size: .8rem; font-weight: 700;
-  letter-spacing: .06em; text-transform: uppercase;
-  margin-bottom: 16px; color: var(--text);
+  font-size: .72rem; font-weight: 700;
+  letter-spacing: .14em; text-transform: uppercase;
+  margin-bottom: 16px;
 }
 .adlg-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
 .adlg-lbl {
-  font-size: .6rem; font-weight: 500;
-  color: var(--mid); letter-spacing: .1em; text-transform: uppercase;
+  font-size: .56rem; font-weight: 400;
+  color: var(--mid); letter-spacing: .12em; text-transform: uppercase;
 }
 .adlg-inp {
-  background: var(--bg); border: 1px solid var(--c2);
-  border-radius: 10px; padding: 11px 14px; color: var(--text);
-  font-family: var(--sans); font-size: .88rem; font-weight: 400;
+  background: transparent; border: 1px solid var(--brd);
+  border-radius: 8px; padding: 11px 13px; color: var(--text);
+  font-family: var(--mono); font-size: .82rem; font-weight: 300;
   outline: none; width: 100%; transition: border-color .15s;
 }
-.adlg-inp:focus { border-color: var(--c4); }
+.adlg-inp:focus { border-color: var(--text); }
 .adlg-textarea {
-  background: var(--bg); border: 1px solid var(--c2);
-  border-radius: 10px; padding: 11px 14px; color: var(--text);
-  font-family: var(--sans); font-size: .88rem; font-weight: 400;
+  background: transparent; border: 1px solid var(--brd);
+  border-radius: 8px; padding: 11px 13px; color: var(--text);
+  font-family: var(--mono); font-size: .82rem; font-weight: 300;
   outline: none; width: 100%; resize: none; height: 80px;
   line-height: 1.5; transition: border-color .15s;
 }
-.adlg-textarea:focus { border-color: var(--c4); }
+.adlg-textarea:focus { border-color: var(--text); }
 .adlg-sel {
-  background: var(--bg); border: 1px solid var(--c2);
-  border-radius: 10px; padding: 11px 14px; color: var(--text);
-  font-family: var(--sans); font-size: .88rem; font-weight: 400;
+  background: transparent; border: 1px solid var(--brd);
+  border-radius: 8px; padding: 11px 13px; color: var(--text);
+  font-family: var(--mono); font-size: .82rem; font-weight: 300;
   outline: none; width: 100%; appearance: none;
 }
 .adlg-row { display: flex; gap: 10px; margin-top: 8px; }
 .adlg-btn {
-  flex: 1; padding: 14px; border-radius: 12px;
-  font-family: var(--sans); font-size: .8rem;
-  font-weight: 600; cursor: pointer; border: none;
-  transition: opacity .15s;
+  flex: 1; padding: 13px; border-radius: 10px;
+  font-family: var(--mono); font-size: .72rem;
+  font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; cursor: pointer; border: none;
 }
-.adlg-btn.cancel  { background: var(--c2); color: var(--mid); }
+.adlg-btn.cancel  { background: transparent; border: 1px solid var(--brd); color: var(--mid); }
 .adlg-btn.confirm { background: var(--text); color: var(--bg); }
-.adlg-btn:active  { opacity: .85; }
 
-/* ── TOAST ── */
+/* Toast */
 .toast {
-  position: fixed; bottom: 72px; left: 50%;
+  position: fixed; bottom: 70px; left: 50%;
   transform: translateX(-50%) translateY(8px);
   background: var(--text); color: var(--bg);
-  padding: 10px 20px; border-radius: 20px;
-  font-family: var(--sans); font-size: .72rem;
-  font-weight: 600;
+  padding: 9px 20px; border-radius: 20px;
+  font-family: var(--mono); font-size: .65rem;
+  font-weight: 700; letter-spacing: .06em;
   opacity: 0; transition: all .2s; z-index: 300;
   white-space: nowrap;
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-/* ══════════════════════════════════════════════════════
-   LANDSCAPE — telefono ruotato
-   
-   PER MODIFICARE DIMENSIONE OROLOGIO:
-   Cambia il valore vh in .clock-hms (es. 28vh → 32vh)
-══════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   LANDSCAPE
+   PER MODIFICARE DIMENSIONE OROLOGIO: cambia vh
+══════════════════════════════════════════════ */
 @media (orientation: landscape) {
-
-  /* Orologio: usa vh invece di vw in landscape */
   .clock-hms { font-size: clamp(3rem, 28vh, 9rem); }
   .clock-sep { font-size: clamp(2.2rem, 21vh, 6.8rem); }
-
-  .clock-date { font-size: .9rem; margin-top: 8px; }
-  .mic-area { margin-top: 12px; gap: 5px; }
-  .mic-ring-wrap { width: 46px; height: 46px; }
-  .mic-lbl  { font-size: .5rem; }
-  .mic-hint { font-size: .45rem; }
-
-  .weather-bar { height: 30px; }
-  .w-item { font-size: .64rem; gap: 5px; margin-right: 36px; }
-
-  .navbar { height: 46px; }
-  .nb-icon { width: 17px; height: 17px; }
-  .nb-lbl  { font-size: .4rem; }
-
+  .clock-date   { font-size: .88rem; margin-top: 8px; }
+  .mic-area     { margin-top: 12px; gap: 5px; }
+  .mic-ring-wrap{ width: 46px; height: 46px; }
+  .mic-lbl      { font-size: .5rem; }
+  .mic-hint     { font-size: .44rem; }
+  .weather-bar  { height: 30px; }
+  .w-item       { font-size: .64rem; gap: 5px; margin-right: 36px; }
+  .navbar       { height: 46px; }
+  .nb-icon      { width: 17px; height: 17px; }
+  .nb-lbl       { font-size: .4rem; }
   .panel-hdr    { padding: 10px 16px; }
   .cp-row       { padding: 8px 12px 14px; }
   .arch-toolbar { padding: 8px 12px 0; }
   .arch-add-bar { padding: 8px 12px 14px; }
 }
 
-/* Landscape schermi bassi (telefoni) */
 @media (orientation: landscape) and (max-height: 450px) {
-  .clock-hms { font-size: clamp(2.8rem, 30vh, 8rem); }
-  .clock-sep { font-size: clamp(2rem, 22vh, 6rem); }
+  .clock-hms     { font-size: clamp(2.8rem, 30vh, 8rem); }
+  .clock-sep     { font-size: clamp(2rem, 22vh, 6rem); }
   .clock-date    { margin-top: 5px; font-size: .78rem; }
   .mic-area      { margin-top: 8px; }
   .mic-ring-wrap { width: 38px; height: 38px; }

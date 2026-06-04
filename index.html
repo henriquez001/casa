@@ -589,10 +589,11 @@ html, body {
      top: 50% = centro; poi saliamo di circa 30vh (metà cifre) + gap */
   .clock-date {
     position: absolute;
-    top: calc(50% - 30vh - 2rem);
+    top: calc(50% - 12.6vh - 1rem - 14px);
     left: 0; right: 0;
     text-align: center;
     margin-top: 0;
+    margin-bottom: 0;
     font-size: .8rem;
     z-index: 2;
   }
@@ -632,7 +633,7 @@ html, body {
   .clock-sep { font-size: clamp(1.8rem, 19.8vh, 5.4rem); }
 
   /* Ricalcola posizioni per cifre più piccole */
-  .clock-date { top: calc(50% - 28vh - 1.6rem); font-size: .72rem; }
+  .clock-date { top: calc(50% - 13.5vh - 0.85rem - 14px); font-size: .72rem; margin-bottom: 0; }
   .mic-area   { top: calc(50% + 17vh); }
 
   .mic-ring-wrap { width: 36px; height: 36px; }

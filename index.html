@@ -797,7 +797,8 @@ html, body {
 <div id="arch-dialog">
   <div class="adlg-box">
     <div class="adlg-handle"></div>
-    <div class="adlg-title">Nuovo Intervento</div>
+    <div class="adlg-title" id="adlg-title">Nuovo Intervento</div>
+    <input type="hidden" id="ad-id" value="">
     <div class="adlg-field">
       <label class="adlg-lbl">Titolo</label>
       <input class="adlg-inp" id="ad-titolo" placeholder="es. Sostituzione filtro caldaia">
@@ -827,7 +828,7 @@ html, body {
     </div>
     <div class="adlg-row">
       <button class="adlg-btn cancel" onclick="closeArchDialog()">Annulla</button>
-      <button class="adlg-btn confirm" onclick="salvaArch()">Salva →</button>
+      <button class="adlg-btn confirm" id="adlg-confirm" onclick="salvaArch()">Salva →</button>
     </div>
   </div>
 </div>
@@ -1249,7 +1250,10 @@ function renderArch(){
       <span class="arch-entry-cat" style="background:${col}22;color:${col}">${e.cat}</span>
       ${e.note ? `<div class="arch-entry-note">${e.note}</div>` : ''}
       ${scadExpired ? `<div class="arch-entry-note" style="color:#ff2d55;margin-top:4px">⚠ Scadenza superata</div>` : ''}
-      <button class="arch-entry-del" onclick="eliminaArch('${e.id}')">Elimina</button>
+      <div style="display:flex;gap:6px;margin-top:10px">
+        <button class="arch-entry-del" onclick="modificaArch('${e.id}')">Modifica</button>
+        <button class="arch-entry-del" onclick="eliminaArch('${e.id}')">Elimina</button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -1275,14 +1279,34 @@ function checkScadenze(){
 function openArchDialog(){
   const inp    = document.getElementById('arch-input');
   const titolo = inp ? inp.value.trim() : '';
-  if(inp) inp.value = ''; // svuota il campo input
+  if(inp) inp.value = '';
 
-  // Pre-popola il dialog con i valori di default
+  // Modalità: nuovo intervento
+  document.getElementById('ad-id').value     = '';
+  document.getElementById('adlg-title').textContent = 'Nuovo Intervento';
+  document.getElementById('adlg-confirm').textContent = 'Salva →';
   document.getElementById('ad-titolo').value = titolo;
   document.getElementById('ad-note').value   = '';
-  document.getElementById('ad-data').value   = ''; // vuoto — l'utente inserisce solo se conosce la data
+  document.getElementById('ad-data').value   = '';
   document.getElementById('ad-scad').value   = '';
   document.getElementById('ad-cat').value    = 'manutenzione';
+
+  document.getElementById('arch-dialog').classList.add('open');
+}
+
+// Apre il dialog in modalità modifica, pre-popolato con i dati esistenti
+function modificaArch(id){
+  const e = archivio.find(x => x.id === id);
+  if(!e) return;
+
+  document.getElementById('ad-id').value     = id;
+  document.getElementById('adlg-title').textContent = 'Modifica Intervento';
+  document.getElementById('adlg-confirm').textContent = 'Aggiorna →';
+  document.getElementById('ad-titolo').value = e.titolo;
+  document.getElementById('ad-note').value   = e.note || '';
+  document.getElementById('ad-data').value   = e.data  || '';
+  document.getElementById('ad-scad').value   = e.scad  || '';
+  document.getElementById('ad-cat').value    = e.cat   || 'manutenzione';
 
   document.getElementById('arch-dialog').classList.add('open');
 }
@@ -1292,26 +1316,37 @@ function closeArchDialog(){
   document.getElementById('arch-dialog').classList.remove('open');
 }
 
-// Legge i valori dal dialog, crea un nuovo intervento e lo salva.
+// Salva il dialog: crea un nuovo intervento o aggiorna uno esistente
+// a seconda che ad-id sia vuoto o contenga un ID.
 function salvaArch(){
   const titolo = document.getElementById('ad-titolo').value.trim();
   if(!titolo){ showToast('Inserisci un titolo'); return; }
 
-  // Crea l'oggetto intervento
-  archivio.push({
-    id:     Date.now().toString(), // ID univoco basato sul timestamp
-    titolo,
-    cat:    document.getElementById('ad-cat').value,
-    data:   document.getElementById('ad-data').value || null, // null = data sconosciuta
-    note:   document.getElementById('ad-note').value.trim(),
-    scad:   document.getElementById('ad-scad').value || null // null se non specificata
-  });
+  const id = document.getElementById('ad-id').value;
 
-  saveArch(archivio);   // persiste nel localStorage
-  renderArch();         // aggiorna la lista a schermo
-  checkScadenze();      // aggiorna il badge scadenze
+  const dati = {
+    titolo,
+    cat:  document.getElementById('ad-cat').value,
+    data: document.getElementById('ad-data').value || null,
+    note: document.getElementById('ad-note').value.trim(),
+    scad: document.getElementById('ad-scad').value || null
+  };
+
+  if(id){
+    // Modalità modifica: aggiorna l'intervento esistente
+    const idx = archivio.findIndex(x => x.id === id);
+    if(idx !== -1) archivio[idx] = { ...archivio[idx], ...dati };
+    showToast('Intervento aggiornato');
+  } else {
+    // Modalità nuovo: aggiunge all'array
+    archivio.push({ id: Date.now().toString(), ...dati });
+    showToast('Intervento salvato');
+  }
+
+  saveArch(archivio);
+  renderArch();
+  checkScadenze();
   closeArchDialog();
-  showToast('Intervento salvato');
 }
 
 // Elimina un intervento dato il suo ID, dopo conferma dell'utente.

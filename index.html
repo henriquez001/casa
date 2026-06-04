@@ -988,9 +988,11 @@ function boot(){
   loadWeather();      // carica il meteo (poi si aggiorna ogni 30 min)
   renderArch();       // popola la lista archivio
   checkScadenze();    // controlla se ci sono scadenze imminenti (badge rosso)
-  // Aspetta 800ms prima di avviare il wake word per dare tempo al browser
-  // di acquisire i permessi microfono senza conflitti
   setTimeout(startWakeWord, 800);
+  // Avvio controllo proattivo: aspetta 4s che meteo e archivio siano pronti
+  setTimeout(controlloProattivo, 4000);
+  // Poi ripeti ogni 2 ore
+  setInterval(controlloProattivo, 2 * 60 * 60 * 1000);
 }
 
 // Resetta la configurazione: rimuove la chiave dal localStorage e ricarica la pagina.
@@ -1563,6 +1565,8 @@ function startWakeWord(){
   wakeEnabled = true;
   setState('wake-active');
   listenLoop();
+  // Avvia anche il monitoraggio del volume ambientale
+  startAmbientMonitor();
 }
 
 // Ferma completamente il wake word: disabilita flag, ferma recognition, torna idle
@@ -1570,6 +1574,7 @@ function stopWakeWord(){
   wakeEnabled = false;
   if(wakeRecognition){ try{ wakeRecognition.stop(); }catch(e){} wakeRecognition = null; }
   setState('idle');
+  stopAmbientMonitor();
 }
 
 // Loop principale di ascolto wake word.
@@ -1704,6 +1709,27 @@ async function handleCommand(cmd){
 // ══════════════════════════════════════════════
 
 async function speakText(text, onEnd=null){
+  // Se la stanza non ha avuto attività recente, metti il testo in coda
+  // e aspetta che ci sia qualcuno — riprova ogni 10 secondi
+  if(!stranzaAttiva()){
+    console.log('Stanza silenziosa, attendo attività per parlare...');
+    let tentativi = 0;
+    const aspetta = setInterval(()=>{
+      tentativi++;
+      if(stranzaAttiva()){
+        clearInterval(aspetta);
+        speakText(text, onEnd); // riprova ora che c'è attività
+      } else if(tentativi > 18){ // max 3 minuti di attesa
+        clearInterval(aspetta);
+        if(onEnd) onEnd(); // abbandona se nessuno è mai arrivato
+      }
+    }, 10000);
+    return;
+  }
+
+  // Suona il chime piacevole PRIMA di parlare
+  await chime();
+
   // Pulisce il testo da markdown e tag HTML prima di inviarlo al TTS
   const clean = text
     .replace(/\*\*(.*?)\*\*/g, '$1')  // rimuovi **grassetto**
@@ -1796,18 +1822,156 @@ async function speakText(text, onEnd=null){
 // Segnala all'utente che la wake word è stata rilevata e può parlare.
 // PER CAMBIARE IL SUONO: modifica o.frequency.value (frequenza in Hz)
 //   880 = La5, 440 = La4, 1000 = tono acuto
+// ══════════════════════════════════════════════
+// CHIME — suono piacevole prima che Claude parli
+//
+// Due note in sequenza (accordo Do-Mi) con fade morbido.
+// Suona sempre prima di qualsiasi risposta vocale.
+//
+// PER CAMBIARE LE NOTE: modifica le frequenze
+//   261.6 = Do4, 329.6 = Mi4, 392.0 = Sol4
+// PER CAMBIARE IL VOLUME: modifica 0.18 (0-1)
+// PER CAMBIARE LA DURATA: modifica i valori in secondi
+// ══════════════════════════════════════════════
+function chime(){
+  return new Promise(resolve => {
+    try{
+      const ctx  = new (window.AudioContext || window.webkitAudioContext)();
+      const now  = ctx.currentTime;
+
+      // Funzione helper: crea una nota con fade in/out morbido
+      function nota(freq, startTime, duration){
+        const osc  = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+
+        osc.type          = 'sine';
+        osc.frequency.value = freq;
+
+        // Forma d'onda: attacco rapido, decay lungo e morbido
+        gain.gain.setValueAtTime(0, startTime);
+        gain.gain.linearRampToValueAtTime(0.18, startTime + 0.05); // attacco 50ms
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration); // decay
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      }
+
+      // Prima nota: Do4 (261.6 Hz)
+      nota(261.6, now, 0.7);
+      // Seconda nota: Mi4 (329.6 Hz) con leggero ritardo
+      nota(329.6, now + 0.15, 0.6);
+      // Terza nota opzionale: Sol4 armonica sottile
+      nota(392.0, now + 0.28, 0.5);
+
+      // Risolvi la Promise dopo che le note sono finite
+      setTimeout(resolve, 700);
+    }catch(e){
+      resolve(); // se fallisce, prosegui comunque
+    }
+  });
+}
+
+// Vecchio beep mantenuto per compatibilità (usato nel wake word)
 function beep(){
   try{
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const o   = ctx.createOscillator();
     const g   = ctx.createGain();
     o.connect(g); g.connect(ctx.destination);
-    o.frequency.value = 900;  // ← frequenza Hz del beep
-    o.type            = 'sine';
-    g.gain.setValueAtTime(0.12, ctx.currentTime);                      // volume iniziale
-    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12); // fade out rapido
-    o.start(); o.stop(ctx.currentTime + 0.12); // durata: 120ms
-  }catch(e){} // silenzioso in caso di errore (es. browser non supporta Web Audio)
+    o.frequency.value = 880;
+    o.type = 'sine';
+    g.gain.setValueAtTime(0.1, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+    o.start(); o.stop(ctx.currentTime + 0.1);
+  }catch(e){}
+}
+
+// ══════════════════════════════════════════════
+// RILEVAMENTO ATTIVITÀ AMBIENTALE
+//
+// Monitora il microfono in background per rilevare
+// se c'è qualcuno nella stanza (voce, rumori, TV...).
+// Claude parla solo se c'è attività recente.
+//
+// COME FUNZIONA:
+//   - AudioContext analizza il volume RMS ogni 100ms
+//   - Se supera la soglia SOGLIA_ATTIVITA → segna "stanza attiva"
+//   - L'attività dura FINESTRA_ATTIVITA ms dopo l'ultimo rumore
+//   - speakText() verifica questo stato prima di parlare
+//
+// PER REGOLARE LA SENSIBILITÀ:
+//   SOGLIA_ATTIVITA: 0.01 = molto sensibile, 0.05 = meno sensibile
+//   FINESTRA_ATTIVITA: ms dopo cui la stanza torna "silenziosa"
+// ══════════════════════════════════════════════
+
+const SOGLIA_ATTIVITA  = 0.02;   // ← volume RMS minimo per considerare la stanza attiva
+const FINESTRA_ATTIVITA = 30000; // ← ms: la stanza resta "attiva" per 30 secondi dopo l'ultimo rumore
+
+let ambientStream     = null;  // stream del microfono ambientale
+let ambientAnalyser   = null;  // nodo analizzatore audio
+let ambientCtx        = null;  // AudioContext per l'ascolto ambientale
+let ultimaAttivita    = 0;     // timestamp dell'ultimo rumore rilevato
+let ambientMonitoring = false; // true se il monitoraggio è attivo
+
+// Avvia il monitoraggio ambientale (chiamato all'avvio del wake word)
+async function startAmbientMonitor(){
+  if(ambientMonitoring) return;
+  try{
+    // Richiede accesso al microfono solo per ascolto (non registrazione)
+    ambientStream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+      video: false
+    });
+
+    ambientCtx      = new (window.AudioContext || window.webkitAudioContext)();
+    const source    = ambientCtx.createMediaStreamSource(ambientStream);
+    ambientAnalyser = ambientCtx.createAnalyser();
+    ambientAnalyser.fftSize = 256;
+    source.connect(ambientAnalyser);
+
+    ambientMonitoring = true;
+    monitorLoop();
+    console.log('Monitoraggio ambientale attivo');
+  }catch(e){
+    // Se l'utente nega il microfono, la stanza è sempre considerata "attiva"
+    // così Claude parla comunque
+    console.warn('Monitoraggio ambientale non disponibile:', e);
+    ultimaAttivita = Date.now();
+  }
+}
+
+// Loop di analisi del volume — gira ogni 150ms
+function monitorLoop(){
+  if(!ambientMonitoring || !ambientAnalyser) return;
+
+  const data = new Float32Array(ambientAnalyser.fftSize);
+  ambientAnalyser.getFloatTimeDomainData(data);
+
+  // Calcola RMS (Root Mean Square) — misura del volume effettivo
+  let sum = 0;
+  for(let i=0; i<data.length; i++) sum += data[i] * data[i];
+  const rms = Math.sqrt(sum / data.length);
+
+  if(rms > SOGLIA_ATTIVITA){
+    ultimaAttivita = Date.now();
+  }
+
+  setTimeout(monitorLoop, 150);
+}
+
+// Ferma il monitoraggio ambientale
+function stopAmbientMonitor(){
+  ambientMonitoring = false;
+  if(ambientStream) ambientStream.getTracks().forEach(t => t.stop());
+  if(ambientCtx)    ambientCtx.close();
+  ambientStream = ambientAnalyser = ambientCtx = null;
+}
+
+// Restituisce true se la stanza è stata attiva di recente
+function stranzaAttiva(){
+  // Se il monitoraggio non è disponibile o non è ancora partito → sempre true
+  if(!ambientMonitoring) return true;
+  return (Date.now() - ultimaAttivita) < FINESTRA_ATTIVITA;
 }
 
 // Precarica le voci TTS del browser all'avvio (Chrome le carica in modo asincrono)
@@ -1852,6 +2016,98 @@ document.addEventListener('fullscreenchange', () => {
 // Mostra un toast (notifica temporanea) in basso allo schermo.
 // Scompare automaticamente dopo 3 secondi.
 // PER CAMBIARE LA DURATA: modifica il valore 3000 (millisecondi)
+// ══════════════════════════════════════════════
+// CONTROLLO PROATTIVO
+//
+// Viene eseguito all'avvio e ogni 2 ore.
+// Chiede a Claude di analizzare archivio + meteo + data
+// e decidere autonomamente se c'è qualcosa da segnalare.
+// Non usa regole fisse: ragiona sui TUOI dati reali,
+// incluse le note che hai scritto negli interventi.
+//
+// Se non c'è nulla di rilevante, Claude risponde con
+// la parola speciale "NESSUN_AVVISO" e non viene detto nulla.
+// ══════════════════════════════════════════════
+
+// Timestamp dell'ultimo avviso proattivo emesso
+// (evita di ripetere lo stesso avviso più volte nella stessa sessione)
+let ultimoAvvisoProattivo = null;
+
+async function controlloProattivo(){
+  // Non fare nulla se non c'è archivio o chiave API
+  if(!apiKey || !archivio.length) return;
+
+  const n    = new Date();
+  const ora  = n.getHours();
+  const stag = ['Inverno','Inverno','Primavera','Primavera','Primavera',
+                'Estate','Estate','Estate','Autunno','Autunno','Autunno','Inverno'];
+
+  // Costruisce il contesto completo per la valutazione proattiva.
+  // Include TUTTO l'archivio con note, scadenze, meteo e stagione —
+  // così Claude può ragionare su condizioni specifiche nelle note
+  // (es. "fare quando piove", "prima dell'inverno", "ogni 3 mesi")
+  const systemProattivo = `Sei "Casa", assistente domestico per Leo a ${CITY}.
+Data e ora: ${n.toLocaleString('it-IT')} — Stagione: ${stag[n.getMonth()]}
+Meteo: ${weatherSummary()}
+
+ARCHIVIO COMPLETO CON NOTE:
+${attContext()}
+
+Il tuo compito è analizzare questi dati e decidere se c'è qualcosa di importante
+da segnalare a Leo ADESSO, tenendo conto di:
+1. Scadenze imminenti o già superate negli interventi
+2. Condizioni nelle NOTE degli interventi (es. "fare quando piove", "ogni primavera",
+   "prima che faccia freddo", "controllare se temperatura scende sotto X°") — 
+   confrontale con meteo e stagione attuali
+3. Interventi non eseguiti da molto tempo rispetto alla loro frequenza tipica
+4. Qualsiasi altra informazione nelle note che sia rilevante in questo momento
+
+SE c'è qualcosa di importante: rispondi con un avviso breve e diretto (max 2 frasi),
+parlando direttamente a Leo in italiano. Cita la nota specifica se pertinente.
+
+SE non c'è nulla di rilevante in questo momento: rispondi SOLO con la parola esatta:
+NESSUN_AVVISO`;
+
+  try{
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 120,
+        system: systemProattivo,
+        messages: [{ role: "user", content: "Analizza la situazione e dimmi se c'è qualcosa di importante." }]
+      })
+    });
+
+    const d = await res.json();
+    if(d.error) return; // silenzioso in caso di errore API
+
+    const risposta = d.content[0].text.trim();
+
+    // Se Claude ha detto che non c'è niente, non fare nulla
+    if(risposta === 'NESSUN_AVVISO' || risposta.includes('NESSUN_AVVISO')) return;
+
+    // Evita di ripetere lo stesso avviso nella stessa ora
+    const chiaveAvviso = risposta.slice(0, 40);
+    if(ultimoAvvisoProattivo === chiaveAvviso) return;
+    ultimoAvvisoProattivo = chiaveAvviso;
+
+    // Mostra il messaggio nella chat e lo legge ad alta voce
+    addMsg(risposta, 'ai');
+    speakText(risposta);
+
+  }catch(e){
+    // Silenzioso — il controllo proattivo non deve mai bloccare l'app
+    console.warn('Controllo proattivo:', e);
+  }
+}
+
 function showToast(msg){
   const t = document.getElementById('toast');
   t.textContent = msg;

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>CASA</title>
-<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;700&family=Major+Mono+Display&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════
    DESIGN SYSTEM
@@ -22,6 +22,7 @@
   --text: #ffffff;               /* testo principale */
   --r:    14px;                  /* border-radius base */
   --mono: 'Roboto Mono', monospace;
+  --clock: 'Major Mono Display', monospace;
 }
 
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -173,14 +174,16 @@ html, body {
   position: relative; z-index: 1;
 }
 .clock-hms {
+  font-family: var(--clock);
   font-size: clamp(2.4rem, 22vw, 10rem);
-  font-weight: 700; line-height: 1;
-  letter-spacing: -.04em; color: var(--text);
+  font-weight: 400; line-height: 1;
+  letter-spacing: -.02em; color: var(--text);
   transition: text-shadow 3s ease;
 }
 .clock-sep {
+  font-family: var(--clock);
   font-size: clamp(1.8rem, 16vw, 7.5rem);
-  font-weight: 300; color: var(--brd);
+  font-weight: 400; color: var(--brd);
   line-height: 1; padding: 0 3px;
   animation: blink 1s step-start infinite;
 }
@@ -550,41 +553,89 @@ html, body {
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-/* ══════════════════════════════════════════════
-   LANDSCAPE
-   PER MODIFICARE DIMENSIONE OROLOGIO: cambia vh
-══════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════
+   LANDSCAPE — telefono ruotato
+
+   LAYOUT:
+     [data]       ← sopra l'orologio (posizione assoluta)
+     [HH:MM:SS]   ← centrato verticalmente (flow normale)
+     [mic]        ← sotto l'orologio (posizione assoluta)
+
+   PER MODIFICARE L'OROLOGIO: cambia il vh (es. 28vh → 32vh)
+   PER SPOSTARE LA DATA: modifica top in .clock-date landscape
+   PER SPOSTARE IL MIC: modifica top in .mic-area landscape
+══════════════════════════════════════════════════════ */
 @media (orientation: landscape) {
+
+  /* Il corpo centra solo l'orologio — data e mic
+     si posizionano in assoluto attorno a esso */
+  .clock-body {
+    position: relative;
+    justify-content: center;
+  }
+
+  /* Orologio centrato con vh */
   .clock-hms { font-size: clamp(3rem, 28vh, 9rem); }
   .clock-sep { font-size: clamp(2.2rem, 21vh, 6.8rem); }
-  .clock-date   { font-size: .88rem; margin-top: 8px; }
-  .mic-area     { margin-top: 12px; gap: 5px; }
-  .mic-ring-wrap{ width: 46px; height: 46px; }
-  .mic-lbl      { font-size: .5rem; }
-  .mic-hint     { font-size: .44rem; }
-  .weather-bar  { height: 30px; }
-  .w-item       { font-size: .64rem; gap: 5px; margin-right: 36px; }
-  .navbar       { height: 46px; }
-  .nb-icon      { width: 17px; height: 17px; }
-  .nb-lbl       { font-size: .4rem; }
+
+  /* DATA — sopra l'orologio in posizione assoluta
+     top: 50% = centro; poi saliamo di circa 30vh (metà cifre) + gap */
+  .clock-date {
+    position: absolute;
+    top: calc(50% - 30vh - 2rem);
+    left: 0; right: 0;
+    text-align: center;
+    margin-top: 0;
+    font-size: .8rem;
+    z-index: 2;
+  }
+
+  /* MIC — sotto l'orologio in posizione assoluta */
+  .mic-area {
+    position: absolute;
+    top: calc(50% + 18vh);
+    left: 0; right: 0;
+    align-items: center;
+    margin-top: 0;
+    gap: 4px;
+    z-index: 2;
+  }
+
+  .mic-ring-wrap { width: 42px; height: 42px; }
+  .mic-lbl       { font-size: .48rem; }
+  .mic-hint      { font-size: .42rem; }
+
+  /* Barra e navbar compatte */
+  .weather-bar { height: 30px; }
+  .w-item      { font-size: .64rem; gap: 5px; margin-right: 36px; }
+  .navbar      { height: 46px; }
+  .nb-icon     { width: 17px; height: 17px; }
+  .nb-lbl      { font-size: .4rem; }
+
   .panel-hdr    { padding: 10px 16px; }
   .cp-row       { padding: 8px 12px 14px; }
   .arch-toolbar { padding: 8px 12px 0; }
   .arch-add-bar { padding: 8px 12px 14px; }
 }
 
+/* Landscape schermi bassi < 450px (telefoni standard ruotati) */
 @media (orientation: landscape) and (max-height: 450px) {
-  .clock-hms     { font-size: clamp(2.8rem, 30vh, 8rem); }
-  .clock-sep     { font-size: clamp(2rem, 22vh, 6rem); }
-  .clock-date    { margin-top: 5px; font-size: .78rem; }
-  .mic-area      { margin-top: 8px; }
-  .mic-ring-wrap { width: 38px; height: 38px; }
+
+  .clock-hms { font-size: clamp(2.8rem, 30vh, 8rem); }
+  .clock-sep { font-size: clamp(2rem, 22vh, 6rem); }
+
+  /* Ricalcola posizioni per cifre più piccole */
+  .clock-date { top: calc(50% - 28vh - 1.6rem); font-size: .72rem; }
+  .mic-area   { top: calc(50% + 17vh); }
+
+  .mic-ring-wrap { width: 36px; height: 36px; }
   .mic-hint      { display: none; }
-  .weather-bar   { height: 26px; }
-  .navbar        { height: 38px; }
-  .nb-lbl        { display: none; }
-  .nb-icon       { width: 18px; height: 18px; }
-  .due-badge     { font-size: .5rem; padding: 3px 9px; top: 6px; right: 10px; }
+
+  .weather-bar { height: 26px; }
+  .navbar      { height: 38px; }
+  .nb-lbl      { display: none; }
+  .nb-icon     { width: 18px; height: 18px; }
+  .due-badge   { font-size: .5rem; padding: 3px 9px; top: 6px; right: 10px; }
 }
 </style>
 </head>
@@ -1263,32 +1314,29 @@ function eliminaArch(id){
 // Restituisce un riassunto testuale dell'archivio per il system prompt di Claude.
 // L'AI usa questi dati per fare suggerimenti contestuali sulle manutenzioni.
 function attContext(){
-  if(!archivio.length) return 'Nessun intervento in archivio.';
+  if(!archivio.length) return 'Nessun intervento registrato in archivio.';
 
-  const oggi   = new Date(); oggi.setHours(0,0,0,0);
-  const tra7gg = new Date(oggi.getTime() + 7 * 86400000);
+  const oggi = new Date(); oggi.setHours(0,0,0,0);
 
-  // Scadenze già passate
-  const scad = archivio
-    .filter(e => e.scad && new Date(e.scad+'T00:00:00') < oggi)
-    .map(e => e.titolo);
-
-  // Scadenze nei prossimi 7 giorni
-  const imm = archivio
-    .filter(e => e.scad && new Date(e.scad+'T00:00:00') >= oggi && new Date(e.scad+'T00:00:00') <= tra7gg)
-    .map(e => e.titolo);
-
-  // Ultimi 3 interventi eseguiti
-  const rec = [...archivio]
+  // Costruisce una descrizione completa di ogni intervento
+  // includendo titolo, categoria, data, NOTE e scadenza.
+  // Le note sono fondamentali: contengono istruzioni su come fare le cose.
+  const descrizioni = [...archivio]
     .sort((a,b) => new Date(b.data) - new Date(a.data))
-    .slice(0, 3)
-    .map(e => `${e.titolo}(${e.data})`);
+    .map(e => {
+      let riga = `- [${e.cat.toUpperCase()}] ${e.titolo} (eseguito: ${e.data})`;
+      if(e.note) riga += ` | Note: ${e.note}`;
+      if(e.scad){
+        const giorni = Math.ceil((new Date(e.scad+'T00:00:00') - oggi) / 86400000);
+        if(giorni < 0)       riga += ` | SCADUTO da ${Math.abs(giorni)} giorni`;
+        else if(giorni === 0) riga += ` | SCADE OGGI`;
+        else if(giorni <= 7)  riga += ` | scade tra ${giorni} giorni`;
+        else                  riga += ` | prossima scadenza: ${e.scad}`;
+      }
+      return riga;
+    });
 
-  let ctx = '';
-  if(scad.length) ctx += `SCADUTI: ${scad.join(', ')}. `;
-  if(imm.length)  ctx += `IN SCADENZA: ${imm.join(', ')}. `;
-  ctx += `Ultimi interventi: ${rec.join(', ')}.`;
-  return ctx;
+  return '\n' + descrizioni.join('\n');
 }
 
 // Stub per compatibilità con chiamate legacy
@@ -1314,18 +1362,23 @@ function buildSystem(breve=false){
   const n    = new Date();
   const stag = ['Inverno','Inverno','Primavera','Primavera','Primavera',
                 'Estate','Estate','Estate','Autunno','Autunno','Autunno','Inverno'];
-  return (
-    `Sei "Casa", assistente domestico per Leo a ${CITY}.
-` +
-    `Data: ${n.toLocaleString('it-IT')} — ${stag[n.getMonth()]}
-` +
-    `Meteo: ${weatherSummary()}
-` +
-    `Archivio: ${attContext()}
-` +
-    `Rispondi in italiano, tono diretto e amichevole.` +
-    (breve ? ' Massimo 2 frasi brevi (risposta vocale).' : '')
-  );
+
+  const archCtx = attContext();
+
+  return `Sei "Casa", assistente domestico intelligente per Leo a ${CITY}.
+Data: ${n.toLocaleString('it-IT')} — Stagione: ${stag[n.getMonth()]}
+Meteo attuale: ${weatherSummary()}
+
+ARCHIVIO MANUTENZIONE DOMESTICA:
+${archCtx}
+
+ISTRUZIONI IMPORTANTI:
+- Usa SEMPRE le informazioni dell'archivio quando rispondi a domande sulla casa
+- Le "Note" di ogni intervento contengono istruzioni specifiche su come fare le cose: citale e usale
+- Se un intervento ha una scadenza imminente o superata, segnalalo proattivamente
+- Quando Leo chiede "come si fa" qualcosa, controlla prima se c'è una nota nell'archivio
+- Suggerisci attività in base al meteo e alla stagione
+- Tono diretto, amichevole, pratico${breve ? '\n- Rispondi in MASSIMO 2 frasi brevi (risposta vocale)' : ''}`;
 }
 
 // Funzione base per chiamare l'API Claude.

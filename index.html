@@ -659,6 +659,8 @@ html, body {
     <input class="s-inp" type="password" id="el-key-input" placeholder="sk_..." autocomplete="off">
     <label class="s-lbl" style="margin-top:4px">Voice ID ElevenLabs</label>
     <input class="s-inp" id="el-voice-input" placeholder="es. gfKKsLN1k0oYYN9n2dXX" autocomplete="off">
+    <label class="s-lbl" style="margin-top:4px">Supabase Anon Key <span style="color:var(--dim);font-weight:300">(cloud sync)</span></label>
+    <input class="s-inp" type="password" id="sb-key-input" placeholder="eyJ..." autocomplete="off">
     <button class="s-btn" onclick="saveAndStart()">Attiva →</button>
   </div>
   <p class="s-note">ElevenLabs opzionale — senza, usa la voce del browser<br>
@@ -876,8 +878,11 @@ function loadArch(){
   catch{ return []; }
 }
 
-// Salva l'intero array archivio nel localStorage come stringa JSON.
-function saveArch(l){ localStorage.setItem(AKEY, JSON.stringify(l)); }
+// Salva l'archivio nel localStorage e sincronizza con Supabase se disponibile
+function saveArch(l){
+  localStorage.setItem(AKEY, JSON.stringify(l));
+  if(sbKey) syncToCloud(l); // fire-and-forget
+}
 
 // Variabile globale con tutti gli interventi caricati all'avvio
 let archivio = loadArch();
@@ -897,9 +902,14 @@ const LON  = 13.4534;
 const CITY = 'Contrada Cervare, Macerata';
 
 // Chiavi API — vengono caricate dal localStorage in window.onload
-let apiKey  = '';  // Claude API key (es. sk-ant-api03-...)
-let elKey   = '';  // ElevenLabs API key (es. sk_...)
-let elVoice = '';  // ElevenLabs Voice ID (es. gfKKsLN1k0oYYN9n2dXX)
+let apiKey  = '';  // Claude API key
+let elKey   = '';  // ElevenLabs API key
+let elVoice = '';  // ElevenLabs Voice ID
+
+// Supabase — cloud sync archivio
+// URL tabella fisso (il nome tabella è 'Archivio' con A maiuscola come creata)
+const SB_URL = 'https://thmoyxfkgtkteajzande.supabase.co/rest/v1/Archivio';
+let sbKey = ''; // anon key — inserita nel setup
 
 // Stato della conversazione con Claude
 // È un array di oggetti {role: 'user'|'assistant', content: '...'}
@@ -977,6 +987,8 @@ function saveAndStart(){
   const elv = document.getElementById('el-voice-input').value.trim();
   if(elk){ elKey=elk; localStorage.setItem('el_key', elk); }
   if(elv){ elVoice=elv; localStorage.setItem('el_voice', elv); }
+  const sbk = document.getElementById('sb-key-input').value.trim();
+  if(sbk){ sbKey=sbk; localStorage.setItem('sb_key', sbk); }
 
   boot();
 }
@@ -992,8 +1004,9 @@ function boot(){
   setTimeout(startWakeWord, 800);
   // Avvio controllo proattivo: aspetta 4s che meteo e archivio siano pronti
   setTimeout(controlloProattivo, 4000);
-  // Poi ripeti ogni 2 ore
   setInterval(controlloProattivo, 2 * 60 * 60 * 1000);
+  // Carica archivio da Supabase (sovrascrive localStorage se cloud più aggiornato)
+  setTimeout(syncFromCloud, 1500);
 }
 
 // Resetta la configurazione: rimuove la chiave dal localStorage e ricarica la pagina.
@@ -1012,12 +1025,14 @@ window.onload = () => {
   // Carica le chiavi ElevenLabs dal localStorage (potrebbero essere vuote)
   elKey   = localStorage.getItem('el_key')   || '';
   elVoice = localStorage.getItem('el_voice') || '';
+  sbKey   = localStorage.getItem('sb_key')   || '';
 
   if(k){ apiKey=k; boot(); } // chiave già presente → avvia subito
 
   // Pre-popola i campi nel setup (utile se l'utente vuole modificarli)
   if(elKey)   { const el=document.getElementById('el-key-input');   if(el) el.value=elKey; }
   if(elVoice) { const el=document.getElementById('el-voice-input'); if(el) el.value=elVoice; }
+  if(sbKey)   { const el=document.getElementById('sb-key-input');    if(el) el.value=sbKey; }
 };
 
 
@@ -2140,6 +2155,108 @@ NESSUN_AVVISO`;
   }catch(e){
     // Silenzioso — il controllo proattivo non deve mai bloccare l'app
     console.warn('Controllo proattivo:', e);
+  }
+}
+
+// ══════════════════════════════════════════════
+// SUPABASE — Cloud sync archivio
+//
+// Usa la REST API di Supabase direttamente,
+// senza SDK aggiuntivi.
+//
+// Ogni record ha un 'id' univoco (timestamp string).
+// Strategia: upsert completo — sovrascrive se esiste,
+// inserisce se non esiste. Più semplice e affidabile
+// di un diff incrementale.
+// ══════════════════════════════════════════════
+
+// Carica tutti i record dal cloud e aggiorna l'archivio locale.
+// Chiamata all'avvio — il cloud è la fonte di verità.
+async function syncFromCloud(){
+  if(!sbKey) return;
+  try{
+    const res = await fetch(`${SB_URL}?order=creato_il.desc`, {
+      headers: {
+        'apikey': sbKey,
+        'Authorization': `Bearer ${sbKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    if(!res.ok){ console.warn('Supabase read error:', res.status); return; }
+    const rows = await res.json();
+    if(!Array.isArray(rows)) return;
+
+    // Converti dal formato Supabase al formato interno
+    const fromCloud = rows.map(r => ({
+      id:     r.id,
+      titolo: r.titolo,
+      cat:    r.cat,
+      data:   r.data   || null,
+      note:   r.note   || '',
+      scad:   r.scad   || null
+    }));
+
+    // Aggiorna solo se il cloud ha dati (non sovrascrivere con vuoto)
+    if(fromCloud.length > 0 || archivio.length === 0){
+      archivio = fromCloud;
+      localStorage.setItem(AKEY, JSON.stringify(archivio));
+      renderArch();
+      checkScadenze();
+      console.log(`Archivio sincronizzato: ${archivio.length} interventi`);
+    }
+  }catch(e){
+    console.warn('Sync dal cloud fallita:', e);
+  }
+}
+
+// Scrive l'intero archivio su Supabase tramite upsert.
+// Chiamata ogni volta che si salva/modifica/elimina un intervento.
+async function syncToCloud(lista){
+  if(!sbKey || !lista) return;
+  try{
+    // Prima svuota la tabella, poi reinserisce tutto.
+    // Più semplice di gestire insert/update/delete separati.
+
+    // Step 1: elimina tutti i record esistenti
+    await fetch(`${SB_URL}?id=neq.PLACEHOLDER_NEVER_MATCHES`, {
+      method: 'DELETE',
+      headers: {
+        'apikey': sbKey,
+        'Authorization': `Bearer ${sbKey}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      }
+    });
+
+    // Step 2: inserisce tutto (se la lista non è vuota)
+    if(lista.length === 0) return;
+
+    const rows = lista.map(e => ({
+      id:     e.id,
+      titolo: e.titolo,
+      cat:    e.cat    || 'altro',
+      data:   e.data   || null,
+      note:   e.note   || null,
+      scad:   e.scad   || null
+    }));
+
+    const res = await fetch(SB_URL, {
+      method: 'POST',
+      headers: {
+        'apikey': sbKey,
+        'Authorization': `Bearer ${sbKey}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(rows)
+    });
+
+    if(!res.ok){
+      const err = await res.text();
+      console.warn('Supabase write error:', res.status, err);
+    }
+  }catch(e){
+    console.warn('Sync al cloud fallita:', e);
   }
 }
 

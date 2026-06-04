@@ -115,7 +115,7 @@ html, body {
 
 /* ── BARRA METEO TOP ── */
 .weather-bar {
-  flex-shrink: 0; height: 36px;
+  flex-shrink: 0; height: 48px;
   background: transparent;
   border-bottom: 1px solid var(--brd2);
   overflow: hidden;
@@ -133,11 +133,11 @@ html, body {
 }
 .w-item {
   display: inline-flex; align-items: center;
-  gap: 8px; margin-right: 48px;
-  font-size: .7rem; font-weight: 300; color: var(--mid);
+  gap: 10px; margin-right: 56px;
+  font-size: .88rem; font-weight: 300; color: var(--mid);
 }
 .w-item .w-loc  { font-weight: 700; color: var(--text); }
-.w-item .w-temp { font-weight: 700; color: var(--text); font-size: .78rem; }
+.w-item .w-temp { font-weight: 700; color: var(--text); font-size: .96rem; }
 .w-item .w-desc { color: var(--mid); }
 .w-item .w-icon { display: flex; align-items: center; }
 .w-sep {
@@ -151,6 +151,7 @@ html, body {
   flex: 1; display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   position: relative; overflow: hidden;
+  gap: 0;
 }
 /* Glow palette sottile */
 .clock-body::before {
@@ -173,6 +174,7 @@ html, body {
 .clock-digits {
   display: flex; align-items: baseline;
   position: relative; z-index: 1;
+  order: 2;
 }
 .clock-hms {
   font-family: var(--clock);
@@ -193,8 +195,11 @@ html, body {
 .clock-date {
   font-size: clamp(.75rem, 2.2vw, 1rem);
   font-weight: 300; color: var(--mid);
-  letter-spacing: .04em; margin-top: 14px;
+  letter-spacing: .04em;
+  margin-top: 0;
+  margin-bottom: 14px; /* distanza minima dall'orologio */
   position: relative; z-index: 1;
+  order: 1; /* va sopra le cifre nel flex column */
 }
 
 /* Badge scadenze */
@@ -215,6 +220,7 @@ html, body {
   display: flex; flex-direction: column;
   align-items: center; gap: 8px;
   margin-top: 28px; position: relative; z-index: 1;
+  order: 3;
 }
 .mic-ring-wrap { position: relative; width: 54px; height: 54px; }
 .mic-ring {
@@ -252,7 +258,7 @@ html, body {
 
 /* ── NAVBAR BOTTOM ── */
 .navbar {
-  flex-shrink: 0; height: 56px;
+  flex-shrink: 0; height: 68px;
   background: transparent;
   border-top: 1px solid var(--brd2);
   display: flex; align-items: stretch;
@@ -265,8 +271,8 @@ html, body {
   transition: color .15s;
 }
 .nb-btn:active { color: var(--text); }
-.nb-icon { width: 20px; height: 20px; color: inherit; }
-.nb-lbl  { font-size: .48rem; font-weight: 400; letter-spacing: .1em; text-transform: uppercase; }
+.nb-icon { width: 22px; height: 22px; color: inherit; }
+.nb-lbl  { font-size: .6rem; font-weight: 400; letter-spacing: .08em; text-transform: uppercase; }
 
 /* ══════════════════════════════
    PANELS
@@ -607,11 +613,11 @@ html, body {
   .mic-hint      { font-size: .42rem; }
 
   /* Barra e navbar compatte */
-  .weather-bar { height: 30px; }
-  .w-item      { font-size: .64rem; gap: 5px; margin-right: 36px; }
-  .navbar      { height: 46px; }
-  .nb-icon     { width: 17px; height: 17px; }
-  .nb-lbl      { font-size: .4rem; }
+  .weather-bar { height: 38px; }
+  .w-item      { font-size: .74rem; gap: 8px; margin-right: 40px; }
+  .navbar      { height: 54px; }
+  .nb-icon     { width: 18px; height: 18px; }
+  .nb-lbl      { font-size: .5rem; }
 
   .panel-hdr    { padding: 10px 16px; }
   .cp-row       { padding: 8px 12px 14px; }
@@ -632,8 +638,8 @@ html, body {
   .mic-ring-wrap { width: 36px; height: 36px; }
   .mic-hint      { display: none; }
 
-  .weather-bar { height: 26px; }
-  .navbar      { height: 38px; }
+  .weather-bar { height: 32px; }
+  .navbar      { height: 44px; }
   .nb-lbl      { display: none; }
   .nb-icon     { width: 18px; height: 18px; }
   .due-badge   { font-size: .5rem; padding: 3px 9px; top: 6px; right: 10px; }

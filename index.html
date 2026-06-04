@@ -1731,23 +1731,15 @@ function listenLoop(){
   }
 }
 
-// Ferma il recognition quando torna disponibile dopo handleCommand
+// Riprende l'ascolto dopo che Claude ha finito di parlare.
+// Riavvia sempre il recognition pulito per evitare stati corrotti.
 function resumeListening(){
   if(!wakeEnabled) return;
-  listenState = 'waitingWake';
-  setState('wake-active');
-  // Se il recognition è ancora vivo, continua — altrimenti riavvia
-  if(!wakeRecognition){
-    listenLoop();
-    return;
+  if(wakeRecognition){
+    try{ wakeRecognition.abort(); }catch(e){}
+    wakeRecognition = null;
   }
-  try{
-    // Tenta di riusare l'istanza esistente (evita riavvio microfono)
-    // Se non è più attiva, l'eccezione ci porta al catch
-    wakeRecognition.onresult; // verifica che esista
-  }catch(e){
-    listenLoop();
-  }
+  setTimeout(listenLoop, 400);
 }
 
 // listenForCommand non serve più con continuous:true
@@ -1759,6 +1751,11 @@ function listenForCommand(){
 }
 
 async function handleCommand(cmd){
+  // Ferma il microfono mentre elabora e parla (evita feedback con la propria voce)
+  if(wakeRecognition){
+    try{ wakeRecognition.abort(); }catch(e){}
+    wakeRecognition = null;
+  }
   setState('thinking');
   addMsg(cmd, 'user');
   const msgs = [...chatHistory, {role:'user', content:cmd}];
@@ -1777,6 +1774,22 @@ async function handleCommand(cmd){
   }
 }
 
+
+// ══════════════════════════════════════════════
+// BEEP — segnale breve quando rileva la wake word
+// (conferma che può ascoltare il comando)
+// ══════════════════════════════════════════════
+function beep(){
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value = 880; o.type = 'sine';
+    g.gain.setValueAtTime(0.1, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+    o.start(); o.stop(ctx.currentTime + 0.1);
+  }catch(e){}
+}
 
 // ══════════════════════════════════════════════
 // CHIME
@@ -1854,6 +1867,162 @@ async function speakText(text, onEnd=null){
 if(window.speechSynthesis){
   window.speechSynthesis.getVoices();
   window.speechSynthesis.onvoiceschanged=()=>window.speechSynthesis.getVoices();
+}
+
+// ══════════════════════════════════════════════
+// CONTROLLO PROATTIVO
+// Analizza archivio + meteo + data e avvisa Leo
+// se c'è qualcosa di importante. Eseguito all'avvio
+// e ogni 2 ore. Usa le note degli interventi.
+// ══════════════════════════════════════════════
+let ultimoAvvisoProattivo = null;
+
+async function controlloProattivo(){
+  if(!apiKey || !archivio.length) return;
+
+  const n    = new Date();
+  const stag = ['Inverno','Inverno','Primavera','Primavera','Primavera',
+                'Estate','Estate','Estate','Autunno','Autunno','Autunno','Inverno'];
+
+  const systemProattivo = `Sei "Casa", assistente domestico per Leo a ${CITY}.
+Data e ora: ${n.toLocaleString('it-IT')} — Stagione: ${stag[n.getMonth()]}
+Meteo: ${weatherSummary()}
+
+ARCHIVIO COMPLETO CON NOTE:
+${attContext()}
+
+Analizza e decidi se c'è qualcosa di importante da segnalare a Leo ADESSO:
+1. Scadenze imminenti o superate
+2. Condizioni nelle NOTE (es. "fare quando piove", "ogni primavera") confrontate con meteo e stagione
+3. Interventi non fatti da molto tempo
+
+SE c'è qualcosa: avviso breve e diretto (max 2 frasi) in italiano, citando la nota se pertinente.
+SE non c'è nulla: rispondi SOLO con: NESSUN_AVVISO`;
+
+  try{
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 120,
+        system: systemProattivo,
+        messages: [{ role: 'user', content: 'Analizza la situazione attuale.' }]
+      })
+    });
+    const d = await res.json();
+    if(d.error) return;
+
+    const risposta = d.content[0].text.trim();
+    if(risposta.includes('NESSUN_AVVISO')) return;
+
+    const chiave = risposta.slice(0, 40);
+    if(ultimoAvvisoProattivo === chiave) return;
+    ultimoAvvisoProattivo = chiave;
+
+    addMsg(risposta, 'ai');
+    speakText(risposta);
+  }catch(e){
+    console.warn('Controllo proattivo:', e);
+  }
+}
+
+// ══════════════════════════════════════════════
+// MONITORAGGIO AMBIENTALE — disabilitato
+// (causava conflitto con SpeechRecognition su mobile)
+// Stub innocui per non rompere le chiamate esistenti.
+// ══════════════════════════════════════════════
+function startAmbientMonitor(){ /* disabilitato */ }
+function stopAmbientMonitor(){ /* disabilitato */ }
+function stranzaAttiva(){ return true; }
+
+// ══════════════════════════════════════════════
+// SUPABASE — sync archivio sul cloud
+// ══════════════════════════════════════════════
+
+// Scarica l'archivio dal cloud all'avvio
+async function syncFromCloud(){
+  if(!sbKey) return;
+  try{
+    const res = await fetch(`${SB_URL}?order=creato_il.desc`, {
+      headers: {
+        'apikey': sbKey,
+        'Authorization': `Bearer ${sbKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    if(!res.ok){ console.warn('Supabase read error:', res.status); return; }
+    const rows = await res.json();
+    if(!Array.isArray(rows)) return;
+
+    const fromCloud = rows.map(r => ({
+      id:     r.id,
+      titolo: r.titolo,
+      cat:    r.cat,
+      data:   r.data || null,
+      note:   r.note || '',
+      scad:   r.scad || null
+    }));
+
+    if(fromCloud.length > 0 || archivio.length === 0){
+      archivio = fromCloud;
+      localStorage.setItem(AKEY, JSON.stringify(archivio));
+      renderArch();
+      checkScadenze();
+      console.log(`Archivio sincronizzato: ${archivio.length} interventi`);
+    }
+  }catch(e){
+    console.warn('Sync dal cloud fallita:', e);
+  }
+}
+
+// Scrive l'intero archivio sul cloud (svuota e reinserisce)
+async function syncToCloud(lista){
+  if(!sbKey || !lista) return;
+  try{
+    // Elimina tutti i record esistenti
+    await fetch(`${SB_URL}?id=neq.PLACEHOLDER_NEVER_MATCHES`, {
+      method: 'DELETE',
+      headers: {
+        'apikey': sbKey,
+        'Authorization': `Bearer ${sbKey}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      }
+    });
+    if(lista.length === 0) return;
+
+    const rows = lista.map(e => ({
+      id:     e.id,
+      titolo: e.titolo,
+      cat:    e.cat  || 'altro',
+      data:   e.data || null,
+      note:   e.note || null,
+      scad:   e.scad || null
+    }));
+
+    const res = await fetch(SB_URL, {
+      method: 'POST',
+      headers: {
+        'apikey': sbKey,
+        'Authorization': `Bearer ${sbKey}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(rows)
+    });
+    if(!res.ok){
+      const err = await res.text();
+      console.warn('Supabase write error:', res.status, err);
+    }
+  }catch(e){
+    console.warn('Sync al cloud fallita:', e);
+  }
 }
 
 function showToast(msg){

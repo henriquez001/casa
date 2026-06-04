@@ -652,19 +652,41 @@ html, body {
 <!-- SETUP -->
 <div id="setup">
   <div class="s-logo">CASA<small>assistente domestico</small></div>
-  <div class="s-box">
+
+  <!-- SCHERMATA A: accesso rapido con PIN -->
+  <div class="s-box" id="setup-pin-box">
+    <label class="s-lbl">PIN di accesso</label>
+    <input class="s-inp" type="password" id="pin-input" placeholder="Il tuo PIN..." autocomplete="off"
+      onkeydown="if(event.key==='Enter')loginWithPin()">
+    <button class="s-btn" onclick="loginWithPin()">Accedi →</button>
+    <div style="text-align:center;margin-top:14px">
+      <button onclick="showFullSetup()" style="background:transparent;border:none;color:var(--mid);font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;text-decoration:underline">
+        Prima volta? Configura manualmente
+      </button>
+    </div>
+  </div>
+
+  <!-- SCHERMATA B: configurazione completa (prima volta) -->
+  <div class="s-box" id="setup-full-box" style="display:none">
     <label class="s-lbl">API Key Claude</label>
     <input class="s-inp" type="password" id="api-input" placeholder="sk-ant-api03-..." autocomplete="off">
-    <label class="s-lbl" style="margin-top:4px">API Key ElevenLabs <span style="color:var(--b3);font-weight:300">(voce naturale)</span></label>
+    <label class="s-lbl" style="margin-top:4px">API Key ElevenLabs <span style="color:var(--dim);font-weight:300">(opzionale)</span></label>
     <input class="s-inp" type="password" id="el-key-input" placeholder="sk_..." autocomplete="off">
     <label class="s-lbl" style="margin-top:4px">Voice ID ElevenLabs</label>
     <input class="s-inp" id="el-voice-input" placeholder="es. gfKKsLN1k0oYYN9n2dXX" autocomplete="off">
-    <label class="s-lbl" style="margin-top:4px">Supabase Anon Key <span style="color:var(--dim);font-weight:300">(cloud sync)</span></label>
+    <label class="s-lbl" style="margin-top:4px">Supabase Anon Key</label>
     <input class="s-inp" type="password" id="sb-key-input" placeholder="eyJ..." autocomplete="off">
-    <button class="s-btn" onclick="saveAndStart()">Attiva →</button>
+    <label class="s-lbl" style="margin-top:4px">Scegli un PIN di accesso</label>
+    <input class="s-inp" type="password" id="pin-create-input" placeholder="min. 4 caratteri" autocomplete="off">
+    <button class="s-btn" onclick="saveAndStart()">Salva e Attiva →</button>
+    <div style="text-align:center;margin-top:14px">
+      <button onclick="showPinLogin()" style="background:transparent;border:none;color:var(--mid);font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;text-decoration:underline">
+        ← Torna al login
+      </button>
+    </div>
   </div>
-  <p class="s-note">ElevenLabs opzionale — senza, usa la voce del browser<br>
-  <a href="https://elevenlabs.io" target="_blank">elevenlabs.io</a> &nbsp;·&nbsp; <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></p>
+
+  <p class="s-note"><a href="https://elevenlabs.io" target="_blank">elevenlabs.io</a> &nbsp;·&nbsp; <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></p>
 </div>
 
 <!-- HOME -->
@@ -908,7 +930,8 @@ let elVoice = '';  // ElevenLabs Voice ID
 
 // Supabase — cloud sync archivio
 // URL tabella fisso (il nome tabella è 'Archivio' con A maiuscola come creata)
-const SB_URL = 'https://thmoyxfkgtkteajzande.supabase.co/rest/v1/Archivio';
+const SB_URL    = 'https://thmoyxfkgtkteajzande.supabase.co/rest/v1/Archivio';
+const SB_CONFIG = 'https://thmoyxfkgtkteajzande.supabase.co/rest/v1/Config';
 let sbKey = ''; // anon key — inserita nel setup
 
 // Stato della conversazione con Claude
@@ -975,22 +998,110 @@ const CAT_COLORS = {
 
 // Chiamata al click su "Attiva →" nella schermata di setup.
 // Valida la chiave Claude, salva tutto nel localStorage, avvia l'app.
-function saveAndStart(){
-  const k = document.getElementById('api-input').value.trim();
-  // La chiave Claude deve iniziare con sk-ant-
-  if(!k.startsWith('sk-ant-')){ showToast('Chiave Claude non valida'); return; }
-  apiKey = k;
-  localStorage.setItem('casa_key', k);
+// ── Navigazione setup ──
+function showFullSetup(){
+  document.getElementById('setup-pin-box').style.display  = 'none';
+  document.getElementById('setup-full-box').style.display = 'block';
+}
+function showPinLogin(){
+  document.getElementById('setup-full-box').style.display = 'none';
+  document.getElementById('setup-pin-box').style.display  = 'block';
+}
 
-  // ElevenLabs è opzionale — salva solo se inserita
+// ── Prima configurazione: salva tutto + carica config su Supabase ──
+async function saveAndStart(){
+  const k   = document.getElementById('api-input').value.trim();
+  const sbk = document.getElementById('sb-key-input').value.trim();
+  const pin = document.getElementById('pin-create-input').value.trim();
+
+  if(!k.startsWith('sk-ant-')){ showToast('Chiave Claude non valida'); return; }
+  if(!sbk){ showToast('Inserisci la Supabase Key'); return; }
+  if(pin.length < 4){ showToast('PIN troppo corto (min. 4 caratteri)'); return; }
+
+  // Salva in localStorage
+  apiKey = k; sbKey = sbk;
+  localStorage.setItem('casa_key', k);
+  localStorage.setItem('sb_key', sbk);
+  localStorage.setItem('casa_pin', pin);
+
   const elk = document.getElementById('el-key-input').value.trim();
   const elv = document.getElementById('el-voice-input').value.trim();
   if(elk){ elKey=elk; localStorage.setItem('el_key', elk); }
   if(elv){ elVoice=elv; localStorage.setItem('el_voice', elv); }
-  const sbk = document.getElementById('sb-key-input').value.trim();
-  if(sbk){ sbKey=sbk; localStorage.setItem('sb_key', sbk); }
+
+  // Carica la config su Supabase (così altri dispositivi possono usare il PIN)
+  await pushConfig(pin, { apiKey: k, elKey: elk, elVoice: elv, sbKey: sbk });
 
   boot();
+}
+
+// ── Login con PIN: scarica la config da Supabase ──
+async function loginWithPin(){
+  const pin = document.getElementById('pin-input').value.trim();
+  if(!pin){ showToast('Inserisci il PIN'); return; }
+
+  // Serve la sbKey per leggere da Supabase — ma non ce l'abbiamo ancora!
+  // Usiamo un campo "pubblico" nella tabella Config identificato dall'hash del PIN.
+  // La sbKey è hardcodata nell'app (è la anon key, non un segreto critico).
+  const hardcodedSbKey = 'SUPABASE_ANON_KEY_PLACEHOLDER';
+  const pinHash = await hashPin(pin);
+
+  try{
+    const res = await fetch(`${SB_CONFIG}?pin_hash=eq.${pinHash}&select=config`, {
+      headers: {
+        'apikey': hardcodedSbKey,
+        'Authorization': `Bearer ${hardcodedSbKey}`
+      }
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const rows = await res.json();
+    if(!rows.length){ showToast('PIN non trovato'); return; }
+
+    const cfg = JSON.parse(rows[0].config);
+    apiKey  = cfg.apiKey  || '';
+    elKey   = cfg.elKey   || '';
+    elVoice = cfg.elVoice || '';
+    sbKey   = cfg.sbKey   || hardcodedSbKey;
+
+    // Salva in localStorage per i prossimi accessi offline
+    localStorage.setItem('casa_key', apiKey);
+    localStorage.setItem('el_key',   elKey);
+    localStorage.setItem('el_voice', elVoice);
+    localStorage.setItem('sb_key',   sbKey);
+    localStorage.setItem('casa_pin', pin);
+
+    boot();
+  }catch(e){
+    showToast('Errore di connessione');
+    console.error(e);
+  }
+}
+
+// Calcola un hash SHA-256 del PIN (non salviamo il PIN in chiaro)
+async function hashPin(pin){
+  const buf  = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// Salva la configurazione su Supabase con l'hash del PIN come chiave
+async function pushConfig(pin, cfg){
+  const pinHash = await hashPin(pin);
+  const sbk = cfg.sbKey || sbKey;
+  try{
+    // Upsert: inserisce o aggiorna
+    await fetch(SB_CONFIG, {
+      method: 'POST',
+      headers: {
+        'apikey': sbk,
+        'Authorization': `Bearer ${sbk}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({ pin_hash: pinHash, config: JSON.stringify(cfg) })
+    });
+  }catch(e){
+    console.warn('pushConfig error:', e);
+  }
 }
 
 // Avvia l'app: nasconde il setup, mostra la home, lancia tutti i moduli.
@@ -1021,18 +1132,23 @@ function resetApp(){
 // Eseguita automaticamente quando la pagina finisce di caricare.
 // Se la chiave è già salvata, salta il setup e va direttamente all'app.
 window.onload = () => {
-  const k = localStorage.getItem('casa_key');
-  // Carica le chiavi ElevenLabs dal localStorage (potrebbero essere vuote)
+  const k   = localStorage.getItem('casa_key');
+  const pin = localStorage.getItem('casa_pin');
   elKey   = localStorage.getItem('el_key')   || '';
   elVoice = localStorage.getItem('el_voice') || '';
   sbKey   = localStorage.getItem('sb_key')   || '';
 
-  if(k){ apiKey=k; boot(); } // chiave già presente → avvia subito
+  if(k){
+    // Chiave già presente in locale → avvia direttamente
+    apiKey = k; boot(); return;
+  }
 
-  // Pre-popola i campi nel setup (utile se l'utente vuole modificarli)
-  if(elKey)   { const el=document.getElementById('el-key-input');   if(el) el.value=elKey; }
-  if(elVoice) { const el=document.getElementById('el-voice-input'); if(el) el.value=elVoice; }
-  if(sbKey)   { const el=document.getElementById('sb-key-input');    if(el) el.value=sbKey; }
+  // Nessuna chiave locale: mostra setup
+  // Se c'è già un PIN salvato, pre-compila il campo PIN
+  if(pin){
+    const pinEl = document.getElementById('pin-input');
+    if(pinEl) pinEl.value = pin;
+  }
 };
 
 

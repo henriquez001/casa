@@ -9,22 +9,22 @@
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
 :root {
-  --bg: #000;
-  --b1: #111;
-  --b2: #222;
-  --b3: #444;
-  --mid: #888;
-  --text: #fff;
+  --bg: #0a0a0a;
+  --b1: #161616;
+  --b2: #242424;
+  --b3: #3a3a3a;
+  --mid: #777;
   --mono: 'Roboto Mono', monospace;
 }
 
-body {
+html, body {
   font-family: var(--mono);
-  background: #000;
+  background: var(--bg);
   color: #fff;
   width: 100vw;
   height: 100dvh;
   overflow: hidden;
+  user-select: none;
 }
 
 /* ══════════════════════════
@@ -32,45 +32,43 @@ body {
 ══════════════════════════ */
 #setup {
   position: fixed; inset: 0;
-  background: #000;
+  background: var(--bg);
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  padding: 32px; gap: 32px;
+  padding: 32px; gap: 28px;
   z-index: 200;
-  border-top: 3px solid #fff;
 }
 #setup.hidden { display: none; }
 
-.s-wordmark {
-  font-size: 2.4rem;
-  font-weight: 700;
-  letter-spacing: -.02em;
-  text-align: center;
+.s-logo {
+  font-size: 2rem; font-weight: 700;
+  letter-spacing: .12em; text-align: center;
+  color: #fff;
 }
-.s-wordmark small {
-  display: block;
-  font-size: .6rem;
-  font-weight: 300;
-  color: var(--b3);
-  letter-spacing: .3em;
-  text-transform: uppercase;
-  margin-top: 8px;
+.s-logo small {
+  display: block; font-size: .58rem;
+  font-weight: 300; color: var(--mid);
+  letter-spacing: .28em; text-transform: uppercase;
+  margin-top: 6px;
 }
 
 .s-box {
-  width: 100%; max-width: 360px;
+  width: 100%; max-width: 340px;
+  background: var(--b1);
   border: 1px solid var(--b2);
+  border-radius: 12px;
   padding: 24px;
 }
 .s-lbl {
-  font-size: .6rem; font-weight: 300;
-  color: var(--b3); letter-spacing: .2em;
+  font-size: .58rem; font-weight: 300;
+  color: var(--mid); letter-spacing: .18em;
   text-transform: uppercase;
   display: block; margin-bottom: 8px;
 }
 .s-inp {
-  width: 100%;
-  background: #000; border: 1px solid var(--b2);
+  width: 100%; background: var(--bg);
+  border: 1px solid var(--b3);
+  border-radius: 8px;
   padding: 13px 12px; color: #fff;
   font-family: var(--mono); font-size: .8rem; font-weight: 300;
   outline: none; margin-bottom: 16px;
@@ -80,40 +78,98 @@ body {
 .s-inp::placeholder { color: var(--b3); }
 .s-btn {
   width: 100%; background: #fff; color: #000;
-  border: none; padding: 14px;
+  border: none; border-radius: 8px; padding: 13px;
   font-family: var(--mono); font-size: .72rem;
-  font-weight: 700; letter-spacing: .16em;
+  font-weight: 700; letter-spacing: .14em;
   text-transform: uppercase; cursor: pointer;
 }
-.s-btn:active { opacity: .8; }
 .s-note {
-  font-size: .62rem; font-weight: 300;
+  font-size: .6rem; font-weight: 300;
   color: var(--b3); text-align: center; line-height: 2;
 }
 .s-note a { color: var(--mid); }
 
 /* ══════════════════════════
-   HOME — LANDSCAPE
-   orologio al centro assoluto
-   meteo angolo top-left
-   toolbar bottom
+   HOME
 ══════════════════════════ */
 #home {
   position: fixed; inset: 0;
   display: none;
+  flex-direction: column;
 }
 
-/* sfondo palette rotante */
-#home::before {
+/* ── BARRA METEO TOP — scorrimento orizzontale ── */
+.weather-bar {
+  flex-shrink: 0;
+  height: 36px;
+  background: var(--b1);
+  border-bottom: 1px solid var(--b2);
+  overflow: hidden;
+  position: relative;
+}
+
+.weather-scroll {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  white-space: nowrap;
+  animation: scroll-left 28s linear infinite;
+  padding-left: 100%;
+}
+
+.weather-scroll:hover { animation-play-state: paused; }
+
+@keyframes scroll-left {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.w-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-right: 48px;
+  font-size: .7rem; font-weight: 300;
+  color: #bbb;
+  letter-spacing: .04em;
+}
+
+.w-item .w-loc  { font-weight: 500; color: #fff; }
+.w-item .w-temp { color: #fff; }
+.w-item .w-desc { color: var(--mid); }
+.w-item .w-icon { font-size: .9rem; }
+
+/* separatore */
+.w-sep {
+  display: inline-block;
+  width: 1px; height: 14px;
+  background: var(--b3);
+  margin-right: 48px;
+  vertical-align: middle;
+}
+
+/* ── CORPO CENTRALE — orologio ── */
+.clock-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  gap: 0;
+}
+
+/* glow palette */
+.clock-body::before {
   content: '';
   position: absolute; top: 50%; left: 50%;
   transform: translate(-50%,-50%);
-  width: 150vmax; height: 150vmax;
+  width: 120vmax; height: 120vmax;
   background: conic-gradient(
     from 0deg,
-    #ff2d5505 0deg, #ff6b0005 60deg, #ffd60a05 120deg,
-    #30d15805 180deg, #0a84ff05 240deg, #bf5af205 300deg,
-    #ff2d5505 360deg
+    #ff2d5504 0deg, #ff6b0004 60deg, #ffd60a04 120deg,
+    #30d15804 180deg, #0a84ff04 240deg, #bf5af204 300deg,
+    #ff2d5504 360deg
   );
   border-radius: 50%;
   animation: spin 90s linear infinite;
@@ -121,138 +177,56 @@ body {
 }
 @keyframes spin { to { transform: translate(-50%,-50%) rotate(360deg); } }
 
-/* ── OROLOGIO — centro assoluto ── */
-.clock-center {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  display: flex; flex-direction: column;
-  align-items: center; gap: 4px;
-  z-index: 2;
+/* OROLOGIO — HH:MM:SS grandi come reference */
+.clock-digits {
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+  position: relative; z-index: 1;
 }
 
-.clock-hm {
-  font-size: clamp(5rem, 18vw, 12rem);
+.clock-hms {
+  font-size: clamp(4rem, 22vw, 10rem);
   font-weight: 700;
   line-height: 1;
-  letter-spacing: -.04em;
+  letter-spacing: -.03em;
   color: #fff;
   transition: text-shadow 3s ease;
-  user-select: none;
 }
 
-.colon { animation: blink 1s step-start infinite; }
-@keyframes blink { 50% { opacity: .08; } }
+.clock-sep {
+  font-size: clamp(3rem, 16vw, 7.5rem);
+  font-weight: 300;
+  color: var(--b3);
+  line-height: 1;
+  letter-spacing: 0;
+  animation: blink 1s step-start infinite;
+  padding: 0 2px;
+}
+@keyframes blink { 50% { opacity: .15; } }
 
-.clock-sub {
-  display: flex; align-items: center;
-  gap: 16px;
-  font-size: .7rem; font-weight: 300;
-  color: var(--b3); letter-spacing: .14em;
-  text-transform: uppercase;
+/* DATA sotto l'orologio */
+.clock-date {
+  font-size: clamp(.72rem, 2.2vw, 1.1rem);
+  font-weight: 300;
+  color: var(--mid);
+  letter-spacing: .06em;
+  margin-top: 14px;
+  position: relative; z-index: 1;
 }
 
-.clock-ss { color: var(--b2); }
-
-/* ── METEO — angolo top-left ── */
-.weather-corner {
-  position: absolute;
-  top: 0; left: 0;
-  padding: 16px 20px;
-  z-index: 3;
-  border-right: 1px solid var(--b1);
-  border-bottom: 1px solid var(--b1);
-  min-width: 160px;
-  background: rgba(0,0,0,.6);
-  backdrop-filter: blur(8px);
-}
-
-.wc-top {
-  display: flex; align-items: baseline; gap: 10px;
-  margin-bottom: 6px;
-}
-
-.wc-icon { font-size: 1.3rem; line-height: 1; }
-
-.wc-temp {
-  font-size: 1.8rem; font-weight: 700; line-height: 1;
-  color: #fff;
-}
-
-.wc-accent {
-  width: 100%; height: 1px;
-  background: var(--wc, #333);
-  margin-bottom: 6px;
-  transition: background 2s;
-}
-
-.wc-desc {
-  font-size: .55rem; font-weight: 300;
-  color: var(--mid); letter-spacing: .12em;
-  text-transform: uppercase;
-  margin-bottom: 4px;
-}
-
-.wc-stats {
-  font-size: .52rem; font-weight: 300;
-  color: var(--b3); letter-spacing: .08em;
-  line-height: 1.9;
-}
-
-.wc-loc {
-  font-size: .48rem; font-weight: 300;
-  color: var(--b2); letter-spacing: .1em;
-  text-transform: uppercase;
-  margin-top: 4px;
-  border-top: 1px solid var(--b1);
-  padding-top: 5px;
-}
-
-/* ── BADGE SCADENZE — top-right ── */
-.due-corner {
-  position: absolute;
-  top: 0; right: 0;
-  z-index: 3;
-}
-.due-badge {
-  display: block;
-  background: #ff2d55; color: #fff;
-  font-size: .52rem; font-weight: 700;
-  letter-spacing: .1em; text-transform: uppercase;
-  padding: 6px 12px; cursor: pointer;
-  animation: fadeUp .3s ease;
-}
-@keyframes fadeUp { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
-
-/* ── MICROFONO — centro-basso ── */
-.mic-center {
-  position: absolute;
-  bottom: 52px; left: 50%;
-  transform: translateX(-50%);
+/* MIC — piccolo, sotto la data */
+.mic-area {
   display: flex; flex-direction: column;
-  align-items: center; gap: 8px;
-  z-index: 3;
+  align-items: center; gap: 6px;
+  margin-top: 24px;
+  position: relative; z-index: 1;
 }
 
 .mic-ring-wrap {
-  position: relative;
-  width: 64px; height: 64px;
+  position: relative; width: 52px; height: 52px;
 }
 
-.mic-btn {
-  position: absolute; inset: 0;
-  border-radius: 50%;
-  border: 1px solid var(--b2);
-  background: transparent;
-  color: var(--b3);
-  font-size: 1.5rem;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all .25s;
-  z-index: 1;
-}
-
-/* anello esterno rotante quando in ascolto wake */
 .mic-ring {
   position: absolute; inset: -5px;
   border-radius: 50%;
@@ -260,62 +234,83 @@ body {
   pointer-events: none;
 }
 
-.state-wake-active .mic-btn  { border-color: var(--b3); color: var(--b3); }
-.state-wake-active .mic-ring { border-color: var(--b2); animation: ringrot 3s linear infinite; }
+.mic-btn {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  border: 1px solid var(--b3);
+  background: transparent;
+  color: var(--b3);
+  font-size: 1.3rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .2s;
+}
 
-.state-listening .mic-btn { border-color: #fff; background: #fff; color: #000; animation: pp .7s infinite; }
-
-.state-thinking .mic-btn { border-color: var(--mid); color: var(--mid); }
-
-.state-speaking .mic-btn { border-color: #30d158; color: #30d158; animation: glow 1s infinite; }
-.state-speaking .mic-ring { border-color: #30d15830; animation: ringrot 1.5s linear infinite; }
+/* stati mic */
+.state-wake-active .mic-btn  { border-color: var(--b3); color: var(--mid); }
+.state-wake-active .mic-ring { border-color: var(--b2); animation: ringrot 4s linear infinite; }
+.state-listening  .mic-btn   { border-color: #fff; background: #fff; color: #000; animation: pp .7s infinite; }
+.state-thinking   .mic-btn   { border-color: var(--mid); color: var(--mid); }
+.state-speaking   .mic-btn   { border-color: #30d158; color: #30d158; }
+.state-speaking   .mic-ring  { border-color: #30d15840; animation: ringrot 1.2s linear infinite; }
 
 @keyframes ringrot { to { transform: rotate(360deg); } }
 @keyframes pp { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
-@keyframes glow { 0%,100%{box-shadow:0 0 0 0 #30d15820} 50%{box-shadow:0 0 0 10px #30d15800} }
 
 .mic-lbl {
-  font-size: .54rem; font-weight: 300;
-  color: var(--b3); letter-spacing: .16em;
-  text-transform: uppercase;
-  min-height: 12px; text-align: center;
+  font-size: .52rem; font-weight: 300;
+  color: var(--mid); letter-spacing: .18em;
+  text-transform: uppercase; min-height: 11px;
+  text-align: center;
 }
-
 .mic-hint {
   font-size: .48rem; font-weight: 300;
-  color: var(--b2); letter-spacing: .12em;
+  color: var(--b3); letter-spacing: .14em;
   text-transform: uppercase;
 }
 
-/* ── TOOLBAR — bottom ── */
-.toolbar {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
+/* badge scadenze */
+.due-badge {
+  position: absolute; top: 12px; right: 16px;
+  background: #ff2d55; color: #fff;
+  font-size: .5rem; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
+  padding: 5px 10px; border-radius: 4px;
+  cursor: pointer; z-index: 2;
+  animation: fadeIn .3s ease;
+}
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+/* ── NAVBAR BOTTOM ── */
+.navbar {
+  flex-shrink: 0;
+  height: 56px;
+  background: var(--b1);
+  border-top: 1px solid var(--b2);
   display: flex;
-  border-top: 1px solid var(--b1);
-  z-index: 3;
-  background: rgba(0,0,0,.8);
-  backdrop-filter: blur(8px);
+  align-items: stretch;
 }
 
-.tb-btn {
-  flex: 1; background: transparent; border: none;
-  border-right: 1px solid var(--b1);
-  padding: 11px 4px;
-  font-family: var(--mono); font-size: .54rem;
-  font-weight: 300; color: var(--b3);
-  letter-spacing: .12em; text-transform: uppercase;
+.nb-btn {
+  flex: 1;
+  background: transparent; border: none;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 3px;
   cursor: pointer; transition: all .15s;
+  color: var(--mid);
 }
-.tb-btn:last-child { border-right: none; }
-.tb-btn:active { background: #fff; color: #000; }
+.nb-btn:active { color: #fff; background: var(--b2); }
+
+.nb-icon { font-size: 1.2rem; line-height: 1; }
+.nb-lbl  { font-size: .44rem; font-weight: 300; letter-spacing: .14em; text-transform: uppercase; }
 
 /* ══════════════════════════
-   PANELS — slide up
+   PANELS
 ══════════════════════════ */
 .panel {
   position: fixed; inset: 0;
-  background: #000; z-index: 50;
+  background: var(--bg); z-index: 50;
   display: flex; flex-direction: column;
   transform: translateY(100%);
   transition: transform .28s cubic-bezier(.4,0,.2,1);
@@ -324,55 +319,58 @@ body {
 
 .panel-hdr {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--b1);
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--b2);
   flex-shrink: 0;
 }
 .panel-title {
-  font-size: .7rem; font-weight: 700;
-  letter-spacing: .16em; text-transform: uppercase;
+  font-size: .66rem; font-weight: 700;
+  letter-spacing: .18em; text-transform: uppercase; color: #fff;
 }
 .panel-close {
   font-family: var(--mono); font-size: .58rem; font-weight: 300;
-  color: var(--b3); background: transparent;
-  border: 1px solid var(--b2);
+  color: var(--mid); background: transparent;
+  border: 1px solid var(--b2); border-radius: 6px;
   padding: 6px 12px; cursor: pointer;
   letter-spacing: .1em; text-transform: uppercase;
 }
-.panel-close:active { background: #fff; color: #000; }
+.panel-close:active { background: #fff; color: #000; border-color: #fff; }
 
 /* chat */
 .chat-area {
-  flex: 1; padding: 14px 18px;
+  flex: 1; padding: 14px 16px;
   overflow-y: auto;
   display: flex; flex-direction: column; gap: 10px;
 }
 .msg {
-  max-width: 86%; padding: 10px 14px;
-  font-size: .84rem; font-weight: 300; line-height: 1.7;
-  animation: fadeUp .2s ease;
+  max-width: 86%; padding: 10px 13px;
+  font-size: .82rem; font-weight: 300; line-height: 1.7;
+  animation: fadeIn .2s ease;
+  border-radius: 8px;
 }
 .msg.ai {
-  background: #080808;
-  border: 1px solid var(--b1);
+  background: var(--b1);
+  border: 1px solid var(--b2);
   border-left: 2px solid #fff;
   align-self: flex-start;
+  border-radius: 4px 10px 10px 4px;
 }
 .msg.ai .lbl {
-  font-size: .54rem; font-weight: 300;
+  font-size: .52rem; font-weight: 300;
   color: var(--b3); letter-spacing: .16em;
-  text-transform: uppercase; margin-bottom: 6px;
+  text-transform: uppercase; margin-bottom: 5px;
 }
 .msg.user {
   background: #fff; color: #000;
   align-self: flex-end; font-weight: 400;
+  border-radius: 10px 4px 4px 10px;
 }
 .typing {
   display: none; align-items: center; gap: 5px;
   padding: 10px 14px;
-  background: #080808;
-  border: 1px solid var(--b1); border-left: 2px solid var(--b2);
-  width: fit-content;
+  background: var(--b1); border: 1px solid var(--b2);
+  border-left: 2px solid var(--b3);
+  width: fit-content; border-radius: 4px 10px 10px 4px;
 }
 .typing.on { display: flex; }
 .dot {
@@ -385,56 +383,47 @@ body {
 
 .cp-row {
   display: flex; gap: 8px;
-  padding: 12px 16px 20px;
-  border-top: 1px solid var(--b1);
+  padding: 10px 14px 20px;
+  border-top: 1px solid var(--b2);
   flex-shrink: 0;
 }
 .cp-inp {
-  flex: 1; background: #080808;
-  border: 1px solid var(--b2);
+  flex: 1; background: var(--b1);
+  border: 1px solid var(--b2); border-radius: 10px;
   padding: 11px 13px; color: #fff;
-  font-family: var(--mono); font-size: .84rem; font-weight: 300;
+  font-family: var(--mono); font-size: .82rem; font-weight: 300;
   outline: none; resize: none;
-  min-height: 43px; max-height: 100px; line-height: 1.5;
+  min-height: 42px; max-height: 100px; line-height: 1.5;
   transition: border-color .15s;
 }
-.cp-inp:focus { border-color: #fff; }
+.cp-inp:focus { border-color: var(--b3); }
 .cp-inp::placeholder { color: var(--b3); font-size: .76rem; }
 .cp-send {
-  width: 43px; height: 43px;
+  width: 42px; height: 42px;
   background: #fff; color: #000; border: none;
-  cursor: pointer; font-size: 1rem;
+  border-radius: 10px; cursor: pointer; font-size: 1rem;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
 
 /* attività */
-.att-list {
-  flex: 1; overflow-y: auto; padding: 14px 16px;
-}
+.att-list { flex: 1; overflow-y: auto; padding: 12px 14px; }
 .att-empty {
   text-align: center; color: var(--b3);
-  font-size: .66rem; font-weight: 300;
+  font-size: .64rem; font-weight: 300;
   letter-spacing: .12em; text-transform: uppercase;
   margin-top: 48px; line-height: 2.4;
 }
 .att-item {
-  border: 1px solid var(--b1);
-  padding: 12px 14px; margin-bottom: 8px;
+  background: var(--b1); border: 1px solid var(--b2);
+  border-left: 3px solid var(--ic, var(--b3));
+  border-radius: 4px 10px 10px 4px;
+  padding: 12px 13px; margin-bottom: 8px;
   display: flex; align-items: center; gap: 12px;
-  position: relative; overflow: hidden;
 }
-.att-item::before {
-  content: ''; position: absolute;
-  left: 0; top: 0; bottom: 0; width: 2px;
-  background: var(--ic, var(--b2));
-}
-.att-info { flex: 1; padding-left: 4px; }
-.att-name { font-weight: 400; font-size: .86rem; margin-bottom: 3px; }
-.att-meta {
-  font-size: .56rem; font-weight: 300;
-  color: var(--mid); letter-spacing: .06em; line-height: 1.8;
-}
+.att-info { flex: 1; }
+.att-name { font-weight: 500; font-size: .86rem; margin-bottom: 3px; }
+.att-meta { font-size: .56rem; font-weight: 300; color: var(--mid); letter-spacing: .06em; line-height: 1.8; }
 .att-due { font-size: .6rem; font-weight: 700; margin-top: 3px; }
 .att-due.ok { color: #30d158; }
 .att-due.soon { color: #ffd60a; }
@@ -444,82 +433,85 @@ body {
   font-family: var(--mono); font-size: .52rem; font-weight: 300;
   letter-spacing: .08em; text-transform: uppercase;
   background: transparent; border: 1px solid var(--b2);
-  color: var(--mid); padding: 5px 8px; cursor: pointer;
-  white-space: nowrap;
+  border-radius: 5px; color: var(--mid);
+  padding: 5px 8px; cursor: pointer; white-space: nowrap;
 }
-.att-btn:active { background: #fff; color: #000; }
+.att-btn:active { background: #fff; color: #000; border-color: #fff; }
 .att-add-bar {
-  padding: 12px 16px 20px;
-  border-top: 1px solid var(--b1);
+  padding: 10px 14px 20px;
+  border-top: 1px solid var(--b2);
   display: flex; gap: 8px; flex-shrink: 0;
 }
 .att-add-inp {
-  flex: 1; background: #080808;
-  border: 1px solid var(--b2);
+  flex: 1; background: var(--b1);
+  border: 1px solid var(--b2); border-radius: 10px;
   padding: 11px 13px; color: #fff;
-  font-family: var(--mono); font-size: .82rem; font-weight: 300;
+  font-family: var(--mono); font-size: .8rem; font-weight: 300;
   outline: none; transition: border-color .15s;
 }
-.att-add-inp:focus { border-color: #fff; }
+.att-add-inp:focus { border-color: var(--b3); }
 .att-add-inp::placeholder { color: var(--b3); font-size: .76rem; }
 .att-add-btn {
   background: #fff; color: #000; border: none;
-  padding: 0 16px;
-  font-family: var(--mono); font-size: .72rem; font-weight: 700;
-  letter-spacing: .1em; cursor: pointer;
+  border-radius: 10px; padding: 0 18px;
+  font-family: var(--mono); font-size: .72rem;
+  font-weight: 700; letter-spacing: .1em; cursor: pointer;
 }
 
 /* dialog */
 #dialog {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,.92);
+  background: rgba(0,0,0,.88);
   z-index: 80; display: none; align-items: flex-end;
 }
 #dialog.open { display: flex; }
 .dlg-box {
-  width: 100%; background: #000;
-  border-top: 2px solid #fff;
-  padding: 22px 20px 30px;
+  width: 100%; background: var(--b1);
+  border-top: 1px solid var(--b3);
+  border-radius: 20px 20px 0 0;
+  padding: 20px 18px 32px;
+}
+.dlg-handle {
+  width: 36px; height: 4px;
+  background: var(--b3); border-radius: 2px;
+  margin: 0 auto 18px;
 }
 .dlg-title {
-  font-size: .72rem; font-weight: 700;
+  font-size: .68rem; font-weight: 700;
   letter-spacing: .16em; text-transform: uppercase;
   margin-bottom: 16px;
 }
 .dlg-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
-.dlg-lbl {
-  font-size: .58rem; font-weight: 300;
-  color: var(--b3); letter-spacing: .14em; text-transform: uppercase;
-}
+.dlg-lbl { font-size: .56rem; font-weight: 300; color: var(--mid); letter-spacing: .14em; text-transform: uppercase; }
 .dlg-inp {
-  background: #000; border: 1px solid var(--b2);
-  padding: 10px 12px; color: #fff;
+  background: var(--bg); border: 1px solid var(--b2);
+  border-radius: 8px; padding: 10px 12px; color: #fff;
   font-family: var(--mono); font-size: .78rem; font-weight: 300;
   outline: none; width: 100%; transition: border-color .15s;
 }
-.dlg-inp:focus { border-color: #fff; }
+.dlg-inp:focus { border-color: var(--b3); }
 .dlg-sel {
-  background: #000; border: 1px solid var(--b2);
-  padding: 10px 12px; color: #fff;
+  background: var(--bg); border: 1px solid var(--b2);
+  border-radius: 8px; padding: 10px 12px; color: #fff;
   font-family: var(--mono); font-size: .78rem; font-weight: 300;
   outline: none; width: 100%; appearance: none;
 }
-.dlg-row { display: flex; gap: 8px; margin-top: 6px; }
+.dlg-row { display: flex; gap: 8px; margin-top: 8px; }
 .dlg-btn {
-  flex: 1; padding: 13px;
+  flex: 1; padding: 13px; border-radius: 10px;
   font-family: var(--mono); font-size: .68rem;
   font-weight: 700; letter-spacing: .12em;
   text-transform: uppercase; cursor: pointer; border: none;
 }
-.dlg-btn.cancel { background: transparent; border: 1px solid var(--b2); color: var(--mid); }
+.dlg-btn.cancel { background: var(--b2); color: var(--mid); }
 .dlg-btn.confirm { background: #fff; color: #000; }
 
 /* toast */
 .toast {
-  position: fixed; bottom: 52px; left: 50%;
-  transform: translateX(-50%) translateY(10px);
+  position: fixed; bottom: 70px; left: 50%;
+  transform: translateX(-50%) translateY(8px);
   background: #fff; color: #000;
-  padding: 8px 16px;
+  padding: 8px 16px; border-radius: 8px;
   font-family: var(--mono); font-size: .62rem;
   font-weight: 700; letter-spacing: .08em;
   opacity: 0; transition: all .2s; z-index: 300;
@@ -532,7 +524,7 @@ body {
 
 <!-- SETUP -->
 <div id="setup">
-  <div class="s-wordmark">CASA<small>assistente domestico</small></div>
+  <div class="s-logo">CASA<small>assistente domestico</small></div>
   <div class="s-box">
     <label class="s-lbl">API Key Claude</label>
     <input class="s-inp" type="password" id="api-input" placeholder="sk-ant-api03-..." autocomplete="off">
@@ -544,54 +536,91 @@ body {
 <!-- HOME -->
 <div id="home">
 
-  <!-- orologio al centro -->
-  <div class="clock-center">
-    <div class="clock-hm" id="clk-hm">00<span class="colon">:</span>00</div>
-    <div class="clock-sub">
-      <span class="clock-ss" id="clk-ss">00s</span>
-      <span id="clk-date"></span>
+  <!-- BARRA METEO TOP scrolling -->
+  <div class="weather-bar">
+    <div class="weather-scroll" id="weather-scroll">
+      <span class="w-item" id="w-main">
+        <span class="w-icon" id="w-icon">—</span>
+        <span class="w-loc">Cervare</span>
+        <span class="w-temp" id="w-temp">—°</span>
+        <span class="w-desc" id="w-desc">Caricamento...</span>
+      </span>
+      <span class="w-sep"></span>
+      <span class="w-item" id="w-extra">
+        <span id="w-extra-txt"></span>
+      </span>
+      <!-- duplicato per loop continuo -->
+      <span class="w-item" id="w-main2" aria-hidden="true">
+        <span class="w-icon" id="w-icon2">—</span>
+        <span class="w-loc">Cervare</span>
+        <span class="w-temp" id="w-temp2">—°</span>
+        <span class="w-desc" id="w-desc2">Caricamento...</span>
+      </span>
+      <span class="w-sep"></span>
+      <span class="w-item" id="w-extra2" aria-hidden="true">
+        <span id="w-extra-txt2"></span>
+      </span>
     </div>
   </div>
 
-  <!-- meteo angolo top-left -->
-  <div class="weather-corner" id="weather-corner">
-    <div class="wc-top">
-      <span class="wc-icon" id="wc-icon">—</span>
-      <span class="wc-temp" id="wc-temp">—°</span>
+  <!-- CORPO: orologio + mic -->
+  <div class="clock-body">
+
+    <!-- badge scadenze -->
+    <div id="due-corner"></div>
+
+    <!-- orologio HH:MM:SS -->
+    <div class="clock-digits">
+      <span class="clock-hms" id="clk-h">00</span>
+      <span class="clock-sep">:</span>
+      <span class="clock-hms" id="clk-m">00</span>
+      <span class="clock-sep">:</span>
+      <span class="clock-hms" id="clk-s">00</span>
     </div>
-    <div class="wc-accent" id="wc-accent"></div>
-    <div class="wc-desc" id="wc-desc">Caricamento...</div>
-    <div class="wc-stats" id="wc-stats"></div>
-    <div class="wc-loc">Cervare · MC</div>
+
+    <!-- data -->
+    <div class="clock-date" id="clk-date">Giovedì 4 Giugno 2026</div>
+
+    <!-- mic -->
+    <div class="mic-area">
+      <div class="mic-ring-wrap" id="mic-wrap">
+        <div class="mic-ring"></div>
+        <button class="mic-btn" id="mic-btn" onclick="toggleWake()">🎤</button>
+      </div>
+      <div class="mic-lbl" id="mic-lbl"></div>
+      <div class="mic-hint">di' "Claude" per iniziare</div>
+    </div>
   </div>
 
-  <!-- badge scadenze top-right -->
-  <div class="due-corner" id="due-corner"></div>
-
-  <!-- mic al centro-basso -->
-  <div class="mic-center" id="mic-center">
-    <div class="mic-ring-wrap" id="mic-wrap">
-      <div class="mic-ring" id="mic-ring"></div>
-      <button class="mic-btn" id="mic-btn" onclick="toggleWake()">🎤</button>
-    </div>
-    <div class="mic-lbl" id="mic-lbl"></div>
-    <div class="mic-hint">di' "Claude" per iniziare</div>
-  </div>
-
-  <!-- toolbar bottom -->
-  <div class="toolbar">
-    <button class="tb-btn" onclick="openPanel('chat-panel')">Chat</button>
-    <button class="tb-btn" onclick="openPanel('att-panel')">Attività</button>
-    <button class="tb-btn" onclick="quickAsk('Cosa devo fare oggi?')">Oggi</button>
-    <button class="tb-btn" onclick="quickAsk('Meteo nei prossimi giorni')">Meteo</button>
-    <button class="tb-btn" onclick="resetApp()">Cfg</button>
+  <!-- NAVBAR BOTTOM -->
+  <div class="navbar">
+    <button class="nb-btn" onclick="openPanel('chat-panel')">
+      <span class="nb-icon">💬</span>
+      <span class="nb-lbl">Chat</span>
+    </button>
+    <button class="nb-btn" onclick="openPanel('att-panel')">
+      <span class="nb-icon">📋</span>
+      <span class="nb-lbl">Attività</span>
+    </button>
+    <button class="nb-btn" onclick="quickAsk('Cosa devo fare oggi in casa?')">
+      <span class="nb-icon">🏠</span>
+      <span class="nb-lbl">Oggi</span>
+    </button>
+    <button class="nb-btn" onclick="quickAsk('Meteo nei prossimi giorni')">
+      <span class="nb-icon">🌤</span>
+      <span class="nb-lbl">Meteo</span>
+    </button>
+    <button class="nb-btn" onclick="resetApp()">
+      <span class="nb-icon">⚙️</span>
+      <span class="nb-lbl">Config</span>
+    </button>
   </div>
 </div>
 
 <!-- CHAT PANEL -->
 <div class="panel" id="chat-panel">
   <div class="panel-hdr">
-    <div class="panel-title">CASA / Chat</div>
+    <div class="panel-title">Casa · Chat</div>
     <button class="panel-close" onclick="closePanel('chat-panel')">✕ Chiudi</button>
   </div>
   <div class="chat-area" id="chat-area">
@@ -609,13 +638,13 @@ body {
 <!-- ATTIVITÀ PANEL -->
 <div class="panel" id="att-panel">
   <div class="panel-hdr">
-    <div class="panel-title">CASA / Attività</div>
+    <div class="panel-title">Casa · Attività</div>
     <button class="panel-close" onclick="closePanel('att-panel')">✕ Chiudi</button>
   </div>
   <div class="att-list" id="att-list"></div>
   <div class="att-add-bar">
     <input class="att-add-inp" id="att-input"
-      placeholder="Nuova attività..."
+      placeholder="Aggiungi attività..."
       onkeydown="if(event.key==='Enter')addAttFromInput()">
     <button class="att-add-btn" onclick="addAttFromInput()">+</button>
   </div>
@@ -624,6 +653,7 @@ body {
 <!-- DIALOG -->
 <div id="dialog">
   <div class="dlg-box">
+    <div class="dlg-handle"></div>
     <div class="dlg-title">Nuova Attività</div>
     <div class="dlg-field">
       <label class="dlg-lbl">Nome</label>
@@ -674,7 +704,7 @@ const LAT=43.2832, LON=13.4534, CITY='Contrada Cervare, Macerata';
 let apiKey='', chatHistory=[], weatherData=null;
 let isSpeaking=false;
 let wakeEnabled=false, wakeRecognition=null;
-let currentState='idle'; // idle | wake-active | listening | thinking | speaking
+let currentState='idle';
 
 const PAL=['#5e5ce6','#5e5ce6','#5e5ce6','#5e5ce6','#5e5ce6',
            '#ffd60a','#ffd60a','#ff6b00','#30d158','#30d158','#30d158',
@@ -686,28 +716,19 @@ const PAL=['#5e5ce6','#5e5ce6','#5e5ce6','#5e5ce6','#5e5ce6',
 // ══════════════════════════════
 function saveAndStart(){
   const k = document.getElementById('api-input').value.trim();
-  if(!k.startsWith('sk-ant-')){ showToast('CHIAVE NON VALIDA'); return; }
-  apiKey = k;
-  localStorage.setItem('casa_key', k);
-  boot();
+  if(!k.startsWith('sk-ant-')){ showToast('Chiave non valida'); return; }
+  apiKey = k; localStorage.setItem('casa_key', k); boot();
 }
 
 function boot(){
   document.getElementById('setup').classList.add('hidden');
-  document.getElementById('home').style.display = 'block';
-  startClock();
-  loadWeather();
-  renderAtt();
-  checkScadenze();
-  // Avvia wake word dopo 800ms per dare tempo al browser
+  document.getElementById('home').style.display = 'flex';
+  startClock(); loadWeather(); renderAtt(); checkScadenze();
   setTimeout(startWakeWord, 800);
 }
 
 function resetApp(){
-  if(confirm('Cambiare configurazione?')){
-    localStorage.removeItem('casa_key');
-    location.reload();
-  }
+  if(confirm('Cambiare configurazione?')){ localStorage.removeItem('casa_key'); location.reload(); }
 }
 
 window.onload = () => {
@@ -725,8 +746,8 @@ function closePanel(id){ document.getElementById(id).classList.remove('open'); }
 // ══════════════════════════════
 // CLOCK
 // ══════════════════════════════
-const GG=['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
-const MM=['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+const GIORNI=['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+const MESI=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
 
 function startClock(){ tick(); setInterval(tick, 1000); }
 
@@ -735,69 +756,74 @@ function tick(){
   const hh = String(n.getHours()).padStart(2,'0');
   const mm = String(n.getMinutes()).padStart(2,'0');
   const ss = String(n.getSeconds()).padStart(2,'0');
-  document.getElementById('clk-hm').innerHTML = `${hh}<span class="colon">:</span>${mm}`;
-  document.getElementById('clk-ss').textContent = ss+'s';
-  document.getElementById('clk-date').textContent = `${GG[n.getDay()]} ${n.getDate()} ${MM[n.getMonth()]}`;
+  document.getElementById('clk-h').textContent = hh;
+  document.getElementById('clk-m').textContent = mm;
+  document.getElementById('clk-s').textContent = ss;
+  document.getElementById('clk-date').textContent =
+    `${GIORNI[n.getDay()]} ${n.getDate()} ${MESI[n.getMonth()]} ${n.getFullYear()}`;
   const col = PAL[n.getHours()];
-  document.getElementById('clk-hm').style.textShadow = `0 0 100px ${col}40`;
+  ['clk-h','clk-m','clk-s'].forEach(id=>{
+    document.getElementById(id).style.textShadow = `0 0 80px ${col}35`;
+  });
 }
 
 // ══════════════════════════════
 // WEATHER
 // ══════════════════════════════
-function wCol(c){ if(c<=1)return'#ffd60a'; if(c<=3)return'#666'; if(c<=48)return'#555'; if(c<=82)return'#0a84ff'; return'#ff453a'; }
-function wIcon(c){ if(c===0)return'☀'; if(c<=2)return'⛅'; if(c<=3)return'☁'; if(c<=48)return'≋'; if(c<=67)return'⟁'; if(c<=77)return'❄'; if(c<=82)return'⟁'; return'↯'; }
+function wIcon(c){ if(c===0)return'☀️'; if(c<=2)return'⛅'; if(c<=3)return'☁️'; if(c<=48)return'🌫️'; if(c<=67)return'🌧️'; if(c<=77)return'❄️'; if(c<=82)return'🌧️'; return'⛈️'; }
 function wDesc(c){ const m={0:'Sereno',1:'Prev. sereno',2:'Parz. nuvoloso',3:'Nuvoloso',45:'Nebbia',51:'Pioggerella',61:'Pioggia leggera',63:'Pioggia',65:'Pioggia intensa',71:'Neve leggera',73:'Neve',80:'Rovesci',95:'Temporale'}; return m[c]||'Variabile'; }
+
+function setWeatherBar(icon, temp, desc, extra){
+  // set entrambe le copie per il loop
+  ['','2'].forEach(s=>{
+    document.getElementById('w-icon'+s).textContent = icon;
+    document.getElementById('w-temp'+s).textContent = temp;
+    document.getElementById('w-desc'+s).textContent = desc;
+    document.getElementById('w-extra-txt'+s).textContent = extra;
+  });
+}
 
 async function loadWeather(){
   try{
     const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Europe%2FRome&forecast_days=3`);
     const d = await r.json();
-    if(!d.current) throw new Error('no data');
+    if(!d.current) throw new Error();
     weatherData = d;
-    const c=d.current, dy=d.daily, col=wCol(c.weather_code);
-    document.getElementById('wc-accent').style.background = col;
-    document.getElementById('wc-accent').style.setProperty('--wc', col);
-    document.getElementById('wc-icon').textContent = wIcon(c.weather_code);
-    document.getElementById('wc-temp').textContent = `${Math.round(c.temperature_2m)}°`;
-    document.getElementById('wc-desc').textContent = wDesc(c.weather_code).toUpperCase();
-    document.getElementById('wc-stats').innerHTML =
-      `💧 ${c.relative_humidity_2m}%  🌬 ${Math.round(c.wind_speed_10m)} km/h\n↑${Math.round(dy.temperature_2m_max[0])}°  ↓${Math.round(dy.temperature_2m_min[0])}°`.replace('\n','<br>');
+    const c=d.current, dy=d.daily;
+    const icon = wIcon(c.weather_code);
+    const temp = `${Math.round(c.temperature_2m)}°`;
+    const desc = wDesc(c.weather_code);
+    const extra = `💧 ${c.relative_humidity_2m}%  🌬 ${Math.round(c.wind_speed_10m)} km/h  ↑${Math.round(dy.temperature_2m_max[0])}° ↓${Math.round(dy.temperature_2m_min[0])}°  ·  Domani ↑${Math.round(dy.temperature_2m_max[1])}° ↓${Math.round(dy.temperature_2m_min[1])}°`;
+    setWeatherBar(icon, temp, desc, extra);
     setTimeout(loadWeather, 30*60*1000);
   }catch(e){
-    document.getElementById('wc-desc').textContent = 'N/D';
+    setWeatherBar('—','—°','Non disponibile','');
   }
 }
 
 function weatherSummary(){
   if(!weatherData) return 'Meteo non disponibile.';
   const c=weatherData.current, d=weatherData.daily;
-  return `${wDesc(c.weather_code)}, ${Math.round(c.temperature_2m)}°C (max ${Math.round(d.temperature_2m_max[0])}°, min ${Math.round(d.temperature_2m_min[0])}°). Domani max ${Math.round(d.temperature_2m_max[1])}°.`;
+  return `${wDesc(c.weather_code)}, ${Math.round(c.temperature_2m)}°C. Max ${Math.round(d.temperature_2m_max[0])}°, min ${Math.round(d.temperature_2m_min[0])}°. Domani max ${Math.round(d.temperature_2m_max[1])}°.`;
 }
 
 // ══════════════════════════════
 // ATTIVITÀ
 // ══════════════════════════════
-function giorniA(a){
-  if(!a.ultimaVolta) return 0;
-  const p = new Date(a.ultimaVolta).getTime() + a.freq*86400000;
-  return Math.ceil((p - Date.now())/86400000);
-}
+function giorniA(a){ if(!a.ultimaVolta)return 0; return Math.ceil((new Date(a.ultimaVolta).getTime()+a.freq*86400000-Date.now())/86400000); }
 function scadLbl(g){ if(g<0)return{t:`Scaduta ${Math.abs(g)}gg fa`,c:'overdue'}; if(g===0)return{t:'Da fare oggi',c:'overdue'}; if(g<=7)return{t:`Tra ${g} giorni`,c:'soon'}; return{t:`Tra ${g} giorni`,c:'ok'}; }
-function attCol(g){ if(g<0)return'#ff2d55'; if(g<=7)return'#ffd60a'; return'#30d158'; }
-function freqLbl(g){ const m={7:'Settimanale',14:'Ogni 2 sett.',30:'Mensile',60:'Ogni 2 mesi',90:'Trimestrale',180:'Semestrale',365:'Annuale'}; return m[g]||`Ogni ${g}gg`; }
+function attCol(g){ return g<0?'#ff2d55':g<=7?'#ffd60a':'#30d158'; }
+function freqLbl(g){ return {7:'Settimanale',14:'Ogni 2 sett.',30:'Mensile',60:'Ogni 2 mesi',90:'Trimestrale',180:'Semestrale',365:'Annuale'}[g]||`Ogni ${g}gg`; }
 
 function renderAtt(){
   const el = document.getElementById('att-list');
   if(!attivita.length){ el.innerHTML='<div class="att-empty">Nessuna attività.<br>Aggiungine una qui sotto.</div>'; return; }
-  const sorted = [...attivita].sort((a,b)=>giorniA(a)-giorniA(b));
-  el.innerHTML = sorted.map(a=>{
-    const g=giorniA(a), lbl=scadLbl(g), col=attCol(g);
-    const ul = a.ultimaVolta ? new Date(a.ultimaVolta).toLocaleDateString('it-IT') : 'Mai';
+  el.innerHTML=[...attivita].sort((a,b)=>giorniA(a)-giorniA(b)).map(a=>{
+    const g=giorniA(a),lbl=scadLbl(g),col=attCol(g);
     return `<div class="att-item" style="--ic:${col}">
       <div class="att-info">
         <div class="att-name">${a.nome}</div>
-        <div class="att-meta">${freqLbl(a.freq)} · Ultima: ${ul}${a.note?'<br>'+a.note:''}</div>
+        <div class="att-meta">${freqLbl(a.freq)} · Ultima: ${a.ultimaVolta?new Date(a.ultimaVolta).toLocaleDateString('it-IT'):'Mai'}${a.note?'<br>'+a.note:''}</div>
         <div class="att-due ${lbl.c}">${lbl.t}</div>
       </div>
       <div class="att-actions">
@@ -810,68 +836,47 @@ function renderAtt(){
 
 function checkScadenze(){
   const tot = attivita.filter(a=>giorniA(a)<=7).length;
-  const el = document.getElementById('due-corner');
-  el.innerHTML = tot>0
-    ? `<div class="due-badge" onclick="openPanel('att-panel')">${tot} IN SCADENZA</div>`
-    : '';
+  document.getElementById('due-corner').innerHTML = tot>0
+    ? `<div class="due-badge" onclick="openPanel('att-panel')">${tot} in scadenza</div>` : '';
 }
 
 function addAttFromInput(){
-  const inp = document.getElementById('att-input');
-  const nome = inp.value.trim(); if(!nome) return;
+  const inp=document.getElementById('att-input'), nome=inp.value.trim(); if(!nome)return;
   inp.value=''; openDialog(nome);
 }
-
 function openDialog(nome=''){
-  document.getElementById('d-nome').value = nome;
-  document.getElementById('d-note').value = '';
-  document.getElementById('d-ultima').value = new Date().toISOString().split('T')[0];
-  document.getElementById('d-freq').value = '30';
+  document.getElementById('d-nome').value=nome;
+  document.getElementById('d-note').value='';
+  document.getElementById('d-ultima').value=new Date().toISOString().split('T')[0];
+  document.getElementById('d-freq').value='30';
   document.getElementById('dialog').classList.add('open');
 }
 function closeDialog(){ document.getElementById('dialog').classList.remove('open'); }
-
 function salvaAtt(){
-  const nome = document.getElementById('d-nome').value.trim();
-  if(!nome){ showToast('INSERISCI UN NOME'); return; }
-  attivita.push({
-    id: Date.now().toString(), nome,
-    freq: parseInt(document.getElementById('d-freq').value),
-    ultimaVolta: document.getElementById('d-ultima').value||null,
-    note: document.getElementById('d-note').value.trim()
-  });
-  saveAtt(attivita); renderAtt(); checkScadenze(); closeDialog();
-  showToast('ATTIVITÀ SALVATA');
+  const nome=document.getElementById('d-nome').value.trim(); if(!nome){showToast('Inserisci un nome');return;}
+  attivita.push({id:Date.now().toString(),nome,freq:parseInt(document.getElementById('d-freq').value),ultimaVolta:document.getElementById('d-ultima').value||null,note:document.getElementById('d-note').value.trim()});
+  saveAtt(attivita);renderAtt();checkScadenze();closeDialog();showToast('Attività salvata');
 }
-
 function segnaFatta(id){
-  const a = attivita.find(x=>x.id===id); if(!a) return;
-  a.ultimaVolta = new Date().toISOString().split('T')[0];
-  saveAtt(attivita); renderAtt(); checkScadenze();
-  showToast('✓ ' + a.nome.toUpperCase());
+  const a=attivita.find(x=>x.id===id);if(!a)return;
+  a.ultimaVolta=new Date().toISOString().split('T')[0];
+  saveAtt(attivita);renderAtt();checkScadenze();showToast('✓ '+a.nome);
 }
-
 function elimina(id){
-  const a = attivita.find(x=>x.id===id); if(!a) return;
-  if(!confirm(`Eliminare "${a.nome}"?`)) return;
-  attivita = attivita.filter(x=>x.id!==id);
-  saveAtt(attivita); renderAtt(); checkScadenze();
+  const a=attivita.find(x=>x.id===id);if(!a)return;
+  if(!confirm(`Eliminare "${a.nome}"?`))return;
+  attivita=attivita.filter(x=>x.id!==id);saveAtt(attivita);renderAtt();checkScadenze();
 }
-
 function attContext(){
-  if(!attivita.length) return 'Nessuna attività registrata.';
-  const sc = attivita.filter(a=>giorniA(a)<=0).map(a=>a.nome);
-  const im = attivita.filter(a=>{const g=giorniA(a);return g>0&&g<=7;}).map(a=>`${a.nome} (${giorniA(a)}gg)`);
-  const pr = attivita.filter(a=>giorniA(a)>7).map(a=>`${a.nome} (${giorniA(a)}gg)`);
-  let s='';
-  if(sc.length) s+=`SCADUTE: ${sc.join(', ')}. `;
-  if(im.length) s+=`IMMINENTI: ${im.join(', ')}. `;
-  if(pr.length) s+=`Prossime: ${pr.join(', ')}.`;
-  return s||'Tutto in regola.';
+  if(!attivita.length)return'Nessuna attività.';
+  const sc=attivita.filter(a=>giorniA(a)<=0).map(a=>a.nome);
+  const im=attivita.filter(a=>{const g=giorniA(a);return g>0&&g<=7;}).map(a=>`${a.nome}(${giorniA(a)}gg)`);
+  const pr=attivita.filter(a=>giorniA(a)>7).map(a=>`${a.nome}(${giorniA(a)}gg)`);
+  return[sc.length?'SCADUTE:'+sc.join(','):'',im.length?'IMMINENTI:'+im.join(','):'',pr.length?'Prossime:'+pr.join(','):''].filter(Boolean).join(' ')||'Tutto in regola.';
 }
 
 // ══════════════════════════════
-// AI — unica funzione fetch
+// AI
 // ══════════════════════════════
 function buildSystem(breve=false){
   const n=new Date();
@@ -880,7 +885,7 @@ function buildSystem(breve=false){
 Data: ${n.toLocaleString('it-IT')} — ${stag[n.getMonth()]}
 Meteo: ${weatherSummary()}
 Attività: ${attContext()}
-Rispondi in italiano, tono diretto.${breve?' MAX 2 frasi brevi (risposta vocale).':''}`;
+Rispondi in italiano, tono diretto e amichevole.${breve?' Massimo 2 frasi brevi (risposta vocale).':''}`;
 }
 
 async function callClaude(messages, breve=false){
@@ -888,55 +893,53 @@ async function callClaude(messages, breve=false){
     method:'POST',
     headers:{
       'Content-Type':'application/json',
-      'x-api-key': apiKey,
+      'x-api-key':apiKey,
       'anthropic-version':'2023-06-01',
       'anthropic-dangerous-direct-browser-access':'true'
     },
-    body: JSON.stringify({
+    body:JSON.stringify({
       model:'claude-sonnet-4-5',
-      max_tokens: breve ? 150 : 600,
-      system: buildSystem(breve),
+      max_tokens:breve?150:600,
+      system:buildSystem(breve),
       messages
     })
   });
-  const d = await res.json();
+  const d=await res.json();
   if(d.error) throw new Error(d.error.message);
   return d.content[0].text;
 }
 
-// ── Chat testuale ──
 async function askAI(text){
-  chatHistory.push({role:'user', content:text});
+  chatHistory.push({role:'user',content:text});
   setTyping(true);
   try{
-    const reply = await callClaude(chatHistory, false);
-    setTyping(false);
-    addMsg(reply,'ai');
-    chatHistory.push({role:'assistant', content:reply});
-    if(chatHistory.length>20) chatHistory=chatHistory.slice(-16);
+    const reply=await callClaude(chatHistory,false);
+    setTyping(false); addMsg(reply,'ai');
+    chatHistory.push({role:'assistant',content:reply});
+    if(chatHistory.length>20)chatHistory=chatHistory.slice(-16);
   }catch(e){
     setTyping(false);
-    addMsg(e.message.includes('401')?'[ API KEY NON VALIDA ]':`[ ERRORE: ${e.message} ]`,'ai');
+    addMsg(e.message.includes('401')?'[ API key non valida ]':`[ Errore: ${e.message} ]`,'ai');
   }
 }
 
 function addMsg(text,who){
-  const area=document.getElementById('chat-area'), typing=document.getElementById('typing');
-  const d=document.createElement('div'); d.className=`msg ${who}`;
-  if(who==='ai') d.innerHTML=`<div class="lbl">CASA /</div>${fmt(text)}`;
+  const area=document.getElementById('chat-area'),typing=document.getElementById('typing');
+  const d=document.createElement('div');d.className=`msg ${who}`;
+  if(who==='ai')d.innerHTML=`<div class="lbl">Casa ·</div>${fmt(text)}`;
   else d.textContent=text;
-  area.insertBefore(d,typing); area.scrollTop=area.scrollHeight;
+  area.insertBefore(d,typing);area.scrollTop=area.scrollHeight;
 }
 function fmt(t){ return t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>').replace(/\n/g,'<br>'); }
 function setTyping(on){ document.getElementById('typing').className=on?'typing on':'typing'; if(on)document.getElementById('chat-area').scrollTop=999999; }
 
 async function sendMessage(){
-  const el=document.getElementById('cp-input'), t=el.value.trim(); if(!t) return;
-  addMsg(t,'user'); el.value=''; autoResize(el); await askAI(t);
+  const el=document.getElementById('cp-input'),t=el.value.trim();if(!t)return;
+  addMsg(t,'user');el.value='';autoResize(el);await askAI(t);
 }
-async function quickAsk(t){ openPanel('chat-panel'); addMsg(t,'user'); await askAI(t); }
+async function quickAsk(t){ openPanel('chat-panel');addMsg(t,'user');await askAI(t); }
 function handleKey(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} }
-function autoResize(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,100)+'px'; }
+function autoResize(el){ el.style.height='auto';el.style.height=Math.min(el.scrollHeight,100)+'px'; }
 
 // ══════════════════════════════
 // WAKE WORD + VOCE
@@ -946,27 +949,32 @@ function setState(s){
   const wrap=document.getElementById('mic-wrap');
   const btn=document.getElementById('mic-btn');
   const lbl=document.getElementById('mic-lbl');
-  // rimuovi tutte le classi stato
   wrap.className='mic-ring-wrap';
-  if(s==='wake-active'){ wrap.classList.add('state-wake-active'); btn.textContent='◉'; lbl.textContent='in ascolto...'; }
-  else if(s==='listening'){ wrap.classList.add('state-listening'); btn.textContent='■'; lbl.textContent='parla ora'; }
-  else if(s==='thinking'){ wrap.classList.add('state-thinking'); btn.textContent='…'; lbl.textContent='sto pensando...'; }
-  else if(s==='speaking'){ wrap.classList.add('state-speaking'); btn.textContent='◎'; lbl.textContent='sto parlando...'; }
-  else { btn.textContent='🎤'; lbl.textContent=''; }
+  const states={
+    'wake-active':['state-wake-active','◉','in ascolto...'],
+    'listening':  ['state-listening','■','parla ora'],
+    'thinking':   ['state-thinking','…','sto pensando...'],
+    'speaking':   ['state-speaking','◎','sto parlando...'],
+  };
+  if(states[s]){
+    wrap.classList.add(states[s][0]);
+    btn.textContent=states[s][1];
+    lbl.textContent=states[s][2];
+  } else {
+    btn.textContent='🎤'; lbl.textContent='';
+  }
 }
 
 function toggleWake(){
-  if(currentState==='speaking'){ window.speechSynthesis.cancel(); isSpeaking=false; startWakeWord(); return; }
-  if(wakeEnabled){ stopWakeWord(); return; }
+  if(currentState==='speaking'){ window.speechSynthesis.cancel();isSpeaking=false;startWakeWord();return; }
+  if(wakeEnabled){ stopWakeWord();return; }
   startWakeWord();
 }
 
 function startWakeWord(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){ showToast('MICROFONO NON SUPPORTATO'); return; }
-  wakeEnabled=true;
-  setState('wake-active');
-  listenLoop();
+  if(!SR){ showToast('Microfono non supportato');return; }
+  wakeEnabled=true; setState('wake-active'); listenLoop();
 }
 
 function stopWakeWord(){
@@ -976,7 +984,7 @@ function stopWakeWord(){
 }
 
 function listenLoop(){
-  if(!wakeEnabled) return;
+  if(!wakeEnabled)return;
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   wakeRecognition=new SR();
   wakeRecognition.lang='it-IT';
@@ -985,123 +993,105 @@ function listenLoop(){
   wakeRecognition.maxAlternatives=5;
 
   wakeRecognition.onresult=(e)=>{
-    let text='', detected=false;
-    for(let i=0;i<e.results.length;i++){
+    let text='',detected=false;
+    for(let i=0;i<e.results.length;i++)
       for(let j=0;j<e.results[i].length;j++){
         const t=e.results[i][j].transcript.toLowerCase().trim();
         text+=t+' ';
         if(/claud|clod|klaud|klod|cloud/.test(t)) detected=true;
       }
-    }
     if(detected){
-      // estrai comando dopo wake word
       const cmd=text.replace(/claud\w*|clod\w*|klaud\w*|klod\w*|cloud\w*/gi,'').trim();
-      if(cmd.length>3){ handleCommand(cmd); }
-      else { listenForCommand(); }
+      if(cmd.length>3) handleCommand(cmd);
+      else listenForCommand();
     } else {
-      if(wakeEnabled) setTimeout(listenLoop, 200);
+      if(wakeEnabled) setTimeout(listenLoop,200);
     }
   };
 
   wakeRecognition.onerror=(e)=>{
-    const retry = (e.error==='no-speech'||e.error==='aborted') ? 300 : 1500;
-    if(wakeEnabled) setTimeout(listenLoop, retry);
+    const retry=(e.error==='no-speech'||e.error==='aborted')?300:1500;
+    if(wakeEnabled) setTimeout(listenLoop,retry);
   };
 
   wakeRecognition.onend=()=>{
-    if(wakeEnabled && currentState==='wake-active') setTimeout(listenLoop, 200);
+    if(wakeEnabled&&currentState==='wake-active') setTimeout(listenLoop,200);
   };
 
   try{ wakeRecognition.start(); }
-  catch(e){ if(wakeEnabled) setTimeout(listenLoop, 1000); }
+  catch(e){ if(wakeEnabled) setTimeout(listenLoop,1000); }
 }
 
 function listenForCommand(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   const r=new SR();
-  r.lang='it-IT'; r.continuous=false; r.interimResults=false;
-  setState('listening');
-  beep();
-
+  r.lang='it-IT';r.continuous=false;r.interimResults=false;
+  setState('listening'); beep();
   r.onresult=(e)=>{ handleCommand(e.results[0][0].transcript); };
-  r.onerror=()=>{ setState('wake-active'); if(wakeEnabled) setTimeout(listenLoop,300); };
-  r.onend=()=>{ if(currentState==='listening'){ setState('wake-active'); if(wakeEnabled) setTimeout(listenLoop,300); } };
-  try{ r.start(); }catch(e){ setState('wake-active'); if(wakeEnabled) setTimeout(listenLoop,500); }
+  r.onerror=()=>{ setState('wake-active');if(wakeEnabled)setTimeout(listenLoop,300); };
+  r.onend=()=>{ if(currentState==='listening'){setState('wake-active');if(wakeEnabled)setTimeout(listenLoop,300);} };
+  try{ r.start(); }catch(e){ setState('wake-active');if(wakeEnabled)setTimeout(listenLoop,500); }
 }
 
 async function handleCommand(cmd){
   setState('thinking');
   addMsg(cmd,'user');
-
-  // Usa una copia separata per non sporcare chatHistory
-  const msgs=[...chatHistory, {role:'user',content:cmd}];
-
+  const msgs=[...chatHistory,{role:'user',content:cmd}];
   try{
-    const reply = await callClaude(msgs, true);
-    // aggiorna chatHistory solo se va bene
+    const reply=await callClaude(msgs,true);
     chatHistory.push({role:'user',content:cmd});
     chatHistory.push({role:'assistant',content:reply});
-    if(chatHistory.length>20) chatHistory=chatHistory.slice(-16);
-
+    if(chatHistory.length>20)chatHistory=chatHistory.slice(-16);
     addMsg(reply,'ai');
-    speakText(reply, ()=>{
-      if(wakeEnabled) setTimeout(listenLoop, 400);
-    });
+    speakText(reply,()=>{ if(wakeEnabled)setTimeout(listenLoop,400); });
   }catch(err){
-    const msg = err.message.includes('401') ? 'Chiave API non valida' : 'Errore di connessione, riprova';
-    addMsg('[ '+msg.toUpperCase()+' ]','ai');
+    const msg=err.message.includes('401')?'Chiave API non valida':'Errore di connessione';
+    addMsg(`[ ${msg} ]`,'ai');
     setState(wakeEnabled?'wake-active':'idle');
-    if(wakeEnabled) setTimeout(listenLoop,1500);
+    if(wakeEnabled)setTimeout(listenLoop,1500);
   }
 }
 
-function speakText(text, onEnd=null){
-  if(!window.speechSynthesis){ setState('idle'); if(onEnd)onEnd(); return; }
+function speakText(text,onEnd=null){
+  if(!window.speechSynthesis){ setState('idle');if(onEnd)onEnd();return; }
   window.speechSynthesis.cancel();
   const clean=text.replace(/\*\*(.*?)\*\*/g,'$1').replace(/\*(.*?)\*/g,'$1').replace(/#+\s/g,'').replace(/<[^>]+>/g,'');
   const utt=new SpeechSynthesisUtterance(clean);
-  utt.lang='it-IT'; utt.rate=1.0; utt.pitch=1.0;
-
-  // Attende che le voci siano caricate
+  utt.lang='it-IT';utt.rate=1.0;utt.pitch=1.0;
   const doSpeak=()=>{
     const voices=window.speechSynthesis.getVoices();
-    const itVoice=voices.find(v=>v.lang==='it-IT')||voices.find(v=>v.lang.startsWith('it'));
-    if(itVoice) utt.voice=itVoice;
-    utt.onstart=()=>{ isSpeaking=true; setState('speaking'); };
-    utt.onend=()=>{ isSpeaking=false; setState(wakeEnabled?'wake-active':'idle'); if(onEnd)onEnd(); };
-    utt.onerror=()=>{ isSpeaking=false; setState(wakeEnabled?'wake-active':'idle'); if(onEnd)onEnd(); };
+    const v=voices.find(v=>v.lang==='it-IT')||voices.find(v=>v.lang.startsWith('it'));
+    if(v)utt.voice=v;
+    utt.onstart=()=>{ isSpeaking=true;setState('speaking'); };
+    utt.onend=()=>{ isSpeaking=false;setState(wakeEnabled?'wake-active':'idle');if(onEnd)onEnd(); };
+    utt.onerror=()=>{ isSpeaking=false;setState(wakeEnabled?'wake-active':'idle');if(onEnd)onEnd(); };
     window.speechSynthesis.speak(utt);
   };
-
   const voices=window.speechSynthesis.getVoices();
-  if(voices.length>0){ doSpeak(); }
-  else { window.speechSynthesis.onvoiceschanged=()=>{ doSpeak(); }; }
+  if(voices.length>0) doSpeak();
+  else { window.speechSynthesis.onvoiceschanged=doSpeak; }
 }
 
 function beep(){
   try{
     const ctx=new(window.AudioContext||window.webkitAudioContext)();
-    const o=ctx.createOscillator(), g=ctx.createGain();
-    o.connect(g); g.connect(ctx.destination);
-    o.frequency.value=900; o.type='sine';
+    const o=ctx.createOscillator(),g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    o.frequency.value=900;o.type='sine';
     g.gain.setValueAtTime(.12,ctx.currentTime);
     g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.12);
-    o.start(); o.stop(ctx.currentTime+.12);
+    o.start();o.stop(ctx.currentTime+.12);
   }catch(e){}
 }
 
-// precarica voci
 if(window.speechSynthesis){
   window.speechSynthesis.getVoices();
   window.speechSynthesis.onvoiceschanged=()=>window.speechSynthesis.getVoices();
 }
 
-// ══════════════════════════════
-// TOAST
-// ══════════════════════════════
 function showToast(msg){
   const t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
+  t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),3000);
 }
 </script>

@@ -186,7 +186,7 @@ html, body {
 }
 
 .clock-hms {
-  font-size: clamp(4rem, 22vw, 10rem);
+  font-size: clamp(2.4rem, 22vw, 10rem);
   font-weight: 700;
   line-height: 1;
   letter-spacing: -.03em;
@@ -195,7 +195,7 @@ html, body {
 }
 
 .clock-sep {
-  font-size: clamp(3rem, 16vw, 7.5rem);
+  font-size: clamp(2rem, 16vw, 7.5rem);
   font-weight: 300;
   color: var(--b3);
   line-height: 1;
@@ -671,6 +671,64 @@ html, body {
   white-space: nowrap;
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ══════════════════════════
+   LANDSCAPE — ottimizzazione
+══════════════════════════ */
+@media (orientation: landscape) {
+  /* orologio più piccolo */
+  .clock-hms {
+    font-size: clamp(2rem, 10vh, 6rem);
+  }
+  .clock-sep {
+    font-size: clamp(1.5rem, 7.5vh, 4.5rem);
+  }
+
+  /* meno spazio verticale */
+  .clock-date {
+    font-size: .7rem;
+    margin-top: 6px;
+  }
+  .mic-area {
+    margin-top: 10px;
+    gap: 4px;
+  }
+  .mic-ring-wrap {
+    width: 40px; height: 40px;
+  }
+  .mic-lbl { font-size: .46rem; }
+  .mic-hint { font-size: .42rem; }
+
+  /* barra meteo più sottile */
+  .weather-bar { height: 28px; }
+  .w-item { font-size: .62rem; gap: 5px; margin-right: 32px; }
+
+  /* navbar più compatta */
+  .navbar { height: 42px; }
+  .nb-icon { width: 16px; height: 16px; }
+  .nb-lbl  { font-size: .38rem; }
+
+  /* panels: layout landscape — side by side per chat */
+  .panel-hdr { padding: 10px 16px; }
+  .cp-row { padding: 8px 12px 12px; }
+  .arch-toolbar { padding: 8px 12px 0; }
+  .arch-add-bar { padding: 8px 12px 12px; }
+}
+
+/* Landscape su schermi molto bassi (telefoni ruotati) */
+@media (orientation: landscape) and (max-height: 450px) {
+  .clock-hms { font-size: clamp(1.8rem, 8vh, 4rem); }
+  .clock-sep { font-size: clamp(1.4rem, 6vh, 3rem); }
+  .clock-date { margin-top: 4px; font-size: .62rem; }
+  .mic-area { margin-top: 6px; }
+  .mic-ring-wrap { width: 34px; height: 34px; }
+  .mic-hint { display: none; }
+  .weather-bar { height: 24px; }
+  .navbar { height: 36px; }
+  .nb-lbl { display: none; }
+  .nb-icon { width: 18px; height: 18px; }
+  .due-badge { font-size: .44rem; padding: 3px 7px; top: 6px; right: 10px; }
+}
 </style>
 </head>
 <body>

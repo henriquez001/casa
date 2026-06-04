@@ -178,14 +178,14 @@ html, body {
 }
 .clock-hms {
   font-family: var(--clock);
-  font-size: clamp(1.2rem, 9vw, 4.5rem);
+  font-size: clamp(1.56rem, 11.7vw, 5.85rem);
   font-weight: 400; line-height: 1;
   letter-spacing: -.04em; color: var(--text);
   transition: text-shadow 3s ease;
 }
 .clock-sep {
   font-family: var(--sep);
-  font-size: clamp(0.9rem, 7vw, 3.5rem);
+  font-size: clamp(1.17rem, 9.1vw, 4.55rem);
   font-weight: 400; color: var(--brd);
   line-height: 1; padding: 0 2px;
   animation: blink 1s step-start infinite;
@@ -582,8 +582,8 @@ html, body {
   }
 
   /* Orologio centrato con vh */
-  .clock-hms { font-size: clamp(3rem, 28vh, 9rem); }
-  .clock-sep { font-size: clamp(2.2rem, 21vh, 6.8rem); }
+  .clock-hms { font-size: clamp(2.7rem, 25.2vh, 8.1rem); }
+  .clock-sep { font-size: clamp(1.98rem, 18.9vh, 6.12rem); }
 
   /* DATA — sopra l'orologio in posizione assoluta
      top: 50% = centro; poi saliamo di circa 30vh (metà cifre) + gap */
@@ -628,8 +628,8 @@ html, body {
 /* Landscape schermi bassi < 450px (telefoni standard ruotati) */
 @media (orientation: landscape) and (max-height: 450px) {
 
-  .clock-hms { font-size: clamp(2.8rem, 30vh, 8rem); }
-  .clock-sep { font-size: clamp(2rem, 22vh, 6rem); }
+  .clock-hms { font-size: clamp(2.52rem, 27.0vh, 7.2rem); }
+  .clock-sep { font-size: clamp(1.8rem, 19.8vh, 5.4rem); }
 
   /* Ricalcola posizioni per cifre più piccole */
   .clock-date { top: calc(50% - 28vh - 1.6rem); font-size: .72rem; }

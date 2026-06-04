@@ -1831,6 +1831,7 @@ async function speakText(text, onEnd=null){
   if(elKey && elVoice){
     setState('speaking'); isSpeaking=true;
     try{
+      console.log('ElevenLabs: invio richiesta, voice =', elVoice);
       const res = await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+elVoice, {
         method:'POST',
         headers:{'xi-api-key':elKey,'Content-Type':'application/json','Accept':'audio/mpeg'},
@@ -1839,13 +1840,43 @@ async function speakText(text, onEnd=null){
           voice_settings:{stability:0.5,similarity_boost:0.8,style:0.3,use_speaker_boost:true}
         })
       });
-      if(!res.ok) throw new Error('EL '+res.status);
-      const url = URL.createObjectURL(await res.blob());
+
+      if(!res.ok){
+        // Leggi il messaggio di errore dettagliato da ElevenLabs
+        let errMsg = 'HTTP '+res.status;
+        try{ const ej = await res.json(); errMsg = JSON.stringify(ej.detail||ej); }catch(_){}
+        console.error('ElevenLabs errore:', res.status, errMsg);
+        if(res.status === 401) showToast('ElevenLabs: chiave non valida');
+        else if(res.status === 422) showToast('ElevenLabs: Voice ID errato');
+        else showToast('ElevenLabs: errore '+res.status);
+        throw new Error(errMsg);
+      }
+
+      const blob = await res.blob();
+      if(blob.size === 0){ console.error('ElevenLabs: audio vuoto'); throw new Error('audio vuoto'); }
+
+      const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
       audio.onended = () => { isSpeaking=false; URL.revokeObjectURL(url); setState(wakeEnabled?'wake-active':'idle'); if(onEnd)onEnd(); };
-      audio.onerror = () => { isSpeaking=false; setState(wakeEnabled?'wake-active':'idle'); if(onEnd)onEnd(); };
-      audio.play(); return;
-    }catch(e){ console.warn('ElevenLabs fallback:',e); }
+      audio.onerror = (ev) => { console.error('Audio playback error:', ev); isSpeaking=false; setState(wakeEnabled?'wake-active':'idle'); if(onEnd)onEnd(); };
+
+      // audio.play() restituisce una Promise che può essere rifiutata dal browser
+      // (autoplay policy). Gestiamo il caso esplicitamente.
+      try{
+        await audio.play();
+        console.log('ElevenLabs: riproduzione avviata');
+      }catch(playErr){
+        console.error('Autoplay bloccato dal browser:', playErr);
+        showToast('Tocca lo schermo per attivare l\'audio');
+        isSpeaking=false;
+        setState(wakeEnabled?'wake-active':'idle');
+        if(onEnd)onEnd();
+      }
+      return;
+    }catch(e){
+      console.warn('ElevenLabs fallback al browser TTS:', e);
+      isSpeaking=false;
+    }
   }
 
   if(!window.speechSynthesis){ setState('idle'); if(onEnd)onEnd(); return; }

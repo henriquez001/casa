@@ -672,61 +672,115 @@ html, body {
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-/* ══════════════════════════
-   LANDSCAPE — ottimizzazione
-══════════════════════════ */
+/* ══════════════════════════════════════════════════════
+   LANDSCAPE — ottimizzazione per telefono ruotato
+   
+   COME FUNZIONA IL RIDIMENSIONAMENTO:
+   - In portrait: l'orologio usa vw (larghezza schermo)
+   - In landscape: usiamo vh (altezza schermo) perché
+     l'altezza è il fattore limitante quando il telefono
+     è ruotato
+   - clamp(MIN, VALORE_PREFERITO, MAX) significa:
+     "non meno di MIN, preferibilmente VALORE, non più di MAX"
+   
+   PER AUMENTARE/DIMINUIRE L'OROLOGIO:
+   Modifica il valore centrale in vh, es. 28vh → 32vh
+   per aumentarlo, 28vh → 22vh per ridurlo.
+══════════════════════════════════════════════════════ */
 @media (orientation: landscape) {
-  /* orologio più piccolo */
+
+  /* ── OROLOGIO ──
+     28vh = il 28% dell'altezza schermo per ogni cifra.
+     Su un telefono da 360px di altezza → circa 100px per cifra.
+     Aumenta questo valore per ingrandire, riducilo per rimpicciolire.
+     MAX fissato a 9rem per evitare cifre gigantesche su tablet. */
   .clock-hms {
-    font-size: clamp(2rem, 10vh, 6rem);
+    font-size: clamp(3rem, 28vh, 9rem);
   }
+
+  /* ── SEPARATORI ":" ──
+     Proporzionali alle cifre: circa 75% della dimensione di .clock-hms */
   .clock-sep {
-    font-size: clamp(1.5rem, 7.5vh, 4.5rem);
+    font-size: clamp(2.2rem, 21vh, 6.8rem);
   }
 
-  /* meno spazio verticale */
+  /* ── DATA sotto l'orologio ──
+     Ridotta in landscape per non rubare spazio verticale */
   .clock-date {
-    font-size: .7rem;
-    margin-top: 6px;
+    font-size: .85rem;
+    margin-top: 8px;
   }
+
+  /* ── AREA MICROFONO ──
+     Meno margine in alto, gap ridotto tra elementi */
   .mic-area {
-    margin-top: 10px;
-    gap: 4px;
+    margin-top: 12px;
+    gap: 5px;
   }
+
+  /* ── CERCHIO MIC ──
+     Leggermente ridotto rispetto al portrait */
   .mic-ring-wrap {
-    width: 40px; height: 40px;
+    width: 46px; height: 46px;
   }
-  .mic-lbl { font-size: .46rem; }
-  .mic-hint { font-size: .42rem; }
 
-  /* barra meteo più sottile */
-  .weather-bar { height: 28px; }
-  .w-item { font-size: .62rem; gap: 5px; margin-right: 32px; }
+  /* ── TESTI MIC ── */
+  .mic-lbl  { font-size: .5rem; }
+  .mic-hint { font-size: .44rem; }
 
-  /* navbar più compatta */
-  .navbar { height: 42px; }
-  .nb-icon { width: 16px; height: 16px; }
-  .nb-lbl  { font-size: .38rem; }
+  /* ── BARRA METEO ──
+     Altezza ridotta da 36px a 30px in landscape */
+  .weather-bar { height: 30px; }
+  .w-item { font-size: .64rem; gap: 5px; margin-right: 36px; }
 
-  /* panels: layout landscape — side by side per chat */
-  .panel-hdr { padding: 10px 16px; }
-  .cp-row { padding: 8px 12px 12px; }
-  .arch-toolbar { padding: 8px 12px 0; }
-  .arch-add-bar { padding: 8px 12px 12px; }
+  /* ── NAVBAR ──
+     Altezza ridotta da 56px a 46px in landscape */
+  .navbar { height: 46px; }
+  .nb-icon { width: 17px; height: 17px; }
+  .nb-lbl  { font-size: .4rem; }
+
+  /* ── PANELS ──
+     Padding ridotto per guadagnare spazio verticale */
+  .panel-hdr   { padding: 10px 16px; }
+  .cp-row      { padding: 8px 12px 12px; }
+  .arch-toolbar{ padding: 8px 12px 0; }
+  .arch-add-bar{ padding: 8px 12px 12px; }
 }
 
-/* Landscape su schermi molto bassi (telefoni ruotati) */
+/* ══════════════════════════════════════════════════════
+   LANDSCAPE SU SCHERMI BASSI (telefoni ruotati < 450px)
+   
+   Questa media query si attiva SOLO quando l'altezza
+   è inferiore a 450px (es. iPhone SE, Galaxy S ruotati).
+   
+   PER MODIFICARE LA SOGLIA: cambia 450px qui sotto.
+   PER L'OROLOGIO: modifica il valore vh in .clock-hms
+══════════════════════════════════════════════════════ */
 @media (orientation: landscape) and (max-height: 450px) {
-  .clock-hms { font-size: clamp(1.8rem, 8vh, 4rem); }
-  .clock-sep { font-size: clamp(1.4rem, 6vh, 3rem); }
-  .clock-date { margin-top: 4px; font-size: .62rem; }
-  .mic-area { margin-top: 6px; }
-  .mic-ring-wrap { width: 34px; height: 34px; }
-  .mic-hint { display: none; }
-  .weather-bar { height: 24px; }
-  .navbar { height: 36px; }
-  .nb-lbl { display: none; }
-  .nb-icon { width: 18px; height: 18px; }
+
+  /* ── OROLOGIO su schermi bassi ──
+     30vh su 360px di altezza → circa 108px per cifra
+     Valore più alto di prima (era 8vh = ~29px) — ora 3x più grande */
+  .clock-hms {
+    font-size: clamp(2.8rem, 30vh, 8rem);
+  }
+  .clock-sep {
+    font-size: clamp(2rem, 22vh, 6rem);
+  }
+
+  /* ── Elementi secondari compressi ── */
+  .clock-date    { margin-top: 5px; font-size: .72rem; }
+  .mic-area      { margin-top: 8px; gap: 4px; }
+  .mic-ring-wrap { width: 38px; height: 38px; }
+  .mic-hint      { display: none; } /* nascosto: non c'è spazio */
+
+  /* ── Barra e navbar al minimo ── */
+  .weather-bar { height: 26px; }
+  .navbar      { height: 38px; }
+  .nb-lbl      { display: none; } /* solo icone, niente testo */
+  .nb-icon     { width: 18px; height: 18px; }
+
+  /* ── Badge scadenze più piccolo ── */
   .due-badge { font-size: .44rem; padding: 3px 7px; top: 6px; right: 10px; }
 }
 </style>
@@ -955,245 +1009,517 @@ html, body {
 <div class="toast" id="toast"></div>
 
 <script>
-// ══════════════════════════════
-// STORAGE
-// ══════════════════════════════
-// legacy storage rimosso — ora si usa AKEY per archivio
+// ╔══════════════════════════════════════════════════════════════╗
+// ║                    CASA — ASSISTENTE DOMESTICO               ║
+// ║                                                              ║
+// ║  STRUTTURA DEL CODICE:                                       ║
+// ║  1. STORAGE      — salvataggio dati nel browser              ║
+// ║  2. GLOBALS      — variabili condivise tra le funzioni        ║
+// ║  3. SETUP        — avvio e configurazione iniziale           ║
+// ║  4. PANELS       — apertura/chiusura pannelli slide-up       ║
+// ║  5. CLOCK        — orologio aggiornato ogni secondo          ║
+// ║  6. WEATHER      — meteo da open-meteo.com                   ║
+// ║  7. ARCHIVIO     — gestione interventi di manutenzione       ║
+// ║  8. AI           — comunicazione con Claude API              ║
+// ║  9. WAKE WORD    — rilevamento "Claude" nel parlato          ║
+// ║  10. TTS         — sintesi vocale (ElevenLabs o browser)     ║
+// ║  11. UTILITIES   — fullscreen, toast, ecc.                   ║
+// ╚══════════════════════════════════════════════════════════════╝
 
-// ══════════════════════════════
-// GLOBALS
-// ══════════════════════════════
-const LAT=43.2832, LON=13.4534, CITY='Contrada Cervare, Macerata';
-let apiKey='', chatHistory=[], weatherData=null;
-let elKey='', elVoice='';
-let isSpeaking=false;
-let wakeEnabled=false, wakeRecognition=null;
-let currentState='idle';
 
-const PAL=['#5e5ce6','#5e5ce6','#5e5ce6','#5e5ce6','#5e5ce6',
-           '#ffd60a','#ffd60a','#ff6b00','#30d158','#30d158','#30d158',
-           '#0a84ff','#0a84ff','#0a84ff','#0a84ff','#ff6b00','#ff6b00',
-           '#ff2d55','#ff2d55','#ff2d55','#bf5af2','#bf5af2','#bf5af2','#5e5ce6'];
+// ══════════════════════════════════════════════
+// 1. STORAGE — Persistenza dati nel localStorage
+//
+// localStorage è un database chiave-valore nel browser.
+// I dati rimangono anche dopo la chiusura dell'app.
+// Vengono persi solo se si svuota la cache del browser.
+//
+// CHIAVI USATE:
+//   'casa_key'       → API key di Claude
+//   'el_key'         → API key di ElevenLabs
+//   'el_voice'       → Voice ID di ElevenLabs
+//   'casa_archivio_v1' → array JSON degli interventi
+// ══════════════════════════════════════════════
 
-// ══════════════════════════════
-// SETUP
-// ══════════════════════════════
+const AKEY = 'casa_archivio_v1'; // chiave per l'archivio interventi
+
+// Carica l'archivio dal localStorage. Se non esiste o è corrotto, restituisce array vuoto.
+function loadArch(){
+  try{ return JSON.parse(localStorage.getItem(AKEY)||'[]'); }
+  catch{ return []; }
+}
+
+// Salva l'intero array archivio nel localStorage come stringa JSON.
+function saveArch(l){ localStorage.setItem(AKEY, JSON.stringify(l)); }
+
+// Variabile globale con tutti gli interventi caricati all'avvio
+let archivio = loadArch();
+
+
+// ══════════════════════════════════════════════
+// 2. GLOBALS — Variabili condivise tra le funzioni
+//
+// Queste variabili sono accessibili da tutte le funzioni.
+// Modificarle qui cambia il comportamento globale dell'app.
+// ══════════════════════════════════════════════
+
+// Coordinate GPS di Contrada Cervare, Macerata (usate per il meteo)
+// Per cambiare città: trova lat/lon su maps.google.com e aggiorna qui
+const LAT  = 43.2832;
+const LON  = 13.4534;
+const CITY = 'Contrada Cervare, Macerata';
+
+// Chiavi API — vengono caricate dal localStorage in window.onload
+let apiKey  = '';  // Claude API key (es. sk-ant-api03-...)
+let elKey   = '';  // ElevenLabs API key (es. sk_...)
+let elVoice = '';  // ElevenLabs Voice ID (es. gfKKsLN1k0oYYN9n2dXX)
+
+// Stato della conversazione con Claude
+// È un array di oggetti {role: 'user'|'assistant', content: '...'}
+// Viene inviato ad ogni chiamata per mantenere il contesto
+let chatHistory = [];
+
+// Ultimo dato meteo ricevuto dall'API (oggetto JSON di open-meteo)
+let weatherData = null;
+
+// Stato del microfono/TTS
+let isSpeaking = false;         // true se sta parlando via TTS
+let wakeEnabled = false;        // true se il wake word è attivo
+let wakeRecognition = null;     // istanza corrente di SpeechRecognition
+let currentState = 'idle';      // stato UI microfono: idle | wake-active | listening | thinking | speaking
+
+// Filtro attivo nell'archivio
+let archFilter = 'all';
+
+// Palette colori per il glow dell'orologio — un colore per ogni ora del giorno (0-23)
+// Modifica questi valori hex per cambiare i colori del glow
+const PAL = [
+  '#5e5ce6', // 00 — mezzanotte: indaco
+  '#5e5ce6', // 01
+  '#5e5ce6', // 02
+  '#5e5ce6', // 03
+  '#5e5ce6', // 04
+  '#ffd60a', // 05 — prima alba: giallo
+  '#ffd60a', // 06 — alba: giallo
+  '#ff6b00', // 07 — mattina presto: arancio
+  '#30d158', // 08 — mattina: verde
+  '#30d158', // 09
+  '#30d158', // 10
+  '#0a84ff', // 11 — tarda mattina: blu
+  '#0a84ff', // 12 — mezzogiorno: blu
+  '#0a84ff', // 13
+  '#0a84ff', // 14
+  '#ff6b00', // 15 — pomeriggio: arancio
+  '#ff6b00', // 16
+  '#ff2d55', // 17 — sera: rosso
+  '#ff2d55', // 18
+  '#ff2d55', // 19
+  '#bf5af2', // 20 — sera tarda: viola
+  '#bf5af2', // 21
+  '#bf5af2', // 22
+  '#5e5ce6', // 23 — notte: indaco
+];
+
+// Colori per categoria nell'archivio interventi
+// Modifica questi hex per cambiare i colori delle categorie
+const CAT_COLORS = {
+  manutenzione: '#0a84ff', // blu
+  pulizia:      '#30d158', // verde
+  impianto:     '#ffd60a', // giallo
+  riparazione:  '#ff2d55', // rosso
+  acquisto:     '#bf5af2', // viola
+  altro:        '#555555'  // grigio
+};
+
+
+// ══════════════════════════════════════════════
+// 3. SETUP — Configurazione iniziale e avvio
+// ══════════════════════════════════════════════
+
+// Chiamata al click su "Attiva →" nella schermata di setup.
+// Valida la chiave Claude, salva tutto nel localStorage, avvia l'app.
 function saveAndStart(){
   const k = document.getElementById('api-input').value.trim();
+  // La chiave Claude deve iniziare con sk-ant-
   if(!k.startsWith('sk-ant-')){ showToast('Chiave Claude non valida'); return; }
-  apiKey = k; localStorage.setItem('casa_key', k);
+  apiKey = k;
+  localStorage.setItem('casa_key', k);
+
+  // ElevenLabs è opzionale — salva solo se inserita
   const elk = document.getElementById('el-key-input').value.trim();
   const elv = document.getElementById('el-voice-input').value.trim();
-  if(elk) { elKey=elk; localStorage.setItem('el_key', elk); }
-  if(elv) { elVoice=elv; localStorage.setItem('el_voice', elv); }
+  if(elk){ elKey=elk; localStorage.setItem('el_key', elk); }
+  if(elv){ elVoice=elv; localStorage.setItem('el_voice', elv); }
+
   boot();
 }
 
+// Avvia l'app: nasconde il setup, mostra la home, lancia tutti i moduli.
 function boot(){
   document.getElementById('setup').classList.add('hidden');
   document.getElementById('home').style.display = 'flex';
-  startClock(); loadWeather(); renderArch(); checkScadenze();
+  startClock();       // avvia l'orologio (aggiornamento ogni secondo)
+  loadWeather();      // carica il meteo (poi si aggiorna ogni 30 min)
+  renderArch();       // popola la lista archivio
+  checkScadenze();    // controlla se ci sono scadenze imminenti (badge rosso)
+  // Aspetta 800ms prima di avviare il wake word per dare tempo al browser
+  // di acquisire i permessi microfono senza conflitti
   setTimeout(startWakeWord, 800);
 }
 
+// Resetta la configurazione: rimuove la chiave dal localStorage e ricarica la pagina.
+// I dati dell'archivio NON vengono cancellati (hanno una chiave diversa).
 function resetApp(){
-  if(confirm('Cambiare configurazione?')){ localStorage.removeItem('casa_key'); location.reload(); }
+  if(confirm('Cambiare configurazione?')){
+    localStorage.removeItem('casa_key');
+    location.reload();
+  }
 }
 
+// Eseguita automaticamente quando la pagina finisce di caricare.
+// Se la chiave è già salvata, salta il setup e va direttamente all'app.
 window.onload = () => {
   const k = localStorage.getItem('casa_key');
+  // Carica le chiavi ElevenLabs dal localStorage (potrebbero essere vuote)
   elKey   = localStorage.getItem('el_key')   || '';
   elVoice = localStorage.getItem('el_voice') || '';
-  if(k){ apiKey=k; boot(); }
-  // pre-fill setup fields
+
+  if(k){ apiKey=k; boot(); } // chiave già presente → avvia subito
+
+  // Pre-popola i campi nel setup (utile se l'utente vuole modificarli)
   if(elKey)   { const el=document.getElementById('el-key-input');   if(el) el.value=elKey; }
   if(elVoice) { const el=document.getElementById('el-voice-input'); if(el) el.value=elVoice; }
+
+  // Imposta la data di oggi come default nel dialog archivio
   document.getElementById('d-ultima').value = new Date().toISOString().split('T')[0];
 };
 
-// ══════════════════════════════
-// PANELS
-// ══════════════════════════════
+
+// ══════════════════════════════════════════════
+// 4. PANELS — Pannelli slide-up (Chat, Archivio)
+//
+// I pannelli sono div fissi che si trovano sotto lo schermo (translateY 100%)
+// e salgono in vista aggiungendo la classe 'open' (translateY 0).
+// La transizione CSS si occupa dell'animazione.
+// ══════════════════════════════════════════════
+
+// Apre un pannello dato il suo ID HTML
 function openPanel(id){ document.getElementById(id).classList.add('open'); }
+
+// Chiude un pannello dato il suo ID HTML
 function closePanel(id){ document.getElementById(id).classList.remove('open'); }
 
-// ══════════════════════════════
-// CLOCK
-// ══════════════════════════════
-const GIORNI=['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
-const MESI=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
 
+// ══════════════════════════════════════════════
+// 5. CLOCK — Orologio digitale aggiornato ogni secondo
+//
+// L'orologio mostra HH:MM:SS con un glow colorato
+// che cambia in base all'ora del giorno (vedi array PAL).
+//
+// PER CAMBIARE IL FORMATO DATA: modifica la riga
+// document.getElementById('clk-date').textContent = ...
+// ══════════════════════════════════════════════
+
+const GIORNI = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+const MESI   = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+
+// Avvia il ciclo orologio: chiama tick() subito e poi ogni 1000ms
 function startClock(){ tick(); setInterval(tick, 1000); }
 
+// Aggiorna le tre cifre dell'orologio (ore, minuti, secondi) e la data.
+// Chiamata ogni secondo da setInterval.
 function tick(){
-  const n = new Date();
-  const hh = String(n.getHours()).padStart(2,'0');
-  const mm = String(n.getMinutes()).padStart(2,'0');
-  const ss = String(n.getSeconds()).padStart(2,'0');
+  const n  = new Date();
+  const hh = String(n.getHours()).padStart(2,'0');   // es. "08"
+  const mm = String(n.getMinutes()).padStart(2,'0'); // es. "05"
+  const ss = String(n.getSeconds()).padStart(2,'0'); // es. "30"
+
+  // Aggiorna i tre span separati (h, m, s) nell'HTML
   document.getElementById('clk-h').textContent = hh;
   document.getElementById('clk-m').textContent = mm;
   document.getElementById('clk-s').textContent = ss;
+
+  // Aggiorna la data nel formato "Lunedì 4 Giugno 2026"
   document.getElementById('clk-date').textContent =
     `${GIORNI[n.getDay()]} ${n.getDate()} ${MESI[n.getMonth()]} ${n.getFullYear()}`;
+
+  // Applica il glow colorato basato sull'ora corrente
+  // Il colore viene preso dall'array PAL[ora] (24 valori, uno per ora)
   const col = PAL[n.getHours()];
   ['clk-h','clk-m','clk-s'].forEach(id=>{
     document.getElementById(id).style.textShadow = `0 0 80px ${col}35`;
+    // 35 in fondo è l'opacità in hex (circa 21%) — aumenta per un glow più forte
   });
 }
 
-// ══════════════════════════════
-// WEATHER
-// ══════════════════════════════
-function wIcon(c){
-  const s=(d)=>`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
-  if(c===0) return s('<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>');
-  if(c<=2)  return s('<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/><circle cx="12" cy="7" r="3"/>');
-  if(c<=3)  return s('<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>');
-  if(c<=48) return s('<line x1="1" y1="22" x2="23" y2="22"/><path d="M5 19H3a2 2 0 0 1 0-4h.09A6 6 0 0 1 15 9.09A5 5 0 0 1 21 14h-1"/><line x1="8" y1="22" x2="8" y2="19"/><line x1="12" y1="22" x2="12" y2="17"/><line x1="16" y1="22" x2="16" y2="19"/>');
-  if(c<=67) return s('<line x1="16" y1="13" x2="16" y2="21"/><line x1="8" y1="13" x2="8" y2="21"/><line x1="12" y1="15" x2="12" y2="23"/><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/>');
-  if(c<=77) return s('<polyline points="23 18 17 12 13 16 9 12 3 18"/><path d="M20 6.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/>');
-  if(c<=82) return s('<line x1="16" y1="13" x2="16" y2="21"/><line x1="8" y1="13" x2="8" y2="21"/><line x1="12" y1="15" x2="12" y2="23"/><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/>');
-  return s('<path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9"/><polyline points="13 11 9 17 15 17 11 23"/>');
-}
-function wDesc(c){ const m={0:'Sereno',1:'Prev. sereno',2:'Parz. nuvoloso',3:'Nuvoloso',45:'Nebbia',51:'Pioggerella',61:'Pioggia leggera',63:'Pioggia',65:'Pioggia intensa',71:'Neve leggera',73:'Neve',80:'Rovesci',95:'Temporale'}; return m[c]||'Variabile'; }
 
+// ══════════════════════════════════════════════
+// 6. WEATHER — Meteo da Open-Meteo (gratuito, no API key)
+//
+// API usata: api.open-meteo.com
+// Dati richiesti: temperatura, umidità, codice meteo, vento
+// Aggiornamento automatico: ogni 30 minuti
+//
+// PER CAMBIARE CITTÀ: aggiorna LAT e LON in cima al file
+// PER AGGIUNGERE DATI: aggiungi parametri alla URL fetch
+// ══════════════════════════════════════════════
+
+// Restituisce un SVG inline (14x14px, linee bianche) in base al codice WMO
+// I codici WMO sono standard internazionali per le condizioni meteo:
+// 0=sereno, 1-3=nuvole, 45-48=nebbia, 51-67=pioggia, 71-77=neve, 80-82=rovesci, 95+=temporale
+function wIcon(c){
+  // Helper: crea un SVG con il path dato
+  const s = (d) => `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+  if(c===0)  return s('<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'); // sole
+  if(c<=2)   return s('<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/><circle cx="12" cy="7" r="3"/>');  // parz. nuvoloso
+  if(c<=3)   return s('<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>');                                 // nuvoloso
+  if(c<=48)  return s('<line x1="1" y1="22" x2="23" y2="22"/><path d="M5 19H3a2 2 0 0 1 0-4h.09A6 6 0 0 1 15 9.09A5 5 0 0 1 21 14h-1"/><line x1="8" y1="22" x2="8" y2="19"/><line x1="12" y1="22" x2="12" y2="17"/><line x1="16" y1="22" x2="16" y2="19"/>'); // nebbia
+  if(c<=67)  return s('<line x1="16" y1="13" x2="16" y2="21"/><line x1="8" y1="13" x2="8" y2="21"/><line x1="12" y1="15" x2="12" y2="23"/><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/>'); // pioggia
+  if(c<=77)  return s('<polyline points="23 18 17 12 13 16 9 12 3 18"/><path d="M20 6.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/>'); // neve
+  if(c<=82)  return s('<line x1="16" y1="13" x2="16" y2="21"/><line x1="8" y1="13" x2="8" y2="21"/><line x1="12" y1="15" x2="12" y2="23"/><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/>'); // rovesci
+  return s('<path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9"/><polyline points="13 11 9 17 15 17 11 23"/>'); // temporale
+}
+
+// Converte un codice WMO in descrizione italiana
+function wDesc(c){
+  const m = {
+    0:'Sereno', 1:'Prev. sereno', 2:'Parz. nuvoloso', 3:'Nuvoloso',
+    45:'Nebbia', 51:'Pioggerella', 61:'Pioggia leggera', 63:'Pioggia',
+    65:'Pioggia intensa', 71:'Neve leggera', 73:'Neve',
+    80:'Rovesci', 95:'Temporale'
+  };
+  return m[c] || 'Variabile';
+}
+
+// Aggiorna la barra meteo (sia la copia originale che quella duplicata per il loop).
+// La barra contiene il contenuto duplicato per creare l'animazione di scorrimento infinito.
 function setWeatherBar(icon, temp, desc, extra){
-  // set entrambe le copie per il loop
   ['','2'].forEach(s=>{
-    document.getElementById('w-icon'+s).innerHTML = icon;
+    document.getElementById('w-icon'+s).innerHTML = icon; // SVG inline
     document.getElementById('w-temp'+s).textContent = temp;
     document.getElementById('w-desc'+s).textContent = desc;
     document.getElementById('w-extra-txt'+s).textContent = extra;
   });
 }
 
+// Carica i dati meteo dall'API open-meteo (gratuita, senza chiave).
+// In caso di errore mostra "Non disponibile" e riprova dopo 30 min.
 async function loadWeather(){
   try{
-    const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Europe%2FRome&forecast_days=3`);
+    const r = await fetch(
+      `https://api.open-meteo.com/v1/forecast` +
+      `?latitude=${LAT}&longitude=${LON}` +
+      `&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m` +
+      `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum` +
+      `&timezone=Europe%2FRome&forecast_days=3`
+    );
     const d = await r.json();
-    if(!d.current) throw new Error();
-    weatherData = d;
-    const c=d.current, dy=d.daily;
-    const icon = wIcon(c.weather_code);
-    const temp = `${Math.round(c.temperature_2m)}°`;
-    const desc = wDesc(c.weather_code);
+    if(!d.current) throw new Error('Dati meteo mancanti');
+
+    weatherData = d; // salva per uso nel system prompt AI
+    const c  = d.current;  // dati correnti
+    const dy = d.daily;    // previsioni giornaliere
+
+    // Componi i testi per la barra scorrevole
+    const icon  = wIcon(c.weather_code);
+    const temp  = `${Math.round(c.temperature_2m)}°`;
+    const desc  = wDesc(c.weather_code);
+    // Extra: umidità, vento, min/max oggi, previsione domani
     const extra = `💧 ${c.relative_humidity_2m}%  🌬 ${Math.round(c.wind_speed_10m)} km/h  ↑${Math.round(dy.temperature_2m_max[0])}° ↓${Math.round(dy.temperature_2m_min[0])}°  ·  Domani ↑${Math.round(dy.temperature_2m_max[1])}° ↓${Math.round(dy.temperature_2m_min[1])}°`;
+
     setWeatherBar(icon, temp, desc, extra);
-    setTimeout(loadWeather, 30*60*1000);
+
+    // Ricarica dopo 30 minuti (30 * 60 * 1000 millisecondi)
+    setTimeout(loadWeather, 30 * 60 * 1000);
+
   }catch(e){
-    setWeatherBar('—','—°','Non disponibile','');
+    setWeatherBar('—', '—°', 'Non disponibile', '');
+    console.warn('Errore meteo:', e);
+    // Riprova dopo 5 minuti in caso di errore
+    setTimeout(loadWeather, 5 * 60 * 1000);
   }
 }
 
+// Restituisce un riassunto meteo testuale da includere nel system prompt di Claude.
+// Così l'AI sa le condizioni attuali e può fare suggerimenti contestuali.
 function weatherSummary(){
   if(!weatherData) return 'Meteo non disponibile.';
-  const c=weatherData.current, d=weatherData.daily;
-  return `${wDesc(c.weather_code)}, ${Math.round(c.temperature_2m)}°C. Max ${Math.round(d.temperature_2m_max[0])}°, min ${Math.round(d.temperature_2m_min[0])}°. Domani max ${Math.round(d.temperature_2m_max[1])}°.`;
+  const c = weatherData.current;
+  const d = weatherData.daily;
+  return `${wDesc(c.weather_code)}, ${Math.round(c.temperature_2m)}°C. ` +
+         `Max ${Math.round(d.temperature_2m_max[0])}°, min ${Math.round(d.temperature_2m_min[0])}°. ` +
+         `Domani max ${Math.round(d.temperature_2m_max[1])}°.`;
 }
 
-// ══════════════════════════════
-// ARCHIVIO MANUTENZIONE
-// ══════════════════════════════
-const AKEY = 'casa_archivio_v1';
-function loadArch(){ try{ return JSON.parse(localStorage.getItem(AKEY)||'[]'); }catch{return[];} }
-function saveArch(l){ localStorage.setItem(AKEY, JSON.stringify(l)); }
-let archivio = loadArch();
-let archFilter = 'all';
 
-const CAT_COLORS = {
-  manutenzione: '#0a84ff',
-  pulizia:      '#30d158',
-  impianto:     '#ffd60a',
-  riparazione:  '#ff2d55',
-  acquisto:     '#bf5af2',
-  altro:        '#555'
-};
+// ══════════════════════════════════════════════
+// 7. ARCHIVIO — Gestione interventi di manutenzione
+//
+// Ogni intervento è un oggetto con questi campi:
+//   id      → timestamp univoco (Date.now())
+//   titolo  → nome dell'intervento (es. "Sostituzione filtro caldaia")
+//   cat     → categoria (manutenzione|pulizia|impianto|riparazione|acquisto|altro)
+//   data    → data esecuzione (formato YYYY-MM-DD)
+//   note    → testo libero (prodotto usato, costo, osservazioni)
+//   scad    → data prossima scadenza (YYYY-MM-DD, opzionale)
+//
+// I dati sono salvati in localStorage con chiave AKEY.
+// ══════════════════════════════════════════════
 
+// Imposta il filtro categoria attivo e aggiorna la lista.
+// f può essere: 'all', 'manutenzione', 'pulizia', 'impianto'
 function setFilter(f){
   archFilter = f;
-  document.querySelectorAll('.arch-filter').forEach(b=>b.classList.remove('active'));
-  const map={all:'filt-all',manutenzione:'filt-man',pulizia:'filt-pul',impianto:'filt-imp'};
-  const bid = map[f]||'filt-all';
-  const btn = document.getElementById(bid);
+  // Rimuovi la classe 'active' da tutti i bottoni filtro
+  document.querySelectorAll('.arch-filter').forEach(b => b.classList.remove('active'));
+  // Aggiungi 'active' al bottone corrispondente
+  const map = { all:'filt-all', manutenzione:'filt-man', pulizia:'filt-pul', impianto:'filt-imp' };
+  const btn = document.getElementById(map[f] || 'filt-all');
   if(btn) btn.classList.add('active');
   renderArch();
 }
 
+// Renderizza la lista degli interventi nel pannello archivio.
+// Applica filtro categoria e ricerca testuale, ordina per data decrescente.
 function renderArch(){
   const el = document.getElementById('arch-list');
-  const q = (document.getElementById('arch-search')||{value:''}).value.toLowerCase().trim();
-  let list = [...archivio].sort((a,b)=>new Date(b.data)-new Date(a.data));
-  if(archFilter!=='all') list=list.filter(e=>e.cat===archFilter);
-  if(q) list=list.filter(e=>e.titolo.toLowerCase().includes(q)||(e.note||'').toLowerCase().includes(q));
+
+  // Leggi il termine di ricerca (campo input in cima al pannello)
+  const q = (document.getElementById('arch-search') || {value:''}).value.toLowerCase().trim();
+
+  // Parti dall'archivio completo, ordinato dal più recente
+  let list = [...archivio].sort((a,b) => new Date(b.data) - new Date(a.data));
+
+  // Applica filtro categoria se non 'all'
+  if(archFilter !== 'all') list = list.filter(e => e.cat === archFilter);
+
+  // Applica filtro ricerca su titolo e note
+  if(q) list = list.filter(e =>
+    e.titolo.toLowerCase().includes(q) || (e.note||'').toLowerCase().includes(q)
+  );
+
+  // Nessun risultato → messaggio vuoto
   if(!list.length){
-    el.innerHTML='<div class="arch-empty">Nessun intervento registrato.<br>Aggiungi il primo qui sotto.</div>';
+    el.innerHTML = '<div class="arch-empty">Nessun intervento registrato.<br>Aggiungi il primo qui sotto.</div>';
     return;
   }
-  el.innerHTML = list.map(e=>{
-    const col = CAT_COLORS[e.cat]||'#555';
-    const dataStr = e.data ? new Date(e.data+'T00:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'}) : '—';
-    const scadStr = e.scad ? '· Prossima: '+new Date(e.scad+'T00:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'}) : '';
+
+  // Genera l'HTML per ogni intervento
+  el.innerHTML = list.map(e => {
+    const col     = CAT_COLORS[e.cat] || '#555';
+    const dataStr = e.data
+      ? new Date(e.data+'T00:00:00').toLocaleDateString('it-IT', {day:'2-digit', month:'short', year:'numeric'})
+      : '—';
+    const scadStr     = e.scad
+      ? '· Prossima: ' + new Date(e.scad+'T00:00:00').toLocaleDateString('it-IT', {day:'2-digit', month:'short', year:'numeric'})
+      : '';
+    // Controlla se la scadenza è già passata
     const scadExpired = e.scad && new Date(e.scad) < new Date();
+
     return `<div class="arch-entry" style="--ic:${col}">
       <div class="arch-entry-top">
         <div class="arch-entry-title">${e.titolo}</div>
         <div class="arch-entry-date">${dataStr} ${scadStr}</div>
       </div>
       <span class="arch-entry-cat" style="background:${col}22;color:${col}">${e.cat}</span>
-      ${e.note?`<div class="arch-entry-note">${e.note}</div>`:''}
-      ${scadExpired?`<div class="arch-entry-note" style="color:#ff2d55;margin-top:4px">⚠ Scadenza superata</div>`:''}
+      ${e.note ? `<div class="arch-entry-note">${e.note}</div>` : ''}
+      ${scadExpired ? `<div class="arch-entry-note" style="color:#ff2d55;margin-top:4px">⚠ Scadenza superata</div>` : ''}
       <button class="arch-entry-del" onclick="eliminaArch('${e.id}')">Elimina</button>
     </div>`;
   }).join('');
 }
 
+// Controlla se ci sono scadenze nei prossimi 7 giorni e aggiorna il badge sull'orologio.
+// Il badge rosso appare sopra l'orologio con il numero di scadenze imminenti.
 function checkScadenze(){
-  const oggi = new Date(); oggi.setHours(0,0,0,0);
-  const scad = archivio.filter(e=>e.scad && new Date(e.scad+'T00:00:00') <= new Date(oggi.getTime()+7*86400000));
-  document.getElementById('due-corner').innerHTML = scad.length>0
-    ? `<div class="due-badge" onclick="openPanel('att-panel')">${scad.length} in scadenza</div>` : '';
+  const oggi   = new Date(); oggi.setHours(0,0,0,0);
+  const tra7gg = new Date(oggi.getTime() + 7 * 86400000); // oggi + 7 giorni
+
+  // Filtra gli interventi con scadenza entro 7 giorni (incluse quelle già passate)
+  const scad = archivio.filter(e =>
+    e.scad && new Date(e.scad+'T00:00:00') <= tra7gg
+  );
+
+  document.getElementById('due-corner').innerHTML = scad.length > 0
+    ? `<div class="due-badge" onclick="openPanel('att-panel')">${scad.length} in scadenza</div>`
+    : '';
 }
 
+// Apre il dialog per un nuovo intervento.
+// Se c'è testo nel campo input, lo pre-popola come titolo.
 function openArchDialog(){
-  const inp = document.getElementById('arch-input');
+  const inp    = document.getElementById('arch-input');
   const titolo = inp ? inp.value.trim() : '';
-  if(inp) inp.value='';
+  if(inp) inp.value = ''; // svuota il campo input
+
+  // Pre-popola il dialog con i valori di default
   document.getElementById('ad-titolo').value = titolo;
-  document.getElementById('ad-note').value = '';
-  document.getElementById('ad-data').value = new Date().toISOString().split('T')[0];
-  document.getElementById('ad-scad').value = '';
-  document.getElementById('ad-cat').value = 'manutenzione';
+  document.getElementById('ad-note').value   = '';
+  document.getElementById('ad-data').value   = new Date().toISOString().split('T')[0]; // oggi
+  document.getElementById('ad-scad').value   = '';
+  document.getElementById('ad-cat').value    = 'manutenzione';
+
   document.getElementById('arch-dialog').classList.add('open');
 }
-function closeArchDialog(){ document.getElementById('arch-dialog').classList.remove('open'); }
 
+// Chiude il dialog senza salvare
+function closeArchDialog(){
+  document.getElementById('arch-dialog').classList.remove('open');
+}
+
+// Legge i valori dal dialog, crea un nuovo intervento e lo salva.
 function salvaArch(){
   const titolo = document.getElementById('ad-titolo').value.trim();
   if(!titolo){ showToast('Inserisci un titolo'); return; }
+
+  // Crea l'oggetto intervento
   archivio.push({
-    id: Date.now().toString(),
+    id:     Date.now().toString(), // ID univoco basato sul timestamp
     titolo,
-    cat:   document.getElementById('ad-cat').value,
-    data:  document.getElementById('ad-data').value || new Date().toISOString().split('T')[0],
-    note:  document.getElementById('ad-note').value.trim(),
-    scad:  document.getElementById('ad-scad').value || null
+    cat:    document.getElementById('ad-cat').value,
+    data:   document.getElementById('ad-data').value || new Date().toISOString().split('T')[0],
+    note:   document.getElementById('ad-note').value.trim(),
+    scad:   document.getElementById('ad-scad').value || null // null se non specificata
   });
-  saveArch(archivio); renderArch(); checkScadenze(); closeArchDialog();
+
+  saveArch(archivio);   // persiste nel localStorage
+  renderArch();         // aggiorna la lista a schermo
+  checkScadenze();      // aggiorna il badge scadenze
+  closeArchDialog();
   showToast('Intervento salvato');
 }
 
+// Elimina un intervento dato il suo ID, dopo conferma dell'utente.
 function eliminaArch(id){
   if(!confirm('Eliminare questo intervento?')) return;
-  archivio = archivio.filter(x=>x.id!==id);
+  archivio = archivio.filter(x => x.id !== id);
   saveArch(archivio); renderArch(); checkScadenze();
 }
 
+// Restituisce un riassunto testuale dell'archivio per il system prompt di Claude.
+// L'AI usa questi dati per fare suggerimenti contestuali sulle manutenzioni.
 function attContext(){
   if(!archivio.length) return 'Nessun intervento in archivio.';
-  const oggi = new Date(); oggi.setHours(0,0,0,0);
-  const scad = archivio.filter(e=>e.scad && new Date(e.scad+'T00:00:00') < oggi).map(e=>e.titolo);
-  const imm  = archivio.filter(e=>e.scad && new Date(e.scad+'T00:00:00') >= oggi && new Date(e.scad+'T00:00:00') <= new Date(oggi.getTime()+7*86400000)).map(e=>e.titolo);
-  const rec  = [...archivio].sort((a,b)=>new Date(b.data)-new Date(a.data)).slice(0,3).map(e=>`${e.titolo}(${e.data})`);
+
+  const oggi   = new Date(); oggi.setHours(0,0,0,0);
+  const tra7gg = new Date(oggi.getTime() + 7 * 86400000);
+
+  // Scadenze già passate
+  const scad = archivio
+    .filter(e => e.scad && new Date(e.scad+'T00:00:00') < oggi)
+    .map(e => e.titolo);
+
+  // Scadenze nei prossimi 7 giorni
+  const imm = archivio
+    .filter(e => e.scad && new Date(e.scad+'T00:00:00') >= oggi && new Date(e.scad+'T00:00:00') <= tra7gg)
+    .map(e => e.titolo);
+
+  // Ultimi 3 interventi eseguiti
+  const rec = [...archivio]
+    .sort((a,b) => new Date(b.data) - new Date(a.data))
+    .slice(0, 3)
+    .map(e => `${e.titolo}(${e.data})`);
+
   let ctx = '';
   if(scad.length) ctx += `SCADUTI: ${scad.join(', ')}. `;
   if(imm.length)  ctx += `IN SCADENZA: ${imm.join(', ')}. `;
@@ -1201,192 +1527,368 @@ function attContext(){
   return ctx;
 }
 
-// legacy stubs (non più usati ma evitano errori se chiamati)
+// Stub per compatibilità con chiamate legacy
 function renderAtt(){ renderArch(); }
 
-// ══════════════════════════════
-// AI
-// ══════════════════════════════
+
+// ══════════════════════════════════════════════
+// 8. AI — Comunicazione con Claude API
+//
+// Usa le Anthropic Messages API.
+// Ogni chiamata include:
+//   - system: contesto (meteo, data, archivio)
+//   - messages: storico conversazione (max 20 messaggi)
+//
+// PER CAMBIARE MODELLO: modifica 'claude-sonnet-4-5' in callClaude()
+// PER CAMBIARE MAX TOKEN: modifica i valori 150 (voce) e 600 (chat)
+// ══════════════════════════════════════════════
+
+// Costruisce il system prompt inviato a Claude ad ogni chiamata.
+// Contiene data, stagione, meteo attuale e stato archivio.
+// breve=true → chiede risposte corte per la modalità vocale
 function buildSystem(breve=false){
-  const n=new Date();
-  const stag=['Inverno','Inverno','Primavera','Primavera','Primavera','Estate','Estate','Estate','Autunno','Autunno','Autunno','Inverno'];
-  return `Sei "Casa", assistente domestico per Leo a ${CITY}.
-Data: ${n.toLocaleString('it-IT')} — ${stag[n.getMonth()]}
-Meteo: ${weatherSummary()}
-Attività: ${attContext()}
-Rispondi in italiano, tono diretto e amichevole.${breve?' Massimo 2 frasi brevi (risposta vocale).':''}`;
+  const n    = new Date();
+  const stag = ['Inverno','Inverno','Primavera','Primavera','Primavera',
+                'Estate','Estate','Estate','Autunno','Autunno','Autunno','Inverno'];
+  return (
+    `Sei "Casa", assistente domestico per Leo a ${CITY}.
+` +
+    `Data: ${n.toLocaleString('it-IT')} — ${stag[n.getMonth()]}
+` +
+    `Meteo: ${weatherSummary()}
+` +
+    `Archivio: ${attContext()}
+` +
+    `Rispondi in italiano, tono diretto e amichevole.` +
+    (breve ? ' Massimo 2 frasi brevi (risposta vocale).' : '')
+  );
 }
 
+// Funzione base per chiamare l'API Claude.
+// Riceve un array di messaggi e restituisce il testo della risposta.
+// breve=true → usa max_tokens=150 per risposte più corte (modalità vocale)
 async function callClaude(messages, breve=false){
-  const res = await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{
-      'Content-Type':'application/json',
-      'x-api-key':apiKey,
-      'anthropic-version':'2023-06-01',
-      'anthropic-dangerous-direct-browser-access':'true'
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      // Questo header è richiesto per chiamare l'API direttamente dal browser
+      'anthropic-dangerous-direct-browser-access': 'true'
     },
-    body:JSON.stringify({
-      model:'claude-sonnet-4-5',
-      max_tokens:breve?150:600,
-      system:buildSystem(breve),
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-5',   // ← cambia qui per usare un altro modello
+      max_tokens: breve ? 150 : 600, // ← 150 per voce, 600 per chat scritta
+      system: buildSystem(breve),
       messages
     })
   });
-  const d=await res.json();
+  const d = await res.json();
   if(d.error) throw new Error(d.error.message);
-  return d.content[0].text;
+  return d.content[0].text; // restituisce solo il testo della risposta
 }
 
+// Invia un messaggio testuale (dalla chat scritta).
+// Aggiunge al chatHistory e mostra la risposta nella chat.
 async function askAI(text){
-  chatHistory.push({role:'user',content:text});
+  chatHistory.push({ role:'user', content:text });
   setTyping(true);
   try{
-    const reply=await callClaude(chatHistory,false);
-    setTyping(false); addMsg(reply,'ai');
-    chatHistory.push({role:'assistant',content:reply});
-    if(chatHistory.length>20)chatHistory=chatHistory.slice(-16);
+    const reply = await callClaude(chatHistory, false);
+    setTyping(false);
+    addMsg(reply, 'ai');
+    chatHistory.push({ role:'assistant', content:reply });
+    // Mantieni lo storico a max 20 messaggi (10 scambi) per non eccedere il context window
+    if(chatHistory.length > 20) chatHistory = chatHistory.slice(-16);
   }catch(e){
     setTyping(false);
-    addMsg(e.message.includes('401')?'[ API key non valida ]':`[ Errore: ${e.message} ]`,'ai');
+    addMsg(e.message.includes('401') ? '[ API key non valida ]' : `[ Errore: ${e.message} ]`, 'ai');
   }
 }
 
-function addMsg(text,who){
-  const area=document.getElementById('chat-area'),typing=document.getElementById('typing');
-  const d=document.createElement('div');d.className=`msg ${who}`;
-  if(who==='ai')d.innerHTML=`<div class="lbl">Casa ·</div>${fmt(text)}`;
-  else d.textContent=text;
-  area.insertBefore(d,typing);area.scrollTop=area.scrollHeight;
+// Aggiunge un messaggio alla chat UI.
+// who = 'user' (bolla bianca destra) | 'ai' (bolla scura sinistra)
+function addMsg(text, who){
+  const area   = document.getElementById('chat-area');
+  const typing = document.getElementById('typing');
+  const d      = document.createElement('div');
+  d.className  = `msg ${who}`;
+  if(who === 'ai') d.innerHTML = `<div class="lbl">Casa ·</div>${fmt(text)}`;
+  else d.textContent = text;
+  area.insertBefore(d, typing); // inserisce prima dell'animazione typing
+  area.scrollTop = area.scrollHeight; // scrolla in fondo
 }
-function fmt(t){ return t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>').replace(/\n/g,'<br>'); }
-function setTyping(on){ document.getElementById('typing').className=on?'typing on':'typing'; if(on)document.getElementById('chat-area').scrollTop=999999; }
 
+// Converte markdown base in HTML (grassetto, corsivo, a capo)
+function fmt(t){
+  return t
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // **testo** → grassetto
+    .replace(/\*(.*?)\*/g,     '<em>$1</em>')          // *testo* → corsivo
+    .replace(/
+/g,            '<br>');                // newline → a capo HTML
+}
+
+// Mostra/nasconde l'animazione "sta scrivendo..." (tre puntini animati)
+function setTyping(on){
+  document.getElementById('typing').className = on ? 'typing on' : 'typing';
+  if(on) document.getElementById('chat-area').scrollTop = 999999;
+}
+
+// Invia il messaggio digitato nel campo input della chat
 async function sendMessage(){
-  const el=document.getElementById('cp-input'),t=el.value.trim();if(!t)return;
-  addMsg(t,'user');el.value='';autoResize(el);await askAI(t);
+  const el = document.getElementById('cp-input');
+  const t  = el.value.trim();
+  if(!t) return;
+  addMsg(t, 'user');
+  el.value = '';
+  autoResize(el); // riporta il textarea all'altezza minima
+  await askAI(t);
 }
-async function quickAsk(t){ openPanel('chat-panel');addMsg(t,'user');await askAI(t); }
-function handleKey(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} }
-function autoResize(el){ el.style.height='auto';el.style.height=Math.min(el.scrollHeight,100)+'px'; }
 
-// ══════════════════════════════
-// WAKE WORD + VOCE
-// ══════════════════════════════
+// Apre la chat e invia una domanda predefinita (bottoni navbar Oggi/Meteo)
+async function quickAsk(t){
+  openPanel('chat-panel');
+  addMsg(t, 'user');
+  await askAI(t);
+}
+
+// Gestisce invio con tasto Enter (senza Shift+Enter che fa a capo)
+function handleKey(e){
+  if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
+}
+
+// Ridimensiona automaticamente il textarea in base al contenuto (max 100px)
+function autoResize(el){
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+
+
+// ══════════════════════════════════════════════
+// 9. WAKE WORD — Rilevamento vocale "Claude"
+//
+// FLUSSO COMPLETO:
+//   1. startWakeWord() → avvia il loop di ascolto
+//   2. listenLoop()    → ascolta continuamente (ciclo)
+//   3. Sente "claude"  → listenForCommand() o handleCommand()
+//   4. Utente parla    → handleCommand(testo)
+//   5. Risposta Claude → speakText() → torna a listenLoop()
+//
+// VARIANTI RICONOSCIUTE come wake word:
+//   "claude", "claud", "clod", "klaud", "klod", "cloud"
+//   (per gestire accenti e pronunce diverse)
+//
+// STATI UI:
+//   idle         → microfono spento (icona 🎤)
+//   wake-active  → in attesa wake word (anello rotante)
+//   listening    → ascolta il comando (icona ■)
+//   thinking     → chiamata API in corso (icona …)
+//   speaking     → TTS in riproduzione (icona ◎)
+// ══════════════════════════════════════════════
+
+// Aggiorna l'UI del microfono in base allo stato corrente.
+// Modifica classe CSS del wrapper, icona del bottone, testo label.
 function setState(s){
-  currentState=s;
-  const wrap=document.getElementById('mic-wrap');
-  const btn=document.getElementById('mic-btn');
-  const lbl=document.getElementById('mic-lbl');
-  wrap.className='mic-ring-wrap';
-  const states={
-    'wake-active':['state-wake-active','◉','in ascolto...'],
-    'listening':  ['state-listening','■','parla ora'],
-    'thinking':   ['state-thinking','…','sto pensando...'],
-    'speaking':   ['state-speaking','◎','sto parlando...'],
+  currentState = s;
+  const wrap = document.getElementById('mic-wrap');
+  const btn  = document.getElementById('mic-btn');
+  const lbl  = document.getElementById('mic-lbl');
+
+  // Rimuovi tutte le classi stato precedenti
+  wrap.className = 'mic-ring-wrap';
+
+  // Mappa stato → [classe CSS, simbolo bottone, testo label]
+  const states = {
+    'wake-active': ['state-wake-active', '◉', 'in ascolto...'],
+    'listening':   ['state-listening',   '■', 'parla ora'],
+    'thinking':    ['state-thinking',    '…', 'sto pensando...'],
+    'speaking':    ['state-speaking',    '◎', 'sto parlando...'],
   };
+
   if(states[s]){
     wrap.classList.add(states[s][0]);
-    btn.dataset.state=states[s][1];
-    lbl.textContent=states[s][2];
-  } else { btn.dataset.state='idle'; lbl.textContent=''; }
+    btn.dataset.state = states[s][1]; // usa dataset invece di textContent per non sovrascrivere SVG
+    lbl.textContent   = states[s][2];
+  } else {
+    // idle: nessuna classe, nessun testo
+    btn.dataset.state = 'idle';
+    lbl.textContent   = '';
+  }
 }
 
+// Toggle manuale: toccare il bottone microfono
+// - Se sta parlando: interrompe e riprende ascolto
+// - Se wake è attivo: disattiva
+// - Se idle: attiva
 function toggleWake(){
-  if(currentState==='speaking'){ window.speechSynthesis.cancel();isSpeaking=false;startWakeWord();return; }
-  if(wakeEnabled){ stopWakeWord();return; }
+  if(currentState === 'speaking'){
+    window.speechSynthesis.cancel();
+    isSpeaking = false;
+    startWakeWord();
+    return;
+  }
+  if(wakeEnabled){ stopWakeWord(); return; }
   startWakeWord();
 }
 
+// Avvia il sistema wake word: controlla supporto, imposta stato, lancia il loop
 function startWakeWord(){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){ showToast('Microfono non supportato');return; }
-  wakeEnabled=true; setState('wake-active'); listenLoop();
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ showToast('Microfono non supportato'); return; }
+  wakeEnabled = true;
+  setState('wake-active');
+  listenLoop();
 }
 
+// Ferma completamente il wake word: disabilita flag, ferma recognition, torna idle
 function stopWakeWord(){
-  wakeEnabled=false;
-  if(wakeRecognition){ try{wakeRecognition.stop();}catch(e){} wakeRecognition=null; }
+  wakeEnabled = false;
+  if(wakeRecognition){ try{ wakeRecognition.stop(); }catch(e){} wakeRecognition = null; }
   setState('idle');
 }
 
+// Loop principale di ascolto wake word.
+// Crea una nuova istanza SpeechRecognition ad ogni ciclo (necessario su Chrome mobile).
+// Ascolta un breve segmento audio e cerca la wake word nel testo trascritto.
 function listenLoop(){
-  if(!wakeEnabled)return;
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  wakeRecognition=new SR();
-  wakeRecognition.lang='it-IT';
-  wakeRecognition.continuous=false;
-  wakeRecognition.interimResults=false;
-  wakeRecognition.maxAlternatives=5;
+  if(!wakeEnabled) return; // smetti se nel frattempo è stato disabilitato
 
-  wakeRecognition.onresult=(e)=>{
-    let text='',detected=false;
-    for(let i=0;i<e.results.length;i++)
-      for(let j=0;j<e.results[i].length;j++){
-        const t=e.results[i][j].transcript.toLowerCase().trim();
-        text+=t+' ';
-        if(/claud|clod|klaud|klod|cloud/.test(t)) detected=true;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  wakeRecognition = new SR();
+  wakeRecognition.lang             = 'it-IT';
+  wakeRecognition.continuous       = false; // un segmento alla volta (più stabile su mobile)
+  wakeRecognition.interimResults   = false; // solo risultati finali
+  wakeRecognition.maxAlternatives  = 5;     // più alternative = più chance di rilevare "claude"
+
+  wakeRecognition.onresult = (e) => {
+    let text = '', detected = false;
+
+    // Scorri tutti i risultati e le alternative cercando la wake word
+    for(let i=0; i<e.results.length; i++)
+      for(let j=0; j<e.results[i].length; j++){
+        const t = e.results[i][j].transcript.toLowerCase().trim();
+        text += t + ' ';
+        // Regex che copre varianti di pronuncia di "Claude"
+        if(/claud|clod|klaud|klod|cloud/.test(t)) detected = true;
       }
+
     if(detected){
-      const cmd=text.replace(/claud\w*|clod\w*|klaud\w*|klod\w*|cloud\w*/gi,'').trim();
-      if(cmd.length>3) handleCommand(cmd);
-      else listenForCommand();
+      // Rimuovi la wake word dal testo per estrarre il comando
+      const cmd = text.replace(/claud\w*|clod\w*|klaud\w*|klod\w*|cloud\w*/gi, '').trim();
+      if(cmd.length > 3){
+        // L'utente ha detto "Claude fai X" tutto insieme → esegui subito
+        handleCommand(cmd);
+      } else {
+        // L'utente ha detto solo "Claude" → ascolta il comando successivo
+        listenForCommand();
+      }
     } else {
-      if(wakeEnabled) setTimeout(listenLoop,200);
+      // Wake word non trovata → riprende subito il loop
+      if(wakeEnabled) setTimeout(listenLoop, 200);
     }
   };
 
-  wakeRecognition.onerror=(e)=>{
-    const retry=(e.error==='no-speech'||e.error==='aborted')?300:1500;
-    if(wakeEnabled) setTimeout(listenLoop,retry);
+  wakeRecognition.onerror = (e) => {
+    // 'no-speech' e 'aborted' sono errori normali (silenzio, timeout) → retry veloce
+    // Altri errori (permessi negati, hardware) → retry lento
+    const retry = (e.error === 'no-speech' || e.error === 'aborted') ? 300 : 1500;
+    if(wakeEnabled) setTimeout(listenLoop, retry);
   };
 
-  wakeRecognition.onend=()=>{
-    if(wakeEnabled&&currentState==='wake-active') setTimeout(listenLoop,200);
+  wakeRecognition.onend = () => {
+    // Se è ancora wake-active significa che non ha trovato nulla → riprende
+    if(wakeEnabled && currentState === 'wake-active') setTimeout(listenLoop, 200);
   };
 
   try{ wakeRecognition.start(); }
-  catch(e){ if(wakeEnabled) setTimeout(listenLoop,1000); }
+  catch(e){ if(wakeEnabled) setTimeout(listenLoop, 1000); } // errore avvio → retry
 }
 
+// Ascolta il comando dell'utente dopo che la wake word è stata rilevata.
+// Emette un beep di conferma, poi trascrive il parlato e lo manda a handleCommand().
 function listenForCommand(){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  const r=new SR();
-  r.lang='it-IT';r.continuous=false;r.interimResults=false;
-  setState('listening'); beep();
-  r.onresult=(e)=>{ handleCommand(e.results[0][0].transcript); };
-  r.onerror=()=>{ setState('wake-active');if(wakeEnabled)setTimeout(listenLoop,300); };
-  r.onend=()=>{ if(currentState==='listening'){setState('wake-active');if(wakeEnabled)setTimeout(listenLoop,300);} };
-  try{ r.start(); }catch(e){ setState('wake-active');if(wakeEnabled)setTimeout(listenLoop,500); }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const r  = new SR();
+  r.lang           = 'it-IT';
+  r.continuous     = false;
+  r.interimResults = false;
+
+  setState('listening');
+  beep(); // feedback sonoro che indica "ora puoi parlare"
+
+  r.onresult = (e) => { handleCommand(e.results[0][0].transcript); };
+  r.onerror  = ()  => { setState('wake-active'); if(wakeEnabled) setTimeout(listenLoop, 300); };
+  r.onend    = ()  => {
+    // Se non ha ricevuto risultati torna in ascolto wake word
+    if(currentState === 'listening'){ setState('wake-active'); if(wakeEnabled) setTimeout(listenLoop, 300); }
+  };
+
+  try{ r.start(); }
+  catch(e){ setState('wake-active'); if(wakeEnabled) setTimeout(listenLoop, 500); }
 }
 
+// Gestisce il comando vocale: chiama Claude, mostra la risposta in chat, la legge ad alta voce.
+// Usa una copia del chatHistory per non corrompere lo stato in caso di errore.
 async function handleCommand(cmd){
   setState('thinking');
-  addMsg(cmd,'user');
-  const msgs=[...chatHistory,{role:'user',content:cmd}];
+  addMsg(cmd, 'user'); // mostra il testo dettato nella chat
+
+  // Copia del history + nuovo messaggio (non modifica chatHistory ancora)
+  const msgs = [...chatHistory, { role:'user', content:cmd }];
+
   try{
-    const reply=await callClaude(msgs,true);
-    chatHistory.push({role:'user',content:cmd});
-    chatHistory.push({role:'assistant',content:reply});
-    if(chatHistory.length>20)chatHistory=chatHistory.slice(-16);
-    addMsg(reply,'ai');
-    speakText(reply,()=>{ if(wakeEnabled)setTimeout(listenLoop,400); });
+    const reply = await callClaude(msgs, true); // true = risposta breve per TTS
+
+    // Aggiorna chatHistory solo se la chiamata ha avuto successo
+    chatHistory.push({ role:'user',      content:cmd   });
+    chatHistory.push({ role:'assistant', content:reply });
+    if(chatHistory.length > 20) chatHistory = chatHistory.slice(-16);
+
+    addMsg(reply, 'ai');
+
+    // Legge la risposta ad alta voce; al termine riprende il wake word loop
+    speakText(reply, () => {
+      if(wakeEnabled) setTimeout(listenLoop, 400);
+    });
+
   }catch(err){
-    const msg=err.message.includes('401')?'Chiave API non valida':'Errore di connessione';
-    addMsg(`[ ${msg} ]`,'ai');
-    setState(wakeEnabled?'wake-active':'idle');
-    if(wakeEnabled)setTimeout(listenLoop,1500);
+    const msg = err.message.includes('401') ? 'Chiave API non valida' : 'Errore di connessione';
+    addMsg(`[ ${msg} ]`, 'ai');
+    setState(wakeEnabled ? 'wake-active' : 'idle');
+    if(wakeEnabled) setTimeout(listenLoop, 1500);
   }
 }
 
-async function speakText(text, onEnd=null){
-  const clean = text
-    .replace(/\*\*(.*?)\*\*/g,'$1')
-    .replace(/\*(.*?)\*/g,'$1')
-    .replace(/#+\s/g,'')
-    .replace(/<[^>]+>/g,'');
 
-  // ── ElevenLabs (voce naturale) ──
+// ══════════════════════════════════════════════
+// 10. TTS — Sintesi vocale
+//
+// Usa ElevenLabs se le chiavi sono configurate (voce naturale).
+// Altrimenti usa il TTS nativo del browser (voce robotica).
+//
+// PER CAMBIARE VOCE ELEVENLABS:
+//   Vai su elevenlabs.io → Voices → copia il Voice ID
+//   Inseriscilo nel campo "Voice ID" nel setup dell'app
+//
+// PER REGOLARE LA VOCE:
+//   In speakText() modifica voice_settings per ElevenLabs:
+//     stability: 0-1 (0=più espressiva, 1=più stabile)
+//     similarity_boost: 0-1 (fedeltà alla voce originale)
+//     style: 0-1 (intensità stile)
+//   Per il browser TTS: modifica utt.rate (velocità) e utt.pitch (tono)
+// ══════════════════════════════════════════════
+
+async function speakText(text, onEnd=null){
+  // Pulisce il testo da markdown e tag HTML prima di inviarlo al TTS
+  const clean = text
+    .replace(/\*\*(.*?)\*\*/g, '$1')  // rimuovi **grassetto**
+    .replace(/\*(.*?)\*/g,     '$1')  // rimuovi *corsivo*
+    .replace(/#+\s/g,          '')    // rimuovi ## titoli
+    .replace(/<[^>]+>/g,       '');   // rimuovi tag HTML
+
+  // ── ELEVENLABS (voce naturale) ──────────────────────
+  // Usato solo se entrambe le chiavi sono configurate
   if(elKey && elVoice){
     setState('speaking');
     isSpeaking = true;
@@ -1394,23 +1896,31 @@ async function speakText(text, onEnd=null){
       const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${elVoice}`, {
         method: 'POST',
         headers: {
-          'xi-api-key': elKey,
+          'xi-api-key':   elKey,
           'Content-Type': 'application/json',
-          'Accept': 'audio/mpeg'
+          'Accept':       'audio/mpeg'
         },
         body: JSON.stringify({
-          text: clean,
-          model_id: 'eleven_multilingual_v2',
-          voice_settings: { stability: 0.5, similarity_boost: 0.8, style: 0.3, use_speaker_boost: true }
+          text,
+          model_id: 'eleven_multilingual_v2', // modello migliore per italiano
+          voice_settings: {
+            stability:        0.5,  // ← 0=espressiva 1=stabile
+            similarity_boost: 0.8,  // ← fedeltà alla voce originale
+            style:            0.3,  // ← intensità stile
+            use_speaker_boost: true // migliora la qualità
+          }
         })
       });
-      if(!res.ok) throw new Error('EL ' + res.status);
-      const blob = await res.blob();
-      const url  = URL.createObjectURL(blob);
+      if(!res.ok) throw new Error('ElevenLabs HTTP ' + res.status);
+
+      // Crea un URL temporaneo per l'audio ricevuto e lo riproduce
+      const blob  = await res.blob();
+      const url   = URL.createObjectURL(blob);
       const audio = new Audio(url);
+
       audio.onended = () => {
         isSpeaking = false;
-        URL.revokeObjectURL(url);
+        URL.revokeObjectURL(url); // libera memoria
         setState(wakeEnabled ? 'wake-active' : 'idle');
         if(onEnd) onEnd();
       };
@@ -1420,70 +1930,109 @@ async function speakText(text, onEnd=null){
         if(onEnd) onEnd();
       };
       audio.play();
-      return;
+      return; // esce: non serve il fallback browser
+
     }catch(e){
-      console.warn('ElevenLabs error, fallback browser TTS:', e);
-      // fallback al browser
+      // ElevenLabs ha fallito → cade nel fallback browser
+      console.warn('ElevenLabs error, uso browser TTS:', e);
     }
   }
 
-  // ── Fallback: browser TTS ──
-  if(!window.speechSynthesis){ setState('idle'); if(onEnd)onEnd(); return; }
-  window.speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(clean);
-  utt.lang='it-IT'; utt.rate=1.0; utt.pitch=1.0;
+  // ── FALLBACK: BROWSER TTS ───────────────────────────
+  // Usato se ElevenLabs non è configurato o ha dato errore
+  if(!window.speechSynthesis){ setState('idle'); if(onEnd) onEnd(); return; }
+
+  window.speechSynthesis.cancel(); // interrompe eventuale parlato precedente
+
+  const utt     = new SpeechSynthesisUtterance(clean);
+  utt.lang      = 'it-IT';
+  utt.rate      = 1.0;   // ← velocità: 0.5=lento, 2.0=veloce
+  utt.pitch     = 1.0;   // ← tono: 0=grave, 2=acuto
+
   const doSpeak = () => {
-    const voices = window.speechSynthesis.getVoices();
-    const v = voices.find(v=>v.lang==='it-IT') || voices.find(v=>v.lang.startsWith('it'));
-    if(v) utt.voice = v;
-    utt.onstart = ()=>{ isSpeaking=true; setState('speaking'); };
-    utt.onend   = ()=>{ isSpeaking=false; setState(wakeEnabled?'wake-active':'idle'); if(onEnd)onEnd(); };
-    utt.onerror = ()=>{ isSpeaking=false; setState(wakeEnabled?'wake-active':'idle'); if(onEnd)onEnd(); };
+    // Cerca una voce italiana tra quelle disponibili
+    const voices   = window.speechSynthesis.getVoices();
+    const itVoice  = voices.find(v => v.lang === 'it-IT') || voices.find(v => v.lang.startsWith('it'));
+    if(itVoice) utt.voice = itVoice;
+
+    utt.onstart = () => { isSpeaking=true;  setState('speaking'); };
+    utt.onend   = () => { isSpeaking=false; setState(wakeEnabled?'wake-active':'idle'); if(onEnd)onEnd(); };
+    utt.onerror = () => { isSpeaking=false; setState(wakeEnabled?'wake-active':'idle'); if(onEnd)onEnd(); };
+
     window.speechSynthesis.speak(utt);
   };
+
+  // Le voci potrebbero non essere ancora caricate al primo avvio
   const voices = window.speechSynthesis.getVoices();
-  if(voices.length>0) doSpeak();
-  else { window.speechSynthesis.onvoiceschanged = doSpeak; }
+  if(voices.length > 0) doSpeak();
+  else window.speechSynthesis.onvoiceschanged = doSpeak; // aspetta il caricamento
 }
 
+// Emette un breve beep sonoro tramite Web Audio API.
+// Segnala all'utente che la wake word è stata rilevata e può parlare.
+// PER CAMBIARE IL SUONO: modifica o.frequency.value (frequenza in Hz)
+//   880 = La5, 440 = La4, 1000 = tono acuto
 function beep(){
   try{
-    const ctx=new(window.AudioContext||window.webkitAudioContext)();
-    const o=ctx.createOscillator(),g=ctx.createGain();
-    o.connect(g);g.connect(ctx.destination);
-    o.frequency.value=900;o.type='sine';
-    g.gain.setValueAtTime(.12,ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.12);
-    o.start();o.stop(ctx.currentTime+.12);
-  }catch(e){}
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o   = ctx.createOscillator();
+    const g   = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value = 900;  // ← frequenza Hz del beep
+    o.type            = 'sine';
+    g.gain.setValueAtTime(0.12, ctx.currentTime);                      // volume iniziale
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12); // fade out rapido
+    o.start(); o.stop(ctx.currentTime + 0.12); // durata: 120ms
+  }catch(e){} // silenzioso in caso di errore (es. browser non supporta Web Audio)
 }
 
+// Precarica le voci TTS del browser all'avvio (Chrome le carica in modo asincrono)
 if(window.speechSynthesis){
   window.speechSynthesis.getVoices();
-  window.speechSynthesis.onvoiceschanged=()=>window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
 }
 
+
+// ══════════════════════════════════════════════
+// 11. UTILITIES — Funzioni di supporto
+// ══════════════════════════════════════════════
+
+// Attiva/disattiva la modalità schermo intero.
+// Su Android Chrome: funziona nativamente.
+// Su iOS Safari: limitazione Apple, non supportato dal browser.
+// L'icona nella navbar cambia per mostrare lo stato.
 function toggleFullscreen(){
   const el = document.documentElement;
-  const fsIcon = document.getElementById('fs-icon');
   if(!document.fullscreenElement){
-    (el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen).call(el);
+    // Entra in fullscreen — usa i prefissi per compatibilità cross-browser
+    (el.requestFullscreen || el.webkitRequestFullscreen ||
+     el.mozRequestFullScreen || el.msRequestFullscreen).call(el);
   } else {
-    (document.exitFullscreen||document.webkitExitFullscreen||document.mozCancelFullScreen||document.msExitFullscreen).call(document);
+    // Esce dal fullscreen
+    (document.exitFullscreen || document.webkitExitFullscreen ||
+     document.mozCancelFullScreen || document.msExitFullscreen).call(document);
   }
 }
-document.addEventListener('fullscreenchange', ()=>{
+
+// Aggiorna l'icona fullscreen quando cambia lo stato (evento del browser)
+document.addEventListener('fullscreenchange', () => {
   const fs = !!document.fullscreenElement;
   const ic = document.getElementById('fs-icon');
   if(ic) ic.innerHTML = fs
+    // Icona "riduci" (frecce verso dentro) quando è fullscreen
     ? '<path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>'
+    // Icona "espandi" (frecce verso fuori) quando non è fullscreen
     : '<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>';
 });
 
+// Mostra un toast (notifica temporanea) in basso allo schermo.
+// Scompare automaticamente dopo 3 secondi.
+// PER CAMBIARE LA DURATA: modifica il valore 3000 (millisecondi)
 function showToast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),3000);
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000); // ← durata in ms
 }
 </script>
 </body>

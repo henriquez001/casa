@@ -1150,19 +1150,23 @@ function setWeatherBar(icon, temp, desc, extra){
 // In caso di errore mostra "Non disponibile" e riprova dopo 30 min.
 async function loadWeather(){
   try{
-    const r = await fetch(
-      `https://api.open-meteo.com/v1/forecast` +
-      `?latitude=${LAT}&longitude=${LON}` +
-      `&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m` +
-      `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum` +
-      `&timezone=Europe%2FRome&forecast_days=3`
-    );
+    const url = 'https://api.open-meteo.com/v1/forecast' +
+      '?latitude=' + LAT + '&longitude=' + LON +
+      '&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m' +
+      '&daily=temperature_2m_max,temperature_2m_min,precipitation_sum' +
+      '&timezone=Europe%2FRome&forecast_days=3';
+    const r = await fetch(url);
+    if(!r.ok) throw new Error('HTTP ' + r.status);
     const d = await r.json();
-    if(!d.current) throw new Error('Dati meteo mancanti');
 
-    weatherData = d; // salva per uso nel system prompt AI
-    const c  = d.current;  // dati correnti
-    const dy = d.daily;    // previsioni giornaliere
+    // open-meteo restituisce 'current' (API v1)
+    const c = d.current || d.current_weather;
+    if(!c) throw new Error('Struttura meteo non riconosciuta: ' + JSON.stringify(Object.keys(d)));
+
+    const dy = d.daily;
+    if(!dy) throw new Error('Previsioni giornaliere mancanti');
+
+    weatherData = d;
 
     // Componi i testi per la barra scorrevole
     const icon  = wIcon(c.weather_code);
@@ -1644,90 +1648,113 @@ function stopWakeWord(){
 
 let listenState = 'waitingWake'; // stato interno del loop
 
+// Contatore riavvii consecutivi — per backoff esponenziale
+let listenRetries = 0;
+
 function listenLoop(){
   if(!wakeEnabled) return;
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if(!SR){ showToast('Microfono non supportato'); return; }
 
-  wakeRecognition = new SR();
-  wakeRecognition.lang           = 'it-IT';
-  wakeRecognition.continuous     = true;   // SEMPRE APERTO — niente accendi/spegni
-  wakeRecognition.interimResults = false;
-  wakeRecognition.maxAlternatives = 3;
+  // Chiudi eventuale istanza precedente prima di crearne una nuova
+  if(wakeRecognition){
+    try{ wakeRecognition.onend = null; wakeRecognition.onerror = null; wakeRecognition.abort(); }catch(_){}
+    wakeRecognition = null;
+  }
 
+  const rec = new SR();
+  rec.lang            = 'it-IT';
+  rec.continuous      = true;
+  rec.interimResults  = false;
+  rec.maxAlternatives = 3;
+  wakeRecognition = rec;
   listenState = 'waitingWake';
 
-  wakeRecognition.onresult = (e) => {
-    // Prendi solo i risultati nuovi (dall'ultimo indice processato)
+  // Riavvia il loop in modo sicuro — con backoff per evitare loop veloci
+  const scheduleRestart = (delay) => {
+    if(!wakeEnabled) return;
+    listenRetries++;
+    // Backoff: max 8 secondi dopo molti errori consecutivi
+    const wait = Math.min(delay * Math.min(listenRetries, 4), 8000);
+    setTimeout(listenLoop, wait);
+  };
+
+  rec.onresult = (e) => {
+    listenRetries = 0; // reset backoff ad ogni risultato
     for(let i = e.resultIndex; i < e.results.length; i++){
       if(!e.results[i].isFinal) continue;
-
       const text = e.results[i][0].transcript.toLowerCase().trim();
 
       if(listenState === 'waitingWake'){
-        // Cerca wake word
         if(/claud|clod|klaud|klod|cloud/.test(text)){
-          // Estrai eventuale comando inline (es. "Claude che tempo fa")
           const cmd = text.replace(/claud\w*|clod\w*|klaud\w*|klod\w*|cloud\w*/gi,'').trim();
           if(cmd.length > 3){
-            // Comando già incluso nella stessa frase
             listenState = 'processing';
             beep();
             handleCommand(cmd);
           } else {
-            // Solo wake word → aspetta il comando nella frase successiva
             listenState = 'waitingCommand';
             setState('listening');
             beep();
           }
         }
-
       } else if(listenState === 'waitingCommand'){
-        // Ricevuto il comando
         if(text.length > 1){
           listenState = 'processing';
           handleCommand(text);
         }
       }
-      // Se listenState === 'processing' ignora input fino al termine
     }
   };
 
-  wakeRecognition.onerror = (e) => {
+  rec.onerror = (e) => {
     if(!wakeEnabled) return;
+    console.warn('SpeechRecognition onerror:', e.error);
+
     if(e.error === 'no-speech'){
-      // Nessun parlato rilevato: se stava aspettando comando, torna a wake
+      // Timeout silenzio: normale con continuous, il browser lo gestisce da solo
       if(listenState === 'waitingCommand'){
         listenState = 'waitingWake';
         setState('wake-active');
       }
-      // non riavviare — continuous:true riparte da solo
-    } else if(e.error === 'aborted'){
-      // Riavvia solo se non stiamo elaborando
-      if(wakeEnabled && listenState !== 'processing'){
-        setTimeout(listenLoop, 300);
-      }
-    } else {
-      // Errore grave → riavvia dopo pausa
-      console.warn('SpeechRecognition error:', e.error);
-      if(wakeEnabled) setTimeout(listenLoop, 2000);
+      // NON riavviare — lasciar fare a onend se necessario
+      return;
     }
+
+    if(e.error === 'aborted'){
+      // Abortito da noi (resumeListening) — non riavviare qui
+      return;
+    }
+
+    if(e.error === 'not-allowed' || e.error === 'service-not-allowed'){
+      // Permesso microfono negato — non riavviare
+      setState('idle'); wakeEnabled = false;
+      showToast('Permesso microfono negato');
+      return;
+    }
+
+    // Altri errori (network, ecc) → riavvia con backoff
+    if(listenState !== 'processing') scheduleRestart(1000);
   };
 
-  wakeRecognition.onend = () => {
-    // continuous:true non dovrebbe mai finire da solo —
-    // ma se succede (es. timeout browser) riavvia
-    if(wakeEnabled && listenState !== 'processing'){
-      setTimeout(listenLoop, 500);
+  rec.onend = () => {
+    if(!wakeEnabled) return;
+    // continuous:true chiude per timeout del browser (Chrome ~60s di silenzio)
+    // Riavvia sempre, tranne se stiamo elaborando (handleCommand in corso)
+    if(listenState !== 'processing'){
+      listenRetries = 0; // timeout naturale, non un errore
+      setTimeout(listenLoop, 300);
     }
   };
 
   try{
-    wakeRecognition.start();
+    rec.start();
     setState('wake-active');
+    console.log('SpeechRecognition avviata');
   }catch(e){
-    if(wakeEnabled) setTimeout(listenLoop, 1000);
+    console.warn('SpeechRecognition start error:', e);
+    scheduleRestart(500);
   }
 }
 

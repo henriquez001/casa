@@ -970,42 +970,6 @@ html, body {
   </div>
 </div>
 
-<!-- DIALOG -->
-<div id="dialog">
-  <div class="dlg-box">
-    <div class="dlg-handle"></div>
-    <div class="dlg-title">Nuova Attività</div>
-    <div class="dlg-field">
-      <label class="dlg-lbl">Nome</label>
-      <input class="dlg-inp" id="d-nome" placeholder="es. Pulizia filtri caldaia">
-    </div>
-    <div class="dlg-field">
-      <label class="dlg-lbl">Frequenza</label>
-      <select class="dlg-sel" id="d-freq">
-        <option value="7">Settimanale</option>
-        <option value="14">Ogni 2 settimane</option>
-        <option value="30" selected>Mensile</option>
-        <option value="60">Ogni 2 mesi</option>
-        <option value="90">Trimestrale</option>
-        <option value="180">Semestrale</option>
-        <option value="365">Annuale</option>
-      </select>
-    </div>
-    <div class="dlg-field">
-      <label class="dlg-lbl">Ultima esecuzione</label>
-      <input class="dlg-inp" type="date" id="d-ultima">
-    </div>
-    <div class="dlg-field">
-      <label class="dlg-lbl">Note (opzionale)</label>
-      <input class="dlg-inp" id="d-note" placeholder="es. Usare prodotto X">
-    </div>
-    <div class="dlg-row">
-      <button class="dlg-btn cancel" onclick="closeDialog()">Annulla</button>
-      <button class="dlg-btn confirm" onclick="salvaAtt()">Salva →</button>
-    </div>
-  </div>
-</div>
-
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1189,9 +1153,6 @@ window.onload = () => {
   // Pre-popola i campi nel setup (utile se l'utente vuole modificarli)
   if(elKey)   { const el=document.getElementById('el-key-input');   if(el) el.value=elKey; }
   if(elVoice) { const el=document.getElementById('el-voice-input'); if(el) el.value=elVoice; }
-
-  // Imposta la data di oggi come default nel dialog archivio
-  document.getElementById('d-ultima').value = new Date().toISOString().split('T')[0];
 };
 
 
@@ -1625,8 +1586,7 @@ function fmt(t){
   return t
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // **testo** → grassetto
     .replace(/\*(.*?)\*/g,     '<em>$1</em>')          // *testo* → corsivo
-    .replace(/
-/g,            '<br>');                // newline → a capo HTML
+    .replace(/\n/g,            '<br>');                // newline → a capo HTML
 }
 
 // Mostra/nasconde l'animazione "sta scrivendo..." (tre puntini animati)

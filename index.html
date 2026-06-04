@@ -814,7 +814,7 @@ html, body {
       </select>
     </div>
     <div class="adlg-field">
-      <label class="adlg-lbl">Data</label>
+      <label class="adlg-lbl">Data ultima esecuzione <span style="opacity:.5;font-weight:300">(lascia vuoto se non ricordi)</span></label>
       <input class="adlg-inp" type="date" id="ad-data">
     </div>
     <div class="adlg-field">
@@ -1213,7 +1213,7 @@ function renderArch(){
   const q = (document.getElementById('arch-search') || {value:''}).value.toLowerCase().trim();
 
   // Parti dall'archivio completo, ordinato dal più recente
-  let list = [...archivio].sort((a,b) => new Date(b.data) - new Date(a.data));
+  let list = [...archivio].sort((a,b) => { const da=a.data?new Date(a.data):new Date(0); const db=b.data?new Date(b.data):new Date(0); return db-da; });
 
   // Applica filtro categoria se non 'all'
   if(archFilter !== 'all') list = list.filter(e => e.cat === archFilter);
@@ -1234,7 +1234,7 @@ function renderArch(){
     const col     = CAT_COLORS[e.cat] || '#555';
     const dataStr = e.data
       ? new Date(e.data+'T00:00:00').toLocaleDateString('it-IT', {day:'2-digit', month:'short', year:'numeric'})
-      : '—';
+      : 'Data sconosciuta';
     const scadStr     = e.scad
       ? '· Prossima: ' + new Date(e.scad+'T00:00:00').toLocaleDateString('it-IT', {day:'2-digit', month:'short', year:'numeric'})
       : '';
@@ -1280,7 +1280,7 @@ function openArchDialog(){
   // Pre-popola il dialog con i valori di default
   document.getElementById('ad-titolo').value = titolo;
   document.getElementById('ad-note').value   = '';
-  document.getElementById('ad-data').value   = new Date().toISOString().split('T')[0]; // oggi
+  document.getElementById('ad-data').value   = ''; // vuoto — l'utente inserisce solo se conosce la data
   document.getElementById('ad-scad').value   = '';
   document.getElementById('ad-cat').value    = 'manutenzione';
 
@@ -1302,7 +1302,7 @@ function salvaArch(){
     id:     Date.now().toString(), // ID univoco basato sul timestamp
     titolo,
     cat:    document.getElementById('ad-cat').value,
-    data:   document.getElementById('ad-data').value || new Date().toISOString().split('T')[0],
+    data:   document.getElementById('ad-data').value || null, // null = data sconosciuta
     note:   document.getElementById('ad-note').value.trim(),
     scad:   document.getElementById('ad-scad').value || null // null se non specificata
   });
@@ -1332,9 +1332,9 @@ function attContext(){
   // includendo titolo, categoria, data, NOTE e scadenza.
   // Le note sono fondamentali: contengono istruzioni su come fare le cose.
   const descrizioni = [...archivio]
-    .sort((a,b) => new Date(b.data) - new Date(a.data))
+    .sort((a,b) => { const da=a.data?new Date(a.data):new Date(0); const db=b.data?new Date(b.data):new Date(0); return db-da; })
     .map(e => {
-      let riga = `- [${e.cat.toUpperCase()}] ${e.titolo} (eseguito: ${e.data})`;
+      let riga = `- [${e.cat.toUpperCase()}] ${e.titolo}` + (e.data ? ` (ultima esecuzione: ${e.data})` : ` (data esecuzione: sconosciuta)`);
       if(e.note) riga += ` | Note: ${e.note}`;
       if(e.scad){
         const giorni = Math.ceil((new Date(e.scad+'T00:00:00') - oggi) / 86400000);

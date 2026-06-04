@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>CASA</title>
-<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;700&family=Major+Mono+Display&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;700&family=Major+Mono+Display&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════
    DESIGN SYSTEM
@@ -23,6 +23,7 @@
   --r:    14px;                  /* border-radius base */
   --mono: 'Roboto Mono', monospace;
   --clock: 'Major Mono Display', monospace;
+  --sep: 'Share Tech Mono', monospace;
 }
 
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -175,16 +176,16 @@ html, body {
 }
 .clock-hms {
   font-family: var(--clock);
-  font-size: clamp(2.4rem, 22vw, 10rem);
+  font-size: clamp(3.8rem, 22vw, 10rem);
   font-weight: 400; line-height: 1;
-  letter-spacing: -.02em; color: var(--text);
+  letter-spacing: -.08em; color: var(--text);
   transition: text-shadow 3s ease;
 }
 .clock-sep {
-  font-family: var(--clock);
-  font-size: clamp(1.8rem, 16vw, 7.5rem);
+  font-family: var(--sep);
+  font-size: clamp(2.8rem, 16vw, 7.5rem);
   font-weight: 400; color: var(--brd);
-  line-height: 1; padding: 0 3px;
+  line-height: 1; padding: 0 2px;
   animation: blink 1s step-start infinite;
 }
 @keyframes blink { 50% { opacity: .1; } }

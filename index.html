@@ -1847,6 +1847,26 @@ function chime(){
 // TTS — ElevenLabs o browser TTS
 // ══════════════════════════════════════════════
 async function speakText(text, onEnd=null){
+  // Callback garantita: chiamata UNA sola volta in qualsiasi scenario
+  let endCalled = false;
+  const done = () => {
+    if(endCalled) return;
+    endCalled = true;
+    isSpeaking = false;
+    setState(wakeEnabled ? 'wake-active' : 'idle');
+    if(onEnd) onEnd();
+  };
+
+  // Timeout di sicurezza: se per qualsiasi motivo done() non viene chiamato
+  // entro 60 secondi, il microfono riparte comunque
+  const safetyTimer = setTimeout(() => {
+    console.warn('speakText: timeout di sicurezza — forzo ripristino microfono');
+    done();
+  }, 60000);
+
+  const finish = () => { clearTimeout(safetyTimer); done(); };
+
+  // Pulisce markdown e HTML
   const clean = text
     .replace(/\*\*(.*?)\*\*/g,'$1')
     .replace(/\*(.*?)\*/g,'$1')
@@ -1855,71 +1875,73 @@ async function speakText(text, onEnd=null){
 
   await chime();
 
+  // ── ElevenLabs ──
   if(elKey && elVoice){
-    setState('speaking'); isSpeaking=true;
+    setState('speaking'); isSpeaking = true;
     try{
-      console.log('ElevenLabs: invio richiesta, voice =', elVoice);
       const res = await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+elVoice, {
-        method:'POST',
-        headers:{'xi-api-key':elKey,'Content-Type':'application/json','Accept':'audio/mpeg'},
-        body:JSON.stringify({
-          text:clean, model_id:'eleven_multilingual_v2',
-          voice_settings:{stability:0.5,similarity_boost:0.8,style:0.3,use_speaker_boost:true}
+        method: 'POST',
+        headers: { 'xi-api-key':elKey, 'Content-Type':'application/json', 'Accept':'audio/mpeg' },
+        body: JSON.stringify({
+          text: clean,
+          model_id: 'eleven_multilingual_v2',
+          voice_settings: { stability:0.5, similarity_boost:0.8, style:0.3, use_speaker_boost:true }
         })
       });
 
       if(!res.ok){
-        // Leggi il messaggio di errore dettagliato da ElevenLabs
         let errMsg = 'HTTP '+res.status;
         try{ const ej = await res.json(); errMsg = JSON.stringify(ej.detail||ej); }catch(_){}
-        console.error('ElevenLabs errore:', res.status, errMsg);
-        if(res.status === 401) showToast('ElevenLabs: chiave non valida');
-        else if(res.status === 422) showToast('ElevenLabs: Voice ID errato');
-        else showToast('ElevenLabs: errore '+res.status);
+        if(res.status===401) showToast('ElevenLabs: chiave non valida');
+        else if(res.status===422) showToast('ElevenLabs: Voice ID errato');
+        else showToast('ElevenLabs errore '+res.status);
         throw new Error(errMsg);
       }
 
       const blob = await res.blob();
-      if(blob.size === 0){ console.error('ElevenLabs: audio vuoto'); throw new Error('audio vuoto'); }
+      if(!blob || blob.size === 0) throw new Error('audio vuoto');
 
-      const url = URL.createObjectURL(blob);
+      const url   = URL.createObjectURL(blob);
       const audio = new Audio(url);
-      audio.onended = () => { isSpeaking=false; URL.revokeObjectURL(url); setState(wakeEnabled?'wake-active':'idle'); if(onEnd)onEnd(); };
-      audio.onerror = (ev) => { console.error('Audio playback error:', ev); isSpeaking=false; setState(wakeEnabled?'wake-active':'idle'); if(onEnd)onEnd(); };
 
-      // audio.play() restituisce una Promise che può essere rifiutata dal browser
-      // (autoplay policy). Gestiamo il caso esplicitamente.
-      try{
-        await audio.play();
-        console.log('ElevenLabs: riproduzione avviata');
-      }catch(playErr){
-        console.error('Autoplay bloccato dal browser:', playErr);
-        showToast('Tocca lo schermo per attivare l\'audio');
-        isSpeaking=false;
-        setState(wakeEnabled?'wake-active':'idle');
-        if(onEnd)onEnd();
+      audio.onended = () => { URL.revokeObjectURL(url); finish(); };
+      audio.onerror = () => { URL.revokeObjectURL(url); finish(); };
+
+      const playPromise = audio.play();
+      if(playPromise && typeof playPromise.then === 'function'){
+        playPromise.catch(err => {
+          console.warn('Autoplay bloccato:', err);
+          finish();
+        });
       }
-      return;
+      return; // attende onended/onerror
+
     }catch(e){
-      console.warn('ElevenLabs fallback al browser TTS:', e);
-      isSpeaking=false;
+      console.warn('ElevenLabs fallback:', e);
+      // Cade nel browser TTS
     }
   }
 
-  if(!window.speechSynthesis){ setState('idle'); if(onEnd)onEnd(); return; }
+  // ── Browser TTS (fallback) ──
+  if(!window.speechSynthesis){ finish(); return; }
   window.speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(clean);
-  utt.lang='it-IT'; utt.rate=1.0; utt.pitch=1.0;
-  const doSpeak=()=>{
-    const v=window.speechSynthesis.getVoices();
-    const iv=v.find(x=>x.lang==='it-IT')||v.find(x=>x.lang.startsWith('it'));
-    if(iv)utt.voice=iv;
-    utt.onstart=()=>{ isSpeaking=true; setState('speaking'); };
-    utt.onend  =()=>{ isSpeaking=false; setState(wakeEnabled?'wake-active':'idle'); if(onEnd)onEnd(); };
-    utt.onerror=()=>{ isSpeaking=false; setState(wakeEnabled?'wake-active':'idle'); if(onEnd)onEnd(); };
+  const utt    = new SpeechSynthesisUtterance(clean);
+  utt.lang     = 'it-IT';
+  utt.rate     = 1.0;
+  utt.pitch    = 1.0;
+  utt.onstart  = () => { isSpeaking = true; setState('speaking'); };
+  utt.onend    = () => finish();
+  utt.onerror  = () => finish();
+
+  const doSpeak = () => {
+    const voices  = window.speechSynthesis.getVoices();
+    const itVoice = voices.find(v=>v.lang==='it-IT') || voices.find(v=>v.lang.startsWith('it'));
+    if(itVoice) utt.voice = itVoice;
     window.speechSynthesis.speak(utt);
   };
-  window.speechSynthesis.getVoices().length>0 ? doSpeak() : (window.speechSynthesis.onvoiceschanged=doSpeak);
+
+  if(window.speechSynthesis.getVoices().length > 0) doSpeak();
+  else window.speechSynthesis.onvoiceschanged = doSpeak;
 }
 
 if(window.speechSynthesis){

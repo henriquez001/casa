@@ -1630,566 +1630,154 @@ function stopWakeWord(){
   stopAmbientMonitor();
 }
 
-// Loop principale di ascolto wake word.
-// Crea una nuova istanza SpeechRecognition ad ogni ciclo (necessario su Chrome mobile).
-// Ascolta un breve segmento audio e cerca la wake word nel testo trascritto.
+// ══════════════════════════════════════════════
+// WAKE WORD ENGINE — una sola istanza continua
+//
+// Usa continuous:true così il microfono resta
+// sempre aperto senza accendi/spegni continui.
+//
+// STATI INTERNI:
+//   waitingWake    → in ascolto per "Claude"
+//   waitingCommand → wake word rilevata, attende comando
+//   processing     → chiamata API in corso
+// ══════════════════════════════════════════════
+
+let listenState = 'waitingWake'; // stato interno del loop
+
 function listenLoop(){
-  if(!wakeEnabled) return; // smetti se nel frattempo è stato disabilitato
+  if(!wakeEnabled) return;
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ showToast('Microfono non supportato'); return; }
+
   wakeRecognition = new SR();
-  wakeRecognition.lang             = 'it-IT';
-  wakeRecognition.continuous       = false; // un segmento alla volta (più stabile su mobile)
-  wakeRecognition.interimResults   = false; // solo risultati finali
-  wakeRecognition.maxAlternatives  = 5;     // più alternative = più chance di rilevare "claude"
+  wakeRecognition.lang           = 'it-IT';
+  wakeRecognition.continuous     = true;   // SEMPRE APERTO — niente accendi/spegni
+  wakeRecognition.interimResults = false;
+  wakeRecognition.maxAlternatives = 3;
+
+  listenState = 'waitingWake';
 
   wakeRecognition.onresult = (e) => {
-    let text = '', detected = false;
+    // Prendi solo i risultati nuovi (dall'ultimo indice processato)
+    for(let i = e.resultIndex; i < e.results.length; i++){
+      if(!e.results[i].isFinal) continue;
 
-    // Scorri tutti i risultati e le alternative cercando la wake word
-    for(let i=0; i<e.results.length; i++)
-      for(let j=0; j<e.results[i].length; j++){
-        const t = e.results[i][j].transcript.toLowerCase().trim();
-        text += t + ' ';
-        // Regex che copre varianti di pronuncia di "Claude"
-        if(/claud|clod|klaud|klod|cloud/.test(t)) detected = true;
-      }
+      const text = e.results[i][0].transcript.toLowerCase().trim();
 
-    if(detected){
-      // Rimuovi la wake word dal testo per estrarre il comando
-      const cmd = text.replace(/claud\w*|clod\w*|klaud\w*|klod\w*|cloud\w*/gi, '').trim();
-      if(cmd.length > 3){
-        // L'utente ha detto "Claude fai X" tutto insieme → esegui subito
-        handleCommand(cmd);
-      } else {
-        // L'utente ha detto solo "Claude" → ascolta il comando successivo
-        listenForCommand();
+      if(listenState === 'waitingWake'){
+        // Cerca wake word
+        if(/claud|clod|klaud|klod|cloud/.test(text)){
+          // Estrai eventuale comando inline (es. "Claude che tempo fa")
+          const cmd = text.replace(/claud\w*|clod\w*|klaud\w*|klod\w*|cloud\w*/gi,'').trim();
+          if(cmd.length > 3){
+            // Comando già incluso nella stessa frase
+            listenState = 'processing';
+            beep();
+            handleCommand(cmd);
+          } else {
+            // Solo wake word → aspetta il comando nella frase successiva
+            listenState = 'waitingCommand';
+            setState('listening');
+            beep();
+          }
+        }
+
+      } else if(listenState === 'waitingCommand'){
+        // Ricevuto il comando
+        if(text.length > 1){
+          listenState = 'processing';
+          handleCommand(text);
+        }
       }
-    } else {
-      // Wake word non trovata → riprende subito il loop
-      if(wakeEnabled) setTimeout(listenLoop, 200);
+      // Se listenState === 'processing' ignora input fino al termine
     }
   };
 
   wakeRecognition.onerror = (e) => {
-    // 'no-speech' e 'aborted' sono errori normali (silenzio, timeout) → retry veloce
-    // Altri errori (permessi negati, hardware) → retry lento
-    const retry = (e.error === 'no-speech' || e.error === 'aborted') ? 300 : 1500;
-    if(wakeEnabled) setTimeout(listenLoop, retry);
+    if(!wakeEnabled) return;
+    if(e.error === 'no-speech'){
+      // Nessun parlato rilevato: se stava aspettando comando, torna a wake
+      if(listenState === 'waitingCommand'){
+        listenState = 'waitingWake';
+        setState('wake-active');
+      }
+      // non riavviare — continuous:true riparte da solo
+    } else if(e.error === 'aborted'){
+      // Riavvia solo se non stiamo elaborando
+      if(wakeEnabled && listenState !== 'processing'){
+        setTimeout(listenLoop, 300);
+      }
+    } else {
+      // Errore grave → riavvia dopo pausa
+      console.warn('SpeechRecognition error:', e.error);
+      if(wakeEnabled) setTimeout(listenLoop, 2000);
+    }
   };
 
   wakeRecognition.onend = () => {
-    // Se è ancora wake-active significa che non ha trovato nulla → riprende
-    if(wakeEnabled && currentState === 'wake-active') setTimeout(listenLoop, 200);
+    // continuous:true non dovrebbe mai finire da solo —
+    // ma se succede (es. timeout browser) riavvia
+    if(wakeEnabled && listenState !== 'processing'){
+      setTimeout(listenLoop, 500);
+    }
   };
-
-  try{ wakeRecognition.start(); }
-  catch(e){ if(wakeEnabled) setTimeout(listenLoop, 1000); } // errore avvio → retry
-}
-
-// Ascolta il comando dell'utente dopo che la wake word è stata rilevata.
-// Emette un beep di conferma, poi trascrive il parlato e lo manda a handleCommand().
-function listenForCommand(){
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const r  = new SR();
-  r.lang           = 'it-IT';
-  r.continuous     = false;
-  r.interimResults = false;
-
-  setState('listening');
-  beep(); // feedback sonoro che indica "ora puoi parlare"
-
-  r.onresult = (e) => { handleCommand(e.results[0][0].transcript); };
-  r.onerror  = ()  => { setState('wake-active'); if(wakeEnabled) setTimeout(listenLoop, 300); };
-  r.onend    = ()  => {
-    // Se non ha ricevuto risultati torna in ascolto wake word
-    if(currentState === 'listening'){ setState('wake-active'); if(wakeEnabled) setTimeout(listenLoop, 300); }
-  };
-
-  try{ r.start(); }
-  catch(e){ setState('wake-active'); if(wakeEnabled) setTimeout(listenLoop, 500); }
-}
-
-// Gestisce il comando vocale: chiama Claude, mostra la risposta in chat, la legge ad alta voce.
-// Usa una copia del chatHistory per non corrompere lo stato in caso di errore.
-async function handleCommand(cmd){
-  setState('thinking');
-  addMsg(cmd, 'user'); // mostra il testo dettato nella chat
-
-  // Copia del history + nuovo messaggio (non modifica chatHistory ancora)
-  const msgs = [...chatHistory, { role:'user', content:cmd }];
 
   try{
-    const reply = await callClaude(msgs, true); // true = risposta breve per TTS
+    wakeRecognition.start();
+    setState('wake-active');
+  }catch(e){
+    if(wakeEnabled) setTimeout(listenLoop, 1000);
+  }
+}
 
-    // Aggiorna chatHistory solo se la chiamata ha avuto successo
-    chatHistory.push({ role:'user',      content:cmd   });
-    chatHistory.push({ role:'assistant', content:reply });
+// Ferma il recognition quando torna disponibile dopo handleCommand
+function resumeListening(){
+  if(!wakeEnabled) return;
+  listenState = 'waitingWake';
+  setState('wake-active');
+  // Se il recognition è ancora vivo, continua — altrimenti riavvia
+  if(!wakeRecognition){
+    listenLoop();
+    return;
+  }
+  try{
+    // Tenta di riusare l'istanza esistente (evita riavvio microfono)
+    // Se non è più attiva, l'eccezione ci porta al catch
+    wakeRecognition.onresult; // verifica che esista
+  }catch(e){
+    listenLoop();
+  }
+}
+
+// listenForCommand non serve più con continuous:true
+// mantenuta come stub per retrocompatibilità
+function listenForCommand(){
+  listenState = 'waitingCommand';
+  setState('listening');
+  beep();
+}
+
+async function handleCommand(cmd){
+  setState('thinking');
+  addMsg(cmd, 'user');
+  const msgs = [...chatHistory, {role:'user', content:cmd}];
+  try{
+    const reply = await callClaude(msgs, true);
+    chatHistory.push({role:'user', content:cmd});
+    chatHistory.push({role:'assistant', content:reply});
     if(chatHistory.length > 20) chatHistory = chatHistory.slice(-16);
-
     addMsg(reply, 'ai');
-
-    // Legge la risposta ad alta voce; al termine riprende il wake word loop
-    speakText(reply, () => {
-      if(wakeEnabled) setTimeout(listenLoop, 400);
-    });
-
+    // Parla, poi riprende l'ascolto
+    speakText(reply, () => { resumeListening(); });
   }catch(err){
     const msg = err.message.includes('401') ? 'Chiave API non valida' : 'Errore di connessione';
     addMsg(`[ ${msg} ]`, 'ai');
-    setState(wakeEnabled ? 'wake-active' : 'idle');
-    if(wakeEnabled) setTimeout(listenLoop, 1500);
+    resumeListening();
   }
 }
 
 
-// ══════════════════════════════════════════════
-// 10. TTS — Sintesi vocale
-//
-// Usa ElevenLabs se le chiavi sono configurate (voce naturale).
-// Altrimenti usa il TTS nativo del browser (voce robotica).
-//
-// PER CAMBIARE VOCE ELEVENLABS:
-//   Vai su elevenlabs.io → Voices → copia il Voice ID
-//   Inseriscilo nel campo "Voice ID" nel setup dell'app
-//
-// PER REGOLARE LA VOCE:
-//   In speakText() modifica voice_settings per ElevenLabs:
-//     stability: 0-1 (0=più espressiva, 1=più stabile)
-//     similarity_boost: 0-1 (fedeltà alla voce originale)
-//     style: 0-1 (intensità stile)
-//   Per il browser TTS: modifica utt.rate (velocità) e utt.pitch (tono)
-// ══════════════════════════════════════════════
-
-async function speakText(text, onEnd=null){
-  // Se la stanza non ha avuto attività recente, metti il testo in coda
-  // e aspetta che ci sia qualcuno — riprova ogni 10 secondi
-  if(!stranzaAttiva()){
-    console.log('Stanza silenziosa, attendo attività per parlare...');
-    let tentativi = 0;
-    const aspetta = setInterval(()=>{
-      tentativi++;
-      if(stranzaAttiva()){
-        clearInterval(aspetta);
-        speakText(text, onEnd); // riprova ora che c'è attività
-      } else if(tentativi > 18){ // max 3 minuti di attesa
-        clearInterval(aspetta);
-        if(onEnd) onEnd(); // abbandona se nessuno è mai arrivato
-      }
-    }, 10000);
-    return;
-  }
-
-  // Suona il chime piacevole PRIMA di parlare
-  await chime();
-
-  // Pulisce il testo da markdown e tag HTML prima di inviarlo al TTS
-  const clean = text
-    .replace(/\*\*(.*?)\*\*/g, '$1')  // rimuovi **grassetto**
-    .replace(/\*(.*?)\*/g,     '$1')  // rimuovi *corsivo*
-    .replace(/#+\s/g,          '')    // rimuovi ## titoli
-    .replace(/<[^>]+>/g,       '');   // rimuovi tag HTML
-
-  // ── ELEVENLABS (voce naturale) ──────────────────────
-  // Usato solo se entrambe le chiavi sono configurate
-  if(elKey && elVoice){
-    setState('speaking');
-    isSpeaking = true;
-    try{
-      const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${elVoice}`, {
-        method: 'POST',
-        headers: {
-          'xi-api-key':   elKey,
-          'Content-Type': 'application/json',
-          'Accept':       'audio/mpeg'
-        },
-        body: JSON.stringify({
-          text,
-          model_id: 'eleven_multilingual_v2', // modello migliore per italiano
-          voice_settings: {
-            stability:        0.5,  // ← 0=espressiva 1=stabile
-            similarity_boost: 0.8,  // ← fedeltà alla voce originale
-            style:            0.3,  // ← intensità stile
-            use_speaker_boost: true // migliora la qualità
-          }
-        })
-      });
-      if(!res.ok) throw new Error('ElevenLabs HTTP ' + res.status);
-
-      // Crea un URL temporaneo per l'audio ricevuto e lo riproduce
-      const blob  = await res.blob();
-      const url   = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-
-      audio.onended = () => {
-        isSpeaking = false;
-        URL.revokeObjectURL(url); // libera memoria
-        setState(wakeEnabled ? 'wake-active' : 'idle');
-        if(onEnd) onEnd();
-      };
-      audio.onerror = () => {
-        isSpeaking = false;
-        setState(wakeEnabled ? 'wake-active' : 'idle');
-        if(onEnd) onEnd();
-      };
-      audio.play();
-      return; // esce: non serve il fallback browser
-
-    }catch(e){
-      // ElevenLabs ha fallito → cade nel fallback browser
-      console.warn('ElevenLabs error, uso browser TTS:', e);
-    }
-  }
-
-  // ── FALLBACK: BROWSER TTS ───────────────────────────
-  // Usato se ElevenLabs non è configurato o ha dato errore
-  if(!window.speechSynthesis){ setState('idle'); if(onEnd) onEnd(); return; }
-
-  window.speechSynthesis.cancel(); // interrompe eventuale parlato precedente
-
-  const utt     = new SpeechSynthesisUtterance(clean);
-  utt.lang      = 'it-IT';
-  utt.rate      = 1.0;   // ← velocità: 0.5=lento, 2.0=veloce
-  utt.pitch     = 1.0;   // ← tono: 0=grave, 2=acuto
-
-  const doSpeak = () => {
-    // Cerca una voce italiana tra quelle disponibili
-    const voices   = window.speechSynthesis.getVoices();
-    const itVoice  = voices.find(v => v.lang === 'it-IT') || voices.find(v => v.lang.startsWith('it'));
-    if(itVoice) utt.voice = itVoice;
-
-    utt.onstart = () => { isSpeaking=true;  setState('speaking'); };
-    utt.onend   = () => { isSpeaking=false; setState(wakeEnabled?'wake-active':'idle'); if(onEnd)onEnd(); };
-    utt.onerror = () => { isSpeaking=false; setState(wakeEnabled?'wake-active':'idle'); if(onEnd)onEnd(); };
-
-    window.speechSynthesis.speak(utt);
-  };
-
-  // Le voci potrebbero non essere ancora caricate al primo avvio
-  const voices = window.speechSynthesis.getVoices();
-  if(voices.length > 0) doSpeak();
-  else window.speechSynthesis.onvoiceschanged = doSpeak; // aspetta il caricamento
-}
-
-// Emette un breve beep sonoro tramite Web Audio API.
-// Segnala all'utente che la wake word è stata rilevata e può parlare.
-// PER CAMBIARE IL SUONO: modifica o.frequency.value (frequenza in Hz)
-//   880 = La5, 440 = La4, 1000 = tono acuto
-// ══════════════════════════════════════════════
-// CHIME — suono piacevole prima che Claude parli
-//
-// Due note in sequenza (accordo Do-Mi) con fade morbido.
-// Suona sempre prima di qualsiasi risposta vocale.
-//
-// PER CAMBIARE LE NOTE: modifica le frequenze
-//   261.6 = Do4, 329.6 = Mi4, 392.0 = Sol4
-// PER CAMBIARE IL VOLUME: modifica 0.18 (0-1)
-// PER CAMBIARE LA DURATA: modifica i valori in secondi
-// ══════════════════════════════════════════════
-function chime(){
-  return new Promise(resolve => {
-    try{
-      const ctx  = new (window.AudioContext || window.webkitAudioContext)();
-      const now  = ctx.currentTime;
-
-      // Funzione helper: crea una nota con fade in/out morbido
-      function nota(freq, startTime, duration){
-        const osc  = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain); gain.connect(ctx.destination);
-
-        osc.type          = 'sine';
-        osc.frequency.value = freq;
-
-        // Forma d'onda: attacco rapido, decay lungo e morbido
-        gain.gain.setValueAtTime(0, startTime);
-        gain.gain.linearRampToValueAtTime(0.18, startTime + 0.05); // attacco 50ms
-        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration); // decay
-        osc.start(startTime);
-        osc.stop(startTime + duration);
-      }
-
-      // Prima nota: Do4 (261.6 Hz)
-      nota(261.6, now, 0.7);
-      // Seconda nota: Mi4 (329.6 Hz) con leggero ritardo
-      nota(329.6, now + 0.15, 0.6);
-      // Terza nota opzionale: Sol4 armonica sottile
-      nota(392.0, now + 0.28, 0.5);
-
-      // Risolvi la Promise dopo che le note sono finite
-      setTimeout(resolve, 700);
-    }catch(e){
-      resolve(); // se fallisce, prosegui comunque
-    }
-  });
-}
-
-// Vecchio beep mantenuto per compatibilità (usato nel wake word)
-function beep(){
-  try{
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const o   = ctx.createOscillator();
-    const g   = ctx.createGain();
-    o.connect(g); g.connect(ctx.destination);
-    o.frequency.value = 880;
-    o.type = 'sine';
-    g.gain.setValueAtTime(0.1, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
-    o.start(); o.stop(ctx.currentTime + 0.1);
-  }catch(e){}
-}
-
-// stranzaAttiva: sempre true — il monitoraggio ambientale è disabilitato
-// perché conflicta con SpeechRecognition su mobile.
-// Claude parla sempre quando ha qualcosa da dire.
-let ambientMonitoring = false;
-function startAmbientMonitor(){ ambientMonitoring = false; }
-function stopAmbientMonitor(){ ambientMonitoring = false; }
-function stranzaAttiva(){ return true; }
-
-
-// Precarica le voci TTS del browser all'avvio (Chrome le carica in modo asincrono)
-if(window.speechSynthesis){
-  window.speechSynthesis.getVoices();
-  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
-}
-
-
-// ══════════════════════════════════════════════
-// 11. UTILITIES — Funzioni di supporto
-// ══════════════════════════════════════════════
-
-// Attiva/disattiva la modalità schermo intero.
-// Su Android Chrome: funziona nativamente.
-// Su iOS Safari: limitazione Apple, non supportato dal browser.
-// L'icona nella navbar cambia per mostrare lo stato.
-function toggleFullscreen(){
-  const el = document.documentElement;
-  if(!document.fullscreenElement){
-    // Entra in fullscreen — usa i prefissi per compatibilità cross-browser
-    (el.requestFullscreen || el.webkitRequestFullscreen ||
-     el.mozRequestFullScreen || el.msRequestFullscreen).call(el);
-  } else {
-    // Esce dal fullscreen
-    (document.exitFullscreen || document.webkitExitFullscreen ||
-     document.mozCancelFullScreen || document.msExitFullscreen).call(document);
-  }
-}
-
-// Aggiorna l'icona fullscreen quando cambia lo stato (evento del browser)
-document.addEventListener('fullscreenchange', () => {
-  const fs = !!document.fullscreenElement;
-  const ic = document.getElementById('fs-icon');
-  if(ic) ic.innerHTML = fs
-    // Icona "riduci" (frecce verso dentro) quando è fullscreen
-    ? '<path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>'
-    // Icona "espandi" (frecce verso fuori) quando non è fullscreen
-    : '<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>';
-});
-
-// Mostra un toast (notifica temporanea) in basso allo schermo.
-// Scompare automaticamente dopo 3 secondi.
-// PER CAMBIARE LA DURATA: modifica il valore 3000 (millisecondi)
-// ══════════════════════════════════════════════
-// CONTROLLO PROATTIVO
-//
-// Viene eseguito all'avvio e ogni 2 ore.
-// Chiede a Claude di analizzare archivio + meteo + data
-// e decidere autonomamente se c'è qualcosa da segnalare.
-// Non usa regole fisse: ragiona sui TUOI dati reali,
-// incluse le note che hai scritto negli interventi.
-//
-// Se non c'è nulla di rilevante, Claude risponde con
-// la parola speciale "NESSUN_AVVISO" e non viene detto nulla.
-// ══════════════════════════════════════════════
-
-// Timestamp dell'ultimo avviso proattivo emesso
-// (evita di ripetere lo stesso avviso più volte nella stessa sessione)
-let ultimoAvvisoProattivo = null;
-
-async function controlloProattivo(){
-  // Non fare nulla se non c'è archivio o chiave API
-  if(!apiKey || !archivio.length) return;
-
-  const n    = new Date();
-  const ora  = n.getHours();
-  const stag = ['Inverno','Inverno','Primavera','Primavera','Primavera',
-                'Estate','Estate','Estate','Autunno','Autunno','Autunno','Inverno'];
-
-  // Costruisce il contesto completo per la valutazione proattiva.
-  // Include TUTTO l'archivio con note, scadenze, meteo e stagione —
-  // così Claude può ragionare su condizioni specifiche nelle note
-  // (es. "fare quando piove", "prima dell'inverno", "ogni 3 mesi")
-  const systemProattivo = `Sei "Casa", assistente domestico per Leo a ${CITY}.
-Data e ora: ${n.toLocaleString('it-IT')} — Stagione: ${stag[n.getMonth()]}
-Meteo: ${weatherSummary()}
-
-ARCHIVIO COMPLETO CON NOTE:
-${attContext()}
-
-Il tuo compito è analizzare questi dati e decidere se c'è qualcosa di importante
-da segnalare a Leo ADESSO, tenendo conto di:
-1. Scadenze imminenti o già superate negli interventi
-2. Condizioni nelle NOTE degli interventi (es. "fare quando piove", "ogni primavera",
-   "prima che faccia freddo", "controllare se temperatura scende sotto X°") — 
-   confrontale con meteo e stagione attuali
-3. Interventi non eseguiti da molto tempo rispetto alla loro frequenza tipica
-4. Qualsiasi altra informazione nelle note che sia rilevante in questo momento
-
-SE c'è qualcosa di importante: rispondi con un avviso breve e diretto (max 2 frasi),
-parlando direttamente a Leo in italiano. Cita la nota specifica se pertinente.
-
-SE non c'è nulla di rilevante in questo momento: rispondi SOLO con la parola esatta:
-NESSUN_AVVISO`;
-
-  try{
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 120,
-        system: systemProattivo,
-        messages: [{ role: "user", content: "Analizza la situazione e dimmi se c'è qualcosa di importante." }]
-      })
-    });
-
-    const d = await res.json();
-    if(d.error) return; // silenzioso in caso di errore API
-
-    const risposta = d.content[0].text.trim();
-
-    // Se Claude ha detto che non c'è niente, non fare nulla
-    if(risposta === 'NESSUN_AVVISO' || risposta.includes('NESSUN_AVVISO')) return;
-
-    // Evita di ripetere lo stesso avviso nella stessa ora
-    const chiaveAvviso = risposta.slice(0, 40);
-    if(ultimoAvvisoProattivo === chiaveAvviso) return;
-    ultimoAvvisoProattivo = chiaveAvviso;
-
-    // Mostra il messaggio nella chat e lo legge ad alta voce
-    addMsg(risposta, 'ai');
-    speakText(risposta);
-
-  }catch(e){
-    // Silenzioso — il controllo proattivo non deve mai bloccare l'app
-    console.warn('Controllo proattivo:', e);
-  }
-}
-
-// ══════════════════════════════════════════════
-// SUPABASE — Cloud sync archivio
-//
-// Usa la REST API di Supabase direttamente,
-// senza SDK aggiuntivi.
-//
-// Ogni record ha un 'id' univoco (timestamp string).
-// Strategia: upsert completo — sovrascrive se esiste,
-// inserisce se non esiste. Più semplice e affidabile
-// di un diff incrementale.
-// ══════════════════════════════════════════════
-
-// Carica tutti i record dal cloud e aggiorna l'archivio locale.
-// Chiamata all'avvio — il cloud è la fonte di verità.
-async function syncFromCloud(){
-  if(!sbKey) return;
-  try{
-    const res = await fetch(`${SB_URL}?order=creato_il.desc`, {
-      headers: {
-        'apikey': sbKey,
-        'Authorization': `Bearer ${sbKey}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    if(!res.ok){ console.warn('Supabase read error:', res.status); return; }
-    const rows = await res.json();
-    if(!Array.isArray(rows)) return;
-
-    // Converti dal formato Supabase al formato interno
-    const fromCloud = rows.map(r => ({
-      id:     r.id,
-      titolo: r.titolo,
-      cat:    r.cat,
-      data:   r.data   || null,
-      note:   r.note   || '',
-      scad:   r.scad   || null
-    }));
-
-    // Aggiorna solo se il cloud ha dati (non sovrascrivere con vuoto)
-    if(fromCloud.length > 0 || archivio.length === 0){
-      archivio = fromCloud;
-      localStorage.setItem(AKEY, JSON.stringify(archivio));
-      renderArch();
-      checkScadenze();
-      console.log(`Archivio sincronizzato: ${archivio.length} interventi`);
-    }
-  }catch(e){
-    console.warn('Sync dal cloud fallita:', e);
-  }
-}
-
-// Scrive l'intero archivio su Supabase tramite upsert.
-// Chiamata ogni volta che si salva/modifica/elimina un intervento.
-async function syncToCloud(lista){
-  if(!sbKey || !lista) return;
-  try{
-    // Prima svuota la tabella, poi reinserisce tutto.
-    // Più semplice di gestire insert/update/delete separati.
-
-    // Step 1: elimina tutti i record esistenti
-    await fetch(`${SB_URL}?id=neq.PLACEHOLDER_NEVER_MATCHES`, {
-      method: 'DELETE',
-      headers: {
-        'apikey': sbKey,
-        'Authorization': `Bearer ${sbKey}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
-      }
-    });
-
-    // Step 2: inserisce tutto (se la lista non è vuota)
-    if(lista.length === 0) return;
-
-    const rows = lista.map(e => ({
-      id:     e.id,
-      titolo: e.titolo,
-      cat:    e.cat    || 'altro',
-      data:   e.data   || null,
-      note:   e.note   || null,
-      scad:   e.scad   || null
-    }));
-
-    const res = await fetch(SB_URL, {
-      method: 'POST',
-      headers: {
-        'apikey': sbKey,
-        'Authorization': `Bearer ${sbKey}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify(rows)
-    });
-
-    if(!res.ok){
-      const err = await res.text();
-      console.warn('Supabase write error:', res.status, err);
-    }
-  }catch(e){
-    console.warn('Sync al cloud fallita:', e);
-  }
-}
-
-function showToast(msg){
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000); // ← durata in ms
-}
 </script>
 </body>
 </html>

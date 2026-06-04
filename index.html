@@ -719,7 +719,7 @@ html, body {
     <div class="mic-area">
       <div class="mic-ring-wrap" id="mic-wrap">
         <div class="mic-ring"></div>
-        <button class="mic-btn" id="mic-btn" onclick="toggleWake()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></button>
+        <button class="mic-btn" id="mic-btn" onclick="toggleMicManual()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></button>
       </div>
       <div class="mic-lbl" id="mic-lbl"></div>
       <div class="mic-hint">di' "Claude" per iniziare</div>
@@ -1648,157 +1648,185 @@ function stopWakeWord(){
 
 let listenState = 'waitingWake'; // stato interno del loop
 
-// Contatore riavvii consecutivi — per backoff esponenziale
-let listenRetries = 0;
+// ══════════════════════════════════════════════
+// MICROFONO — versione semplice e stabile
+//
+// MODALITÀ PULSANTE (default):
+//   Premi → ascolta → invia a Claude → risponde
+//
+// WAKE WORD AUTOMATICO:
+//   Se wakeEnabled=true, rimane in ascolto
+//   e si attiva quando sente "Claude"
+//   Usa sessioni brevi (continuous:false) per
+//   compatibilità massima con Android Chrome
+// ══════════════════════════════════════════════
 
-function listenLoop(){
+listenState  = 'idle'; // idle | listening | processing
+let wakeLoop     = null;   // timeout per il prossimo ciclo
+
+// Avvia/ferma il wake word automatico
+function toggleWake(){
+  if(wakeEnabled){ stopWakeWord(); }
+  else            { startWakeWord(); }
+}
+
+function startWakeWord(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ showToast('Microfono non supportato'); return; }
+  wakeEnabled = true;
+  setState('wake-active');
+  scheduleWakeListen();
+}
+
+function stopWakeWord(){
+  wakeEnabled = false;
+  if(wakeRecognition){ try{ wakeRecognition.abort(); }catch(e){} wakeRecognition = null; }
+  clearTimeout(wakeLoop);
+  setState('idle');
+}
+
+// Avvia un singolo ciclo di ascolto (breve, continuous:false — più stabile su mobile)
+function scheduleWakeListen(delay){
+  clearTimeout(wakeLoop);
+  wakeLoop = setTimeout(doWakeListen, delay||300);
+}
+
+function doWakeListen(){
   if(!wakeEnabled) return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR) return;
 
+  wakeRecognition = new SR();
+  wakeRecognition.lang           = 'it-IT';
+  wakeRecognition.continuous     = false;  // sessione breve — evita timeout Chrome
+  wakeRecognition.interimResults = false;
+  wakeRecognition.maxAlternatives = 3;
+
+  wakeRecognition.onresult = (e) => {
+    let testo = '';
+    for(let i=0; i<e.results.length; i++)
+      for(let j=0; j<e.results[i].length; j++)
+        testo += e.results[i][j].transcript.toLowerCase() + ' ';
+
+    if(/claud|clod|klaud|klod|cloud/.test(testo)){
+      const cmd = testo.replace(/claud\w*|clod\w*|klaud\w*|klod\w*|cloud\w*/gi,'').trim();
+      if(cmd.length > 2){
+        wakeEnabled = false; // pausa durante elaborazione
+        beep();
+        handleVoiceCommand(cmd);
+      } else {
+        // Solo wake word → ascolta il comando successivo
+        beep();
+        startManualListen();
+      }
+    } else {
+      // Nessuna wake word → ripeti
+      if(wakeEnabled) scheduleWakeListen(200);
+    }
+  };
+
+  wakeRecognition.onerror = (e) => {
+    if(!wakeEnabled) return;
+    // no-speech è normale, riprendi subito; altri errori: pausa breve
+    const d = (e.error === 'no-speech' || e.error === 'aborted') ? 200 : 1500;
+    scheduleWakeListen(d);
+  };
+
+  wakeRecognition.onend = () => {
+    // Il ciclo è finito — ne avvia un altro se siamo ancora attivi
+    if(wakeEnabled && listenState !== 'processing') scheduleWakeListen(200);
+  };
+
+  try{
+    wakeRecognition.start();
+  }catch(e){
+    if(wakeEnabled) scheduleWakeListen(1000);
+  }
+}
+
+// Ascolta un singolo comando dopo il wake word o il pulsante
+function startManualListen(){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if(!SR){ showToast('Microfono non supportato'); return; }
 
-  // Chiudi eventuale istanza precedente prima di crearne una nuova
-  if(wakeRecognition){
-    try{ wakeRecognition.onend = null; wakeRecognition.onerror = null; wakeRecognition.abort(); }catch(_){}
-    wakeRecognition = null;
-  }
+  if(wakeRecognition){ try{ wakeRecognition.abort(); }catch(e){} wakeRecognition = null; }
+  clearTimeout(wakeLoop);
 
-  const rec = new SR();
-  rec.lang            = 'it-IT';
-  rec.continuous      = true;
-  rec.interimResults  = false;
-  rec.maxAlternatives = 3;
-  wakeRecognition = rec;
-  listenState = 'waitingWake';
+  const r = new SR();
+  wakeRecognition = r;
+  r.lang           = 'it-IT';
+  r.continuous     = false;
+  r.interimResults = false;
 
-  // Riavvia il loop in modo sicuro — con backoff per evitare loop veloci
-  const scheduleRestart = (delay) => {
-    if(!wakeEnabled) return;
-    listenRetries++;
-    // Backoff: max 8 secondi dopo molti errori consecutivi
-    const wait = Math.min(delay * Math.min(listenRetries, 4), 8000);
-    setTimeout(listenLoop, wait);
-  };
-
-  rec.onresult = (e) => {
-    listenRetries = 0; // reset backoff ad ogni risultato
-    for(let i = e.resultIndex; i < e.results.length; i++){
-      if(!e.results[i].isFinal) continue;
-      const text = e.results[i][0].transcript.toLowerCase().trim();
-
-      if(listenState === 'waitingWake'){
-        if(/claud|clod|klaud|klod|cloud/.test(text)){
-          const cmd = text.replace(/claud\w*|clod\w*|klaud\w*|klod\w*|cloud\w*/gi,'').trim();
-          if(cmd.length > 3){
-            listenState = 'processing';
-            beep();
-            handleCommand(cmd);
-          } else {
-            listenState = 'waitingCommand';
-            setState('listening');
-            beep();
-          }
-        }
-      } else if(listenState === 'waitingCommand'){
-        if(text.length > 1){
-          listenState = 'processing';
-          handleCommand(text);
-        }
-      }
-    }
-  };
-
-  rec.onerror = (e) => {
-    if(!wakeEnabled) return;
-    console.warn('SpeechRecognition onerror:', e.error);
-
-    if(e.error === 'no-speech'){
-      // Timeout silenzio: normale con continuous, il browser lo gestisce da solo
-      if(listenState === 'waitingCommand'){
-        listenState = 'waitingWake';
-        setState('wake-active');
-      }
-      // NON riavviare — lasciar fare a onend se necessario
-      return;
-    }
-
-    if(e.error === 'aborted'){
-      // Abortito da noi (resumeListening) — non riavviare qui
-      return;
-    }
-
-    if(e.error === 'not-allowed' || e.error === 'service-not-allowed'){
-      // Permesso microfono negato — non riavviare
-      setState('idle'); wakeEnabled = false;
-      showToast('Permesso microfono negato');
-      return;
-    }
-
-    // Altri errori (network, ecc) → riavvia con backoff
-    if(listenState !== 'processing') scheduleRestart(1000);
-  };
-
-  rec.onend = () => {
-    if(!wakeEnabled) return;
-    // continuous:true chiude per timeout del browser (Chrome ~60s di silenzio)
-    // Riavvia sempre, tranne se stiamo elaborando (handleCommand in corso)
-    if(listenState !== 'processing'){
-      listenRetries = 0; // timeout naturale, non un errore
-      setTimeout(listenLoop, 300);
-    }
-  };
-
-  try{
-    rec.start();
-    setState('wake-active');
-    console.log('SpeechRecognition avviata');
-  }catch(e){
-    console.warn('SpeechRecognition start error:', e);
-    scheduleRestart(500);
-  }
-}
-
-// Riprende l'ascolto dopo che Claude ha finito di parlare.
-// Riavvia sempre il recognition pulito per evitare stati corrotti.
-function resumeListening(){
-  if(!wakeEnabled) return;
-  if(wakeRecognition){
-    try{ wakeRecognition.abort(); }catch(e){}
-    wakeRecognition = null;
-  }
-  setTimeout(listenLoop, 400);
-}
-
-// listenForCommand non serve più con continuous:true
-// mantenuta come stub per retrocompatibilità
-function listenForCommand(){
-  listenState = 'waitingCommand';
   setState('listening');
-  beep();
+
+  r.onresult = (e) => {
+    const testo = e.results[0][0].transcript;
+    handleVoiceCommand(testo);
+  };
+
+  r.onerror = () => {
+    setState(wakeEnabled ? 'wake-active' : 'idle');
+    if(wakeEnabled) scheduleWakeListen(500);
+  };
+
+  r.onend = () => {
+    if(listenState === 'listening'){
+      // Nessun risultato ricevuto
+      setState(wakeEnabled ? 'wake-active' : 'idle');
+      if(wakeEnabled) scheduleWakeListen(300);
+    }
+  };
+
+  try{ r.start(); }
+  catch(e){
+    setState(wakeEnabled ? 'wake-active' : 'idle');
+    if(wakeEnabled) scheduleWakeListen(800);
+  }
 }
 
-async function handleCommand(cmd){
-  // Ferma il microfono mentre elabora e parla (evita feedback con la propria voce)
-  if(wakeRecognition){
-    try{ wakeRecognition.abort(); }catch(e){}
-    wakeRecognition = null;
-  }
+// Gestisce il comando vocale: chiama Claude, mostra e legge la risposta
+async function handleVoiceCommand(cmd){
+  listenState = 'processing';
   setState('thinking');
   addMsg(cmd, 'user');
-  const msgs = [...chatHistory, {role:'user', content:cmd}];
+
   try{
+    const msgs  = [...chatHistory, {role:'user', content:cmd}];
     const reply = await callClaude(msgs, true);
     chatHistory.push({role:'user', content:cmd});
     chatHistory.push({role:'assistant', content:reply});
     if(chatHistory.length > 20) chatHistory = chatHistory.slice(-16);
     addMsg(reply, 'ai');
-    // Parla, poi riprende l'ascolto
-    speakText(reply, () => { resumeListening(); });
+    speakText(reply, () => {
+      listenState = 'idle';
+      if(wakeEnabled){
+        wakeEnabled = true; // riattiva
+        setState('wake-active');
+        scheduleWakeListen(500);
+      } else {
+        setState('idle');
+      }
+    });
   }catch(err){
     const msg = err.message.includes('401') ? 'Chiave API non valida' : 'Errore di connessione';
     addMsg(`[ ${msg} ]`, 'ai');
-    resumeListening();
+    listenState = 'idle';
+    setState(wakeEnabled ? 'wake-active' : 'idle');
+    if(wakeEnabled) scheduleWakeListen(1000);
   }
+}
+
+// Toggle manuale del microfono (pulsante nella UI)
+function toggleMicManual(){
+  if(listenState === 'processing') return; // occupato
+  if(isSpeaking){ window.speechSynthesis && window.speechSynthesis.cancel(); }
+  if(listenState === 'listening'){
+    if(wakeRecognition){ try{ wakeRecognition.abort(); }catch(e){} wakeRecognition = null; }
+    setState(wakeEnabled ? 'wake-active' : 'idle');
+    return;
+  }
+  startManualListen();
 }
 
 

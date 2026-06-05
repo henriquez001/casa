@@ -2138,57 +2138,43 @@ async function syncToCloud(lista){
 
 // ══════════════════════════════════════════════
 // DETTAGLIO INTERVENTO
-// Apre una pagina con titolo, quando e come.
-// Claude integra le note in automatico basandosi
-// SOLO su quello che è scritto — non inventa dettagli
-// specifici sull'impianto o sulla casa.
+// Claude riformula SOLO le note esistenti —
+// non aggiunge nulla che non sia già scritto.
 // ══════════════════════════════════════════════
 async function openDetail(id){
   const e = archivio.find(x => x.id === id);
   if(!e) return;
 
-  // Mostra il pannello
   document.getElementById('detail-panel').style.display = 'block';
-
-  // Categoria e titolo
-  document.getElementById('detail-cat').textContent   = e.cat || '';
-  document.getElementById('detail-title').textContent = e.titolo;
-
-  // ── QUANDO ──
-  const parti = [];
-  if(e.data){
-    const d = new Date(e.data+'T00:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
-    parti.push('Ultimo intervento: ' + d);
-  } else {
-    parti.push('Data ultimo intervento: sconosciuta');
-  }
-  if(e.scad){
-    const s = new Date(e.scad+'T00:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
-    const scaduta = new Date(e.scad) < new Date();
-    parti.push((scaduta ? '⚠ Scadenza superata: ' : 'Prossima scadenza: ') + s);
-  }
-  document.getElementById('detail-quando').textContent = parti.join('\n');
-
-  // ── COME — chiede a Claude di argomentare le note ──
+  document.getElementById('detail-cat').textContent     = e.cat || '';
+  document.getElementById('detail-title').textContent   = e.titolo;
+  document.getElementById('detail-quando').textContent  = '';
   document.getElementById('detail-come').textContent    = '';
   document.getElementById('detail-loading').style.display = 'block';
 
-  // Costruisci il prompt: Claude legge titolo + note e le espande
-  // Istruzione chiave: non inventare dettagli specifici non presenti nelle note
-  const noteRaw = e.note || '';
-  const prompt  = `Intervento di manutenzione domestica:
-Titolo: ${e.titolo}
-Categoria: ${e.cat}
-Note dell'utente: ${noteRaw || '(nessuna nota inserita)'}
+  const noteRaw = (e.note || '').trim();
 
-Scrivi una spiegazione chiara e pratica di COME eseguire questo intervento.
-Regole importanti:
-- Puoi spiegare la procedura generale per questo tipo di intervento
-- Se le note contengono dettagli specifici (prodotti, misure, procedure), includili
-- NON inventare dettagli specifici sull'impianto, sui materiali o sui prodotti usati che non sono nelle note
-- Se mancano informazioni specifiche, dillo esplicitamente ("verifica il manuale del tuo impianto", ecc.)
-- Tono pratico, diretto, in italiano
-- Massimo 200 parole`;
+  if(!noteRaw){
+    document.getElementById('detail-come').textContent = 'Nessuna nota inserita per questo intervento.';
+    document.getElementById('detail-loading').style.display = 'none';
+    return;
+  }
+
+  const prompt = `Queste sono le note scritte dall'utente per un intervento chiamato "${e.titolo}":
+
+---
+${noteRaw}
+---
+
+Riformula queste note in modo chiaro e leggibile, divise in due sezioni:
+1. QUANDO — quando/ogni quanto fare questo intervento
+2. COME — come eseguire l'intervento
+
+Regole assolute:
+- Usa SOLO le informazioni presenti nelle note sopra
+- NON aggiungere procedure, consigli o dettagli assenti nelle note
+- Se una sezione non ha informazioni, scrivi "Non specificato nelle note"
+- Italiano, tono diretto`;
 
   try{
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -2207,11 +2193,13 @@ Regole importanti:
     });
     const d = await res.json();
     if(d.error) throw new Error(d.error.message);
-    document.getElementById('detail-come').textContent = d.content[0].text.trim();
+    const testo = d.content[0].text.trim();
+    const whenM = testo.match(/1\.\s*QUANDO[^\n]*\n([\s\S]*?)(?=2\.\s*COME|$)/i);
+    const howM  = testo.match(/2\.\s*COME[^\n]*\n([\s\S]*?)$/i);
+    document.getElementById('detail-quando').textContent = whenM ? whenM[1].trim() : '';
+    document.getElementById('detail-come').textContent   = howM  ? howM[1].trim()  : testo;
   }catch(err){
-    // Se Claude non è disponibile, mostra le note così come sono
-    document.getElementById('detail-come').textContent = noteRaw || 'Nessuna nota disponibile.';
-    console.warn('openDetail Claude error:', err);
+    document.getElementById('detail-come').textContent = noteRaw;
   }
 
   document.getElementById('detail-loading').style.display = 'none';
@@ -2220,6 +2208,7 @@ Regole importanti:
 function closeDetail(){
   document.getElementById('detail-panel').style.display = 'none';
 }
+
 
 function showToast(msg){
   const t=document.getElementById('toast');

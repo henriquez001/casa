@@ -622,6 +622,9 @@ html, body {
   .navbar      { height: 54px; }
   .nb-icon     { width: 18px; height: 18px; }
   .nb-lbl      { font-size: .5rem; }
+  .nb-btn      { color: var(--text); }
+  .nb-btn:hover{ color: var(--dim); }
+  .nb-btn:active{ color: var(--dim); }
 
   .panel-hdr    { padding: 10px 16px; }
   .cp-row       { padding: 8px 12px 14px; }
@@ -646,6 +649,9 @@ html, body {
   .navbar      { height: 44px; }
   .nb-lbl      { display: none; }
   .nb-icon     { width: 18px; height: 18px; }
+  .nb-btn      { color: var(--text); }
+  .nb-btn:hover{ color: var(--dim); }
+  .nb-btn:active{ color: var(--dim); }
   .due-badge   { font-size: .5rem; padding: 3px 9px; top: 6px; right: 10px; }
 }
 </style>
@@ -1055,6 +1061,8 @@ function boot(){
   setInterval(controlloProattivo, 2 * 60 * 60 * 1000);
   // Carica archivio da Supabase (sovrascrive localStorage se cloud più aggiornato)
   setTimeout(syncFromCloud, 1500);
+  // Mantieni lo schermo acceso
+  requestWakeLock();
 }
 
 // Resetta la configurazione: rimuove la chiave dal localStorage e ricarica la pagina.
@@ -1432,7 +1440,7 @@ function renderAtt(){ renderArch(); }
 //   - system: contesto (meteo, data, archivio)
 //   - messages: storico conversazione (max 20 messaggi)
 //
-// PER CAMBIARE MODELLO: modifica 'claude-sonnet-4-5' in callClaude()
+// PER CAMBIARE MODELLO: modifica 'claude-sonnet-4-6' in callClaude()
 // PER CAMBIARE MAX TOKEN: modifica i valori 150 (voce) e 600 (chat)
 // ══════════════════════════════════════════════
 
@@ -1476,7 +1484,7 @@ async function callClaude(messages, breve=false){
       'anthropic-dangerous-direct-browser-access': 'true'
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-5',   // ← cambia qui per usare un altro modello
+      model: 'claude-sonnet-4-6',   // ← cambia qui per usare un altro modello
       max_tokens: breve ? 150 : 600, // ← 150 per voce, 600 per chat scritta
       system: buildSystem(breve),
       messages
@@ -2031,7 +2039,7 @@ SE non c'è nulla: rispondi SOLO con: NESSUN_AVVISO`;
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
+        model: 'claude-sonnet-4-6',
         max_tokens: 120,
         system: systemProattivo,
         messages: [{ role: 'user', content: 'Analizza la situazione attuale.' }]
@@ -2197,7 +2205,7 @@ Regole assolute:
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
+        model: 'claude-sonnet-4-6',
         max_tokens: 400,
         messages: [{ role:'user', content: prompt }]
       })
@@ -2321,6 +2329,37 @@ function syncSW(){
     archivio: archivio
   });
 }
+
+// ══════════════════════════════════════════════
+// WAKE LOCK — mantiene lo schermo acceso
+// Funziona su Android Chrome come YouTube.
+// Si attiva all'avvio e si riattiva automaticamente
+// se la pagina torna in primo piano.
+// ══════════════════════════════════════════════
+let wakeLock = null;
+
+async function requestWakeLock(){
+  if(!('wakeLock' in navigator)){ return; } // non supportato
+  try{
+    wakeLock = await navigator.wakeLock.request('screen');
+    console.log('Wake Lock attivo');
+    wakeLock.addEventListener('release', () => {
+      console.log('Wake Lock rilasciato');
+      wakeLock = null;
+    });
+  }catch(e){
+    // Può fallire se la pagina non è in primo piano
+    console.warn('Wake Lock non ottenuto:', e.message);
+  }
+}
+
+// Riattiva il wake lock quando la pagina torna visibile
+// (es. dopo aver minimizzato e riaperto l'app)
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible' && wakeLock === null){
+    requestWakeLock();
+  }
+});
 
 function showToast(msg){
   const t=document.getElementById('toast');

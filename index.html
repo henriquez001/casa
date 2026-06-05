@@ -244,6 +244,9 @@ html, body {
 .state-thinking   .mic-btn   { border-color: var(--mid); color: var(--mid); }
 .state-speaking   .mic-btn   { border-color: #30d158; color: #30d158; }
 .state-speaking   .mic-ring  { border-color: #30d15830; animation: ringrot 1.2s linear infinite; }
+
+.state-idle-manual .mic-btn  { border-color: #ff3b30; color: #ff3b30; }
+.state-idle-manual .mic-ring { border-color: #ff3b3030; }
 @keyframes ringrot { to { transform: rotate(360deg); } }
 
 .mic-lbl {
@@ -756,6 +759,9 @@ html, body {
       <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       <span class="nb-lbl">Config</span>
     </button>
+        <button style="width:100%;margin-top:8px;padding:10px;background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);font-family:var(--mono);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:4px" onclick="testNotifica()">
+          Test notifiche
+        </button>
   </div>
 </div>
 
@@ -1591,10 +1597,11 @@ function setState(s){
 
   // Mappa stato → [classe CSS, simbolo bottone, testo label]
   const states = {
-    'wake-active': ['state-wake-active', '◉', 'in ascolto...'],
-    'listening':   ['state-listening',   '■', 'parla ora'],
-    'thinking':    ['state-thinking',    '…', 'sto pensando...'],
-    'speaking':    ['state-speaking',    '◎', 'sto parlando...'],
+    'wake-active':  ['state-wake-active',  '◉', 'in ascolto...'],
+    'listening':    ['state-listening',    '■', 'parla ora'],
+    'thinking':     ['state-thinking',     '…', 'sto pensando...'],
+    'speaking':     ['state-speaking',     '◎', 'sto parlando...'],
+    'idle-manual':  ['state-idle-manual',  '○', 'microfono spento'],
   };
 
   if(states[s]){
@@ -1688,7 +1695,7 @@ function stopWakeWord(){
     try{ wakeRecognition.abort(); }catch(e){}
     wakeRecognition = null;
   }
-  setState('idle');
+  setState('idle-manual'); // rosso — spento manualmente dall'utente
 }
 
 // Apre UNA istanza SpeechRecognition con continuous:true
@@ -2218,27 +2225,72 @@ function closeDetail(){
 // SERVICE WORKER — notifiche background
 // ══════════════════════════════════════════════
 async function registerSW(){
-  if(!('serviceWorker' in navigator)) return;
+  if(!('serviceWorker' in navigator)){
+    console.warn('Service Worker non supportato');
+    return;
+  }
+  if(!('Notification' in window)){
+    console.warn('Notification API non supportata');
+    return;
+  }
   try{
-    const reg = await navigator.serviceWorker.register('/sw.js');
-    console.log('SW registrato:', reg.scope);
+    // Percorso assoluto — evita problemi con GitHub Pages
+    const swUrl = location.origin + '/sw.js';
+    const reg   = await navigator.serviceWorker.register(swUrl, { scope: '/' });
+    console.log('SW registrato:', reg.scope, '— stato:', reg.active ? 'attivo' : 'in attesa');
 
-    // Richiedi permesso notifiche (solo se non già deciso)
-    if(Notification.permission === 'default'){
-      // Aspetta un po' — non chiedere subito all'avvio
-      setTimeout(async () => {
-        const perm = await Notification.requestPermission();
-        if(perm === 'granted'){
-          showToast('Notifiche attivate');
-          syncSW();
-        }
-      }, 5000);
-    } else if(Notification.permission === 'granted'){
+    // Aspetta che il SW sia attivo
+    await navigator.serviceWorker.ready;
+    console.log('SW pronto');
+
+    // Richiedi permesso notifiche
+    const perm = Notification.permission;
+    console.log('Permesso notifiche:', perm);
+
+    if(perm === 'granted'){
+      showToast('Notifiche attive ✓');
       syncSW();
+    } else if(perm === 'default'){
+      // Aspetta interazione utente (requisito browser moderni)
+      setTimeout(async () => {
+        const result = await Notification.requestPermission();
+        console.log('Permesso richiesto, risposta:', result);
+        if(result === 'granted'){
+          showToast('Notifiche attivate ✓');
+          syncSW();
+        } else {
+          showToast('Notifiche non autorizzate');
+        }
+      }, 3000);
+    } else {
+      showToast('Notifiche bloccate — abilita dalle impostazioni Chrome');
     }
   }catch(e){
-    console.warn('SW registrazione fallita:', e);
+    console.error('SW errore:', e);
   }
+}
+
+// Forza la richiesta permesso notifiche (usato dal pannello impostazioni)
+async function testNotifica(){
+  if(!('Notification' in window)){ showToast('Browser non supportato'); return; }
+
+  if(Notification.permission === 'denied'){
+    showToast('Notifiche bloccate — vai su Impostazioni Chrome → Sito → Notifiche');
+    return;
+  }
+
+  const perm = await Notification.requestPermission();
+  if(perm !== 'granted'){ showToast('Permesso negato'); return; }
+
+  // Mostra notifica di test immediata
+  const reg = await navigator.serviceWorker.ready;
+  await reg.showNotification('CASA — Test notifica', {
+    body: 'Le notifiche funzionano correttamente ✓',
+    icon: '/icon-192.png',
+    tag:  'test'
+  });
+  showToast('Notifica di test inviata');
+  syncSW();
 }
 
 // Manda l'archivio aggiornato al service worker

@@ -683,6 +683,13 @@ html, body {
   color: var(--mid);
   font-weight: 300;
 }
+
+@media (orientation: landscape){
+  .imp-group { padding: 8px 16px 5px; font-size: .52rem; }
+  .imp-row   { padding: 8px 16px; gap: 1px; }
+  .imp-title { font-size: .72rem; }
+  .imp-sub   { font-size: .6rem; }
+}
 </style>
 </head>
 <body>
@@ -1355,7 +1362,7 @@ function checkScadenze(){
   );
 
   document.getElementById('due-corner').innerHTML = scad.length > 0
-    ? `<div class="due-badge" onclick="openPanel('att-panel')">${scad.length} in scadenza</div>`
+    ? `<div class="due-badge" onclick="openArchScadenze()">${scad.length} in scadenza</div>`
     : '';
 }
 

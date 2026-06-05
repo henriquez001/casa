@@ -886,6 +886,7 @@ function loadArch(){
 function saveArch(l){
   localStorage.setItem(AKEY, JSON.stringify(l));
   if(sbKey) syncToCloud(l); // fire-and-forget
+  syncSW(); // aggiorna il service worker
 }
 
 // Variabile globale con tutti gli interventi caricati all'avvio
@@ -2247,13 +2248,6 @@ function syncSW(){
     type: 'SYNC_ARCHIVIO',
     archivio: archivio
   });
-}
-
-// Chiama syncSW ogni volta che l'archivio viene salvato
-const _origSalvaArch = salvaArch;
-function salvaArch(lista){
-  _origSalvaArch(lista);
-  syncSW();
 }
 
 function showToast(msg){

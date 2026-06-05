@@ -2297,6 +2297,22 @@ async function testNotifica(){
   }
 }
 
+// Forza un controllo immediato delle attività
+async function forceCheck(){
+  if(!('serviceWorker' in navigator)){ showToast('Service Worker non disponibile'); return; }
+  try{
+    const reg = await navigator.serviceWorker.ready;
+    if(reg.active){
+      reg.active.postMessage({ type: 'START_CHECK' });
+      showToast('Controllo in corso...');
+    } else {
+      showToast('SW non ancora attivo — ricarica la pagina');
+    }
+  }catch(e){
+    showToast('Errore: ' + e.message);
+  }
+}
+
 // Manda l'archivio aggiornato al service worker
 function syncSW(){
   if(!navigator.serviceWorker.controller) return;
@@ -2365,6 +2381,11 @@ document.addEventListener('fullscreenchange',()=>{
     <div class="arch-entry" style="cursor:pointer" onclick="testNotifica()">
       <div class="arch-entry-title">Test notifica</div>
       <div class="arch-entry-note">Invia una notifica di prova immediata</div>
+    </div>
+
+    <div class="arch-entry" style="cursor:pointer" onclick="forceCheck()">
+      <div class="arch-entry-title">Controlla attività ora</div>
+      <div class="arch-entry-note">Forza il controllo scadenze e meteo adesso</div>
     </div>
 
     <div class="arch-entry">

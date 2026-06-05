@@ -650,7 +650,6 @@ html, body {
   .nb-lbl      { display: none; }
   .nb-icon     { width: 18px; height: 18px; }
   .nb-btn      { color: var(--text); }
-  .nb-btn:hover{ color: var(--dim); }
   .nb-btn:active{ color: var(--dim); }
   .due-badge   { font-size: .5rem; padding: 3px 9px; top: 6px; right: 10px; }
 }
@@ -1783,6 +1782,12 @@ function openRecognition(){
 
 // Gestisce il comando vocale
 async function handleVoiceCommand(cmd){
+  // Se Claude sta già parlando, interrompi prima di rispondere
+  if(isSpeaking){
+    if(currentAudio){ try{ currentAudio.pause(); currentAudio=null; }catch(e){} }
+    window.speechSynthesis && window.speechSynthesis.cancel();
+    isSpeaking = false;
+  }
   setState('thinking');
   addMsg(cmd, 'user');
 
@@ -2056,7 +2061,10 @@ SE non c'è nulla: rispondi SOLO con: NESSUN_AVVISO`;
     ultimoAvvisoProattivo = chiave;
 
     addMsg(risposta, 'ai');
-    speakText(risposta);
+    // Non interrompere se Claude sta già parlando o elaborando
+    if(!isSpeaking && listenState !== 'processing'){
+      speakText(risposta);
+    }
   }catch(e){
     console.warn('Controllo proattivo:', e);
   }

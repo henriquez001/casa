@@ -1269,12 +1269,12 @@ function renderArch(){
     const scadExpired = e.scad && new Date(e.scad) < new Date();
 
     return `<div class="arch-entry" style="--ic:${col}">
-      <div class="arch-entry-top">
+      <div class="arch-entry-top" onclick="openDetail('${e.id}')" style="cursor:pointer">
         <div class="arch-entry-title">${e.titolo}</div>
         <div class="arch-entry-date">${dataStr} ${scadStr}</div>
       </div>
       <span class="arch-entry-cat" style="background:${col}22;color:${col}">${e.cat}</span>
-      ${e.note ? `<div class="arch-entry-note">${e.note}</div>` : ''}
+      ${e.note ? `<div class="arch-entry-note" onclick="openDetail('${e.id}')" style="cursor:pointer">${e.note}</div>` : ''}
       ${scadExpired ? `<div class="arch-entry-note" style="color:#ff2d55;margin-top:4px">⚠ Scadenza superata</div>` : ''}
       <div style="display:flex;gap:6px;margin-top:10px">
         <button class="arch-entry-del" onclick="modificaArch('${e.id}')">Modifica</button>
@@ -2136,6 +2136,91 @@ async function syncToCloud(lista){
   }
 }
 
+// ══════════════════════════════════════════════
+// DETTAGLIO INTERVENTO
+// Apre una pagina con titolo, quando e come.
+// Claude integra le note in automatico basandosi
+// SOLO su quello che è scritto — non inventa dettagli
+// specifici sull'impianto o sulla casa.
+// ══════════════════════════════════════════════
+async function openDetail(id){
+  const e = archivio.find(x => x.id === id);
+  if(!e) return;
+
+  // Mostra il pannello
+  document.getElementById('detail-panel').style.display = 'block';
+
+  // Categoria e titolo
+  document.getElementById('detail-cat').textContent   = e.cat || '';
+  document.getElementById('detail-title').textContent = e.titolo;
+
+  // ── QUANDO ──
+  const parti = [];
+  if(e.data){
+    const d = new Date(e.data+'T00:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
+    parti.push('Ultimo intervento: ' + d);
+  } else {
+    parti.push('Data ultimo intervento: sconosciuta');
+  }
+  if(e.scad){
+    const s = new Date(e.scad+'T00:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
+    const scaduta = new Date(e.scad) < new Date();
+    parti.push((scaduta ? '⚠ Scadenza superata: ' : 'Prossima scadenza: ') + s);
+  }
+  document.getElementById('detail-quando').textContent = parti.join('\n');
+
+  // ── COME — chiede a Claude di argomentare le note ──
+  document.getElementById('detail-come').textContent    = '';
+  document.getElementById('detail-loading').style.display = 'block';
+
+  // Costruisci il prompt: Claude legge titolo + note e le espande
+  // Istruzione chiave: non inventare dettagli specifici non presenti nelle note
+  const noteRaw = e.note || '';
+  const prompt  = `Intervento di manutenzione domestica:
+Titolo: ${e.titolo}
+Categoria: ${e.cat}
+Note dell'utente: ${noteRaw || '(nessuna nota inserita)'}
+
+Scrivi una spiegazione chiara e pratica di COME eseguire questo intervento.
+Regole importanti:
+- Puoi spiegare la procedura generale per questo tipo di intervento
+- Se le note contengono dettagli specifici (prodotti, misure, procedure), includili
+- NON inventare dettagli specifici sull'impianto, sui materiali o sui prodotti usati che non sono nelle note
+- Se mancano informazioni specifiche, dillo esplicitamente ("verifica il manuale del tuo impianto", ecc.)
+- Tono pratico, diretto, in italiano
+- Massimo 200 parole`;
+
+  try{
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 400,
+        messages: [{ role:'user', content: prompt }]
+      })
+    });
+    const d = await res.json();
+    if(d.error) throw new Error(d.error.message);
+    document.getElementById('detail-come').textContent = d.content[0].text.trim();
+  }catch(err){
+    // Se Claude non è disponibile, mostra le note così come sono
+    document.getElementById('detail-come').textContent = noteRaw || 'Nessuna nota disponibile.';
+    console.warn('openDetail Claude error:', err);
+  }
+
+  document.getElementById('detail-loading').style.display = 'none';
+}
+
+function closeDetail(){
+  document.getElementById('detail-panel').style.display = 'none';
+}
+
 function showToast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg; t.classList.add('show');
@@ -2158,5 +2243,27 @@ document.addEventListener('fullscreenchange',()=>{
 });
 
 </script>
+
+<!-- DETTAGLIO INTERVENTO -->
+<div id="detail-panel" style="display:none;position:fixed;inset:0;background:#000;z-index:200;overflow-y:auto;padding:0 0 100px 0">
+  <div style="display:flex;align-items:center;gap:12px;padding:18px 16px 12px;border-bottom:1px solid rgba(255,255,255,.1)">
+    <button onclick="closeDetail()" style="background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;padding:4px 8px;font-family:var(--mono)">←</button>
+    <span id="detail-cat" style="font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;opacity:.5;font-family:var(--mono)"></span>
+  </div>
+  <div style="padding:20px 18px">
+    <h1 id="detail-title" style="font-family:var(--mono);font-size:1.3rem;font-weight:700;margin:0 0 24px;line-height:1.3;color:#fff"></h1>
+
+    <div style="margin-bottom:20px">
+      <div style="font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;opacity:.4;font-family:var(--mono);margin-bottom:8px">Quando</div>
+      <div id="detail-quando" style="font-family:var(--mono);font-size:.85rem;color:rgba(255,255,255,.85);line-height:1.6;white-space:pre-wrap"></div>
+    </div>
+
+    <div>
+      <div style="font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;opacity:.4;font-family:var(--mono);margin-bottom:8px">Come</div>
+      <div id="detail-come" style="font-family:var(--mono);font-size:.85rem;color:rgba(255,255,255,.85);line-height:1.7;white-space:pre-wrap"></div>
+      <div id="detail-loading" style="display:none;font-family:var(--mono);font-size:.75rem;opacity:.4;margin-top:12px;animation:pulse 1.5s infinite">Claude sta elaborando...</div>
+    </div>
+  </div>
+</div>
 </body>
 </html>

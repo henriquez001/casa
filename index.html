@@ -1623,10 +1623,10 @@ function autoResize(el){
 //
 // FLUSSO COMPLETO:
 //   1. startWakeWord() → avvia il loop di ascolto
-//   2. listenLoop()    → ascolta continuamente (ciclo)
+//   2. openRecognition()    → ascolta continuamente (ciclo)
 //   3. Sente "claude"  → listenForCommand() o handleCommand()
 //   4. Utente parla    → handleCommand(testo)
-//   5. Risposta Claude → speakText() → torna a listenLoop()
+//   5. Risposta Claude → speakText() → torna a openRecognition()
 //
 // VARIANTI RICONOSCIUTE come wake word:
 //   "claude", "claud", "clod", "klaud", "klod", "cloud"
@@ -1683,11 +1683,13 @@ function toggleWake(){
 // Avvia il sistema wake word: controlla supporto, imposta stato, lancia il loop
 function startWakeWord(){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SR){ showToast('Microfono non supportato'); return; }
+  console.log('startWakeWord — SR supportato:', !!SR, '— userAgent:', navigator.userAgent.slice(0,80));
+  if(!SR){ showToast('Microfono non supportato'); console.error('SpeechRecognition non disponibile'); return; }
   wakeEnabled = true;
+  wakeActive  = true;
   setState('wake-active');
-  listenLoop();
-  // Avvia anche il monitoraggio del volume ambientale
+  console.log('startWakeWord — avvio openRecognition');
+  openRecognition();
   startAmbientMonitor();
 }
 
@@ -1751,26 +1753,28 @@ function stopWakeWord(){
 // Apre UNA istanza SpeechRecognition con continuous:true
 // Se Chrome la chiude, onend la riapre (dopo pausa)
 function openRecognition(){
-  if(!wakeActive) return;
+  if(!wakeActive){ console.log('openRecognition — wakeActive=false, esco'); return; }
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  console.log('openRecognition — SR:', SR?.name || typeof SR);
   const r  = new SR();
   wakeRecognition = r;
 
   r.lang            = 'it-IT';
-  r.continuous      = true;   // rimane aperta — Chrome può chiuderla dopo silenzio
+  r.continuous      = true;
   r.interimResults  = false;
   r.maxAlternatives = 3;
+  console.log('openRecognition — configurato lang=it-IT continuous=true');
 
   r.onresult = (e) => {
     if(!wakeActive) return;
-    // Processa solo i nuovi risultati (dall'ultimo indice)
     for(let i = e.resultIndex; i < e.results.length; i++){
       if(!e.results[i].isFinal) continue;
       const testo = Array.from({length: e.results[i].length},
         (_,j) => e.results[i][j].transcript).join(' ').toLowerCase().trim();
+      console.log('onresult — sentito:', testo, '— stato:', listenState);
 
-      if(listenState === 'processing') continue; // occupato, ignora
+      if(listenState === 'processing'){ console.log('onresult — processing, ignoro'); continue; }
 
       if(/claud|clod|klaud|klod|cloud/.test(testo)){
         const cmd = testo.replace(/claud\w*|clod\w*|klaud\w*|klod\w*|cloud\w*/gi,'').trim();
@@ -1791,34 +1795,34 @@ function openRecognition(){
   };
 
   r.onerror = (e) => {
+    console.warn('onerror —', e.error, '— wakeActive:', wakeActive);
     if(!wakeActive) return;
-    // no-speech = normale silenzio, continuous:true lo gestisce da solo, ignora
-    if(e.error === 'no-speech') return;
-    // not-allowed = permesso negato, fermati
+    if(e.error === 'no-speech'){ console.log('onerror — no-speech, ignoro'); return; }
     if(e.error === 'not-allowed' || e.error === 'service-not-allowed'){
-      wakeActive = false; setState('idle'); showToast('Permesso microfono negato'); return;
+      wakeActive = false; setState('idle');
+      showToast('Permesso microfono negato');
+      console.error('onerror — permesso negato:', e.error);
+      return;
     }
-    // aborted = lo abbiamo fatto noi (stop), ignora
-    if(e.error === 'aborted') return;
-    // altri errori: riapri dopo pausa
-    console.warn('SpeechRecognition error:', e.error);
+    if(e.error === 'aborted'){ console.log('onerror — aborted (intenzionale), ignoro'); return; }
+    console.error('onerror — errore grave:', e.error, '— riavvio tra 2s');
   };
 
   r.onend = () => {
+    console.log('onend — wakeActive:', wakeActive, '— listenState:', listenState);
     if(!wakeActive) return;
-    // Chrome ha chiuso la sessione (timeout silenzio o altro)
-    // Riaprila dopo 800ms — abbastanza lungo da non fare loop veloci
     setState('wake-active');
     setTimeout(() => {
-      if(wakeActive) openRecognition();
+      if(wakeActive){ console.log('onend — riavvio openRecognition'); openRecognition(); }
     }, 800);
   };
 
   try{
     r.start();
     setState('wake-active');
+    console.log('openRecognition — r.start() OK');
   }catch(e){
-    console.warn('Recognition start error:', e);
+    console.error('openRecognition — r.start() ERRORE:', e.message);
     setTimeout(() => { if(wakeActive) openRecognition(); }, 2000);
   }
 }

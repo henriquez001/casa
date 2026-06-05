@@ -685,10 +685,10 @@ html, body {
 }
 
 @media (orientation: landscape){
-  .imp-group { padding: 8px 16px 5px; font-size: .52rem; }
-  .imp-row   { padding: 8px 16px; gap: 1px; }
-  .imp-title { font-size: .72rem; }
-  .imp-sub   { font-size: .6rem; }
+  .imp-group { padding: 6px 16px 4px; font-size: .52rem; }
+  .imp-row   { min-height: 44px; padding: 6px 16px; gap: 2px; justify-content: center; }
+  .imp-title { font-size: .75rem; }
+  .imp-sub   { font-size: .62rem; }
 }
 </style>
 </head>
@@ -779,7 +779,7 @@ html, body {
       <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       <span class="nb-lbl">Chat</span>
     </button>
-    <button class="nb-btn" onclick="openPanel('att-panel')">
+    <button class="nb-btn" onclick="openPanel('att-panel');setFilter('all')">
       <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
       <span class="nb-lbl">Archivio</span>
     </button>

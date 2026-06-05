@@ -13,7 +13,7 @@
 // ══════════════════════════════════════════════
 
 const CACHE_NAME  = 'casa-sw-v1';
-const CHECK_INTERVAL = 60 * 60 * 1000; // 1 ora in ms
+const CHECK_INTERVAL = 60 * 60 * 1000; // 1 ora
 const LAT = 43.2832;
 const LON = 13.4534;
 
@@ -24,8 +24,8 @@ self.addEventListener('install', e => {
 
 self.addEventListener('activate', e => {
   e.waitUntil(self.clients.claim());
-  // Avvia il loop di controllo
-  scheduleCheck();
+  // Check immediato all'attivazione + loop periodico
+  doCheck().then(() => scheduleCheck());
 });
 
 // ── Messaggi dall'app principale ──

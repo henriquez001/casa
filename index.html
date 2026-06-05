@@ -734,7 +734,7 @@ html, body {
         <button class="mic-btn" id="mic-btn" onclick="toggleWake()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></button>
       </div>
       <div class="mic-lbl" id="mic-lbl"></div>
-      <div class="mic-hint">di' "Claude" per iniziare</div>
+      <div class="mic-hint"></div>
     </div>
   </div>
 
@@ -744,7 +744,7 @@ html, body {
       <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       <span class="nb-lbl">Chat</span>
     </button>
-    <button class="nb-btn" onclick="openPanel('att-panel')">
+    <button class="nb-btn" onclick="openArchScadenze()">
       <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
       <span class="nb-lbl">Archivio</span>
     </button>
@@ -798,6 +798,7 @@ html, body {
     <button class="arch-filter" id="filt-man" onclick="setFilter('manutenzione')">Man.</button>
     <button class="arch-filter" id="filt-pul" onclick="setFilter('pulizia')">Pul.</button>
     <button class="arch-filter" id="filt-imp" onclick="setFilter('impianto')">Imp.</button>
+    <button class="arch-filter" id="filt-scad" onclick="setFilter('scadenze')" style="color:#ff3b30;border-color:#ff3b3040">⚠ Scad.</button>
   </div>
   <div class="arch-list" id="arch-list"></div>
   <div class="arch-add-bar">
@@ -1237,12 +1238,15 @@ function weatherSummary(){
 
 // Imposta il filtro categoria attivo e aggiorna la lista.
 // f può essere: 'all', 'manutenzione', 'pulizia', 'impianto'
+function openArchScadenze(){
+  openPanel('att-panel');
+  setFilter('scadenze');
+}
+
 function setFilter(f){
   archFilter = f;
-  // Rimuovi la classe 'active' da tutti i bottoni filtro
   document.querySelectorAll('.arch-filter').forEach(b => b.classList.remove('active'));
-  // Aggiungi 'active' al bottone corrispondente
-  const map = { all:'filt-all', manutenzione:'filt-man', pulizia:'filt-pul', impianto:'filt-imp' };
+  const map = { all:'filt-all', manutenzione:'filt-man', pulizia:'filt-pul', impianto:'filt-imp', scadenze:'filt-scad' };
   const btn = document.getElementById(map[f] || 'filt-all');
   if(btn) btn.classList.add('active');
   renderArch();
@@ -1259,8 +1263,17 @@ function renderArch(){
   // Parti dall'archivio completo, ordinato dal più recente
   let list = [...archivio].sort((a,b) => { const da=a.data?new Date(a.data):new Date(0); const db=b.data?new Date(b.data):new Date(0); return db-da; });
 
-  // Applica filtro categoria se non 'all'
-  if(archFilter !== 'all') list = list.filter(e => e.cat === archFilter);
+  // Applica filtro
+  if(archFilter === 'scadenze'){
+    const oggi = new Date(); oggi.setHours(0,0,0,0);
+    list = list.filter(e => {
+      if(!e.scad) return false;
+      const diff = Math.ceil((new Date(e.scad+'T00:00:00') - oggi) / (1000*60*60*24));
+      return diff <= 14; // scadute o entro 14 giorni
+    });
+  } else if(archFilter !== 'all'){
+    list = list.filter(e => e.cat === archFilter);
+  }
 
   // Applica filtro ricerca su titolo e note
   if(q) list = list.filter(e =>
@@ -1313,7 +1326,7 @@ function checkScadenze(){
   );
 
   document.getElementById('due-corner').innerHTML = scad.length > 0
-    ? `<div class="due-badge" onclick="openPanel('att-panel')">${scad.length} in scadenza</div>`
+    ? `<div class="due-badge" onclick="openArchScadenze()">${scad.length} in scadenza</div>`
     : '';
 }
 

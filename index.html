@@ -648,33 +648,6 @@ html, body {
   .nb-icon     { width: 18px; height: 18px; }
   .due-badge   { font-size: .5rem; padding: 3px 9px; top: 6px; right: 10px; }
 }
-
-/* ── Pannello impostazioni ── */
-.imp-section-title{
-  font-family: var(--mono);
-  font-size: .6rem;
-  letter-spacing: .15em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.35);
-  padding: 0 0 8px;
-  border-bottom: 1px solid rgba(255,255,255,.07);
-  margin-bottom: 4px;
-}
-.imp-row{
-  padding: 14px 0;
-  border-bottom: 1px solid rgba(255,255,255,.06);
-}
-.imp-row-label{
-  font-family: var(--mono);
-  font-size: .8rem;
-  color: rgba(255,255,255,.85);
-  margin-bottom: 3px;
-}
-.imp-row-sub{
-  font-family: var(--mono);
-  font-size: .65rem;
-  color: rgba(255,255,255,.35);
-}
 </style>
 </head>
 <body>
@@ -1120,8 +1093,9 @@ window.onload = () => {
 
 // Apre un pannello dato il suo ID HTML
 function openPanel(id){
-  document.getElementById(id).classList.add('open');
-  // Aggiorna stato notifiche quando si apre impostazioni
+  const el = document.getElementById(id);
+  if(!el){ console.warn('Pannello non trovato:', id); return; }
+  el.classList.add('open');
   if(id === 'panel-impostazioni'){
     const txt = document.getElementById('imp-notif-txt');
     if(txt){
@@ -2312,25 +2286,25 @@ async function testNotifica(){
   if(perm !== 'granted'){ showToast('Permesso negato'); return; }
 
   try{
-    // Verifica SW registrato
-    const reg = await navigator.serviceWorker.ready;
-    console.log('SW per test:', reg.scope, reg.active?.state);
-
-    await reg.showNotification('CASA — Test ✓', {
-      body:  'Le notifiche funzionano correttamente.',
-      icon:  location.origin + '/icon-192.png',
-      tag:   'test-' + Date.now(),
-      requireInteraction: false
-    });
-    showToast('Notifica inviata — controlla la barra delle notifiche');
-    syncSW();
-
-    // Aggiorna stato nel pannello
-    const txt = document.getElementById('imp-notif-txt');
-    if(txt){ txt.textContent = '✓ Attive'; txt.style.color = '#30d158'; }
-
+    // Prova prima con Service Worker (più affidabile su Android)
+    if('serviceWorker' in navigator){
+      const reg = await navigator.serviceWorker.ready;
+      if(reg.active){
+        await reg.showNotification('CASA', {
+          body: 'Test notifica — funziona correttamente ✓',
+          tag:  'casa-test'
+        });
+        showToast('Notifica inviata ✓');
+        const txt = document.getElementById('imp-notif-txt');
+        if(txt){ txt.textContent = '✓ Attive'; txt.style.color = '#30d158'; }
+        return;
+      }
+    }
+    // Fallback: notifica diretta (senza SW)
+    new Notification('CASA', { body: 'Test notifica — funziona correttamente ✓' });
+    showToast('Notifica inviata ✓');
   }catch(err){
-    console.error('Errore notifica test:', err);
+    console.error('testNotifica errore:', err);
     showToast('Errore: ' + err.message);
   }
 }
@@ -2390,27 +2364,32 @@ document.addEventListener('fullscreenchange',()=>{
 </div>
 
 <!-- PANNELLO IMPOSTAZIONI -->
-<div id="panel-impostazioni" class="panel">
-  <div class="panel-head">
-    <span class="panel-title">Impostazioni</span>
-    <button class="panel-close" onclick="closePanel('panel-impostazioni')">✕</button>
+<div class="panel" id="panel-impostazioni">
+  <div class="panel-hdr">
+    <div class="panel-title">Impostazioni</div>
+    <button class="panel-close" onclick="closePanel('panel-impostazioni')">✕ Chiudi</button>
   </div>
-  <div class="panel-body">
+  <div style="padding:16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto">
 
-    <div class="imp-section-title">Notifiche</div>
-    <div class="imp-row" onclick="testNotifica()" style="cursor:pointer">
-      <div class="imp-row-label">Test notifica</div>
-      <div class="imp-row-sub">Verifica che le notifiche funzionino</div>
-    </div>
-    <div class="imp-row" id="imp-notif-status">
-      <div class="imp-row-label">Stato permesso</div>
-      <div class="imp-row-sub" id="imp-notif-txt">—</div>
+    <!-- Sezione Notifiche -->
+    <div style="font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mid);padding:4px 0 8px;border-bottom:1px solid var(--brd2)">Notifiche</div>
+
+    <div class="arch-entry" style="cursor:pointer" onclick="testNotifica()">
+      <div class="arch-entry-title">Test notifica</div>
+      <div class="arch-entry-note">Invia una notifica di prova immediata</div>
     </div>
 
-    <div class="imp-section-title" style="margin-top:24px">Account</div>
-    <div class="imp-row" onclick="resetApp()" style="cursor:pointer">
-      <div class="imp-row-label" style="color:#ff3b30">Reset API Keys</div>
-      <div class="imp-row-sub">Rimuove le chiavi da questo dispositivo</div>
+    <div class="arch-entry">
+      <div class="arch-entry-title">Stato permesso</div>
+      <div class="arch-entry-note" id="imp-notif-txt">—</div>
+    </div>
+
+    <!-- Sezione Account -->
+    <div style="font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mid);padding:16px 0 8px;border-bottom:1px solid var(--brd2)">Account</div>
+
+    <div class="arch-entry" style="cursor:pointer" onclick="resetApp()">
+      <div class="arch-entry-title" style="color:#ff3b30">Reset API Keys</div>
+      <div class="arch-entry-note">Rimuove le chiavi da questo dispositivo</div>
     </div>
 
   </div>

@@ -153,14 +153,8 @@ async function mostraNotifica(titolo, corpo, id){
   if(Notification.permission !== 'granted') return;
   await self.registration.showNotification(titolo, {
     body:  corpo,
-    icon:  '/icon-192.png',
-    badge: '/icon-192.png',
-    tag:   id,
-    data:  { id },
-    actions: [
-      { action:'apri',    title: 'Apri' },
-      { action:'ignora',  title: 'Ignora' }
-    ],
+    tag:  id,
+    data: { id },
     requireInteraction: false
   });
 }

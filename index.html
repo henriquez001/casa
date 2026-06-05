@@ -1010,6 +1010,9 @@ function boot(){
   checkScadenze();    // controlla se ci sono scadenze imminenti (badge rosso)
   // Avvia ascolto automaticamente dopo 1s
   setTimeout(startWakeWord, 1000);
+
+  // Registra service worker per notifiche background
+  registerSW();
   // Avvio controllo proattivo: aspetta 4s che meteo e archivio siano pronti
   setTimeout(controlloProattivo, 4000);
   setInterval(controlloProattivo, 2 * 60 * 60 * 1000);
@@ -2209,6 +2212,49 @@ function closeDetail(){
   document.getElementById('detail-panel').style.display = 'none';
 }
 
+
+// ══════════════════════════════════════════════
+// SERVICE WORKER — notifiche background
+// ══════════════════════════════════════════════
+async function registerSW(){
+  if(!('serviceWorker' in navigator)) return;
+  try{
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    console.log('SW registrato:', reg.scope);
+
+    // Richiedi permesso notifiche (solo se non già deciso)
+    if(Notification.permission === 'default'){
+      // Aspetta un po' — non chiedere subito all'avvio
+      setTimeout(async () => {
+        const perm = await Notification.requestPermission();
+        if(perm === 'granted'){
+          showToast('Notifiche attivate');
+          syncSW();
+        }
+      }, 5000);
+    } else if(Notification.permission === 'granted'){
+      syncSW();
+    }
+  }catch(e){
+    console.warn('SW registrazione fallita:', e);
+  }
+}
+
+// Manda l'archivio aggiornato al service worker
+function syncSW(){
+  if(!navigator.serviceWorker.controller) return;
+  navigator.serviceWorker.controller.postMessage({
+    type: 'SYNC_ARCHIVIO',
+    archivio: archivio
+  });
+}
+
+// Chiama syncSW ogni volta che l'archivio viene salvato
+const _origSalvaArch = salvaArch;
+function salvaArch(lista){
+  _origSalvaArch(lista);
+  syncSW();
+}
 
 function showToast(msg){
   const t=document.getElementById('toast');

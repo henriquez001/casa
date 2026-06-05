@@ -652,6 +652,37 @@ html, body {
   .nb-btn:active{ color: var(--dim); }
   .due-badge   { font-size: .5rem; padding: 3px 9px; top: 6px; right: 10px; }
 }
+
+/* ── Pannello impostazioni ── */
+.imp-group {
+  font-family: var(--mono);
+  font-size: .58rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--mid);
+  padding: 16px 20px 8px;
+  border-bottom: 1px solid var(--brd2);
+}
+.imp-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.imp-row:active { background: rgba(255,255,255,.04); }
+.imp-title {
+  font-family: var(--mono);
+  font-size: .82rem;
+  font-weight: 500;
+  color: var(--text);
+}
+.imp-sub {
+  font-family: var(--mono);
+  font-size: .68rem;
+  color: var(--mid);
+  font-weight: 300;
+}
 </style>
 </head>
 <body>
@@ -741,7 +772,7 @@ html, body {
       <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       <span class="nb-lbl">Chat</span>
     </button>
-    <button class="nb-btn" onclick="openArchScadenze()">
+    <button class="nb-btn" onclick="openPanel('att-panel')">
       <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
       <span class="nb-lbl">Archivio</span>
     </button>
@@ -1324,7 +1355,7 @@ function checkScadenze(){
   );
 
   document.getElementById('due-corner').innerHTML = scad.length > 0
-    ? `<div class="due-badge" onclick="openArchScadenze()">${scad.length} in scadenza</div>`
+    ? `<div class="due-badge" onclick="openPanel('att-panel')">${scad.length} in scadenza</div>`
     : '';
 }
 

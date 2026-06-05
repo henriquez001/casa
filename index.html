@@ -2272,42 +2272,62 @@ async function registerSW(){
 
 // Forza la richiesta permesso notifiche (usato dal pannello impostazioni)
 async function testNotifica(){
-  if(!('Notification' in window)){ showToast('Browser non supportato'); return; }
-  if(!('serviceWorker' in navigator)){ showToast('Service Worker non supportato'); return; }
+  // Step 1: API disponibile?
+  if(!('Notification' in window)){ showToast('❌ Notification API non disponibile'); return; }
+  showToast('1. Notification API: OK');
+  await sleep(1000);
 
-  // Se bloccate → istruzioni
-  if(Notification.permission === 'denied'){
-    showToast('Bloccate: Impostazioni Chrome → Sito → Notifiche → Consenti');
+  // Step 2: permesso attuale
+  const permAttuale = Notification.permission;
+  showToast('2. Permesso: ' + permAttuale);
+  await sleep(1500);
+
+  if(permAttuale === 'denied'){
+    showToast('❌ Bloccate — Impostazioni Chrome → Sito → Notifiche → Consenti');
     return;
   }
 
-  // Richiedi permesso se non ancora dato
-  const perm = await Notification.requestPermission();
-  if(perm !== 'granted'){ showToast('Permesso negato'); return; }
+  // Step 3: richiedi se non dato
+  if(permAttuale !== 'granted'){
+    const p = await Notification.requestPermission();
+    showToast('3. Risposta: ' + p);
+    await sleep(1500);
+    if(p !== 'granted'){ showToast('❌ Permesso negato'); return; }
+  }
 
+  // Step 4: Service Worker disponibile?
+  if(!('serviceWorker' in navigator)){
+    // Prova notifica diretta
+    showToast('4. SW non disponibile, provo diretto...');
+    await sleep(1000);
+    try{ new Notification('CASA Test', { body: 'Funziona ✓' }); showToast('✓ Notifica inviata!'); }
+    catch(e){ showToast('❌ Errore: ' + e.message); }
+    return;
+  }
+
+  // Step 5: SW registrato?
+  showToast('4. Verifico Service Worker...');
+  await sleep(1000);
   try{
-    // Prova prima con Service Worker (più affidabile su Android)
-    if('serviceWorker' in navigator){
-      const reg = await navigator.serviceWorker.ready;
-      if(reg.active){
-        await reg.showNotification('CASA', {
-          body: 'Test notifica — funziona correttamente ✓',
-          tag:  'casa-test'
-        });
-        showToast('Notifica inviata ✓');
-        const txt = document.getElementById('imp-notif-txt');
-        if(txt){ txt.textContent = '✓ Attive'; txt.style.color = '#30d158'; }
-        return;
-      }
-    }
-    // Fallback: notifica diretta (senza SW)
-    new Notification('CASA', { body: 'Test notifica — funziona correttamente ✓' });
-    showToast('Notifica inviata ✓');
-  }catch(err){
-    console.error('testNotifica errore:', err);
-    showToast('Errore: ' + err.message);
+    const reg = await Promise.race([
+      navigator.serviceWorker.ready,
+      new Promise((_,r) => setTimeout(() => r(new Error('timeout 5s')), 5000))
+    ]);
+    showToast('5. SW: ' + (reg.active ? reg.active.state : 'non attivo'));
+    await sleep(1500);
+
+    await reg.showNotification('CASA', { body: 'Test ✓ — funziona!', tag: 'test' });
+    showToast('✓ Notifica inviata! Guarda la barra.');
+
+  }catch(e){
+    showToast('❌ SW errore: ' + e.message);
+    // Prova diretta come fallback
+    try{ new Notification('CASA Test', { body: 'Funziona ✓' }); showToast('✓ Notifica diretta!'); }
+    catch(e2){ showToast('❌ Anche diretta fallita: ' + e2.message); }
   }
 }
+
+function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
 
 // Manda l'archivio aggiornato al service worker
 function syncSW(){

@@ -994,6 +994,38 @@ const PAL = [
   '#5e5ce6', // 23 — notte: indaco
 ];
 
+// ══════════════════════════════════════════════
+// OROLOGIO
+// ══════════════════════════════════════════════
+const GIORNI = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+const MESI   = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+
+function startClock(){ tick(); setInterval(tick, 1000); }
+
+function tick(){
+  const n  = new Date();
+  const hh = String(n.getHours()).padStart(2,'0');
+  const mm = String(n.getMinutes()).padStart(2,'0');
+  const ss = String(n.getSeconds()).padStart(2,'0');
+
+  const elH = document.getElementById('clk-h');
+  const elM = document.getElementById('clk-m');
+  const elS = document.getElementById('clk-s');
+  const elD = document.getElementById('clk-date');
+
+  if(elH) elH.textContent = hh;
+  if(elM) elM.textContent = mm;
+  if(elS) elS.textContent = ss;
+  if(elD) elD.textContent = GIORNI[n.getDay()] + ' ' + n.getDate() + ' ' + MESI[n.getMonth()] + ' ' + n.getFullYear();
+
+  const col = PAL[n.getHours()];
+  ['clk-h','clk-m','clk-s'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.style.textShadow = '0 0 80px ' + col + '35';
+  });
+}
+
+
 // Colori per categoria nell'archivio interventi
 // Modifica questi hex per cambiare i colori delle categorie
 const CAT_COLORS = {

@@ -782,7 +782,7 @@ html, body {
       <svg class="nb-icon" id="fs-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
       <span class="nb-lbl">Schermo</span>
     </button>
-    <button class="nb-btn" onclick="openPanel('impostazioni')">
+    <button class="nb-btn" onclick="openPanel('panel-impostazioni')">
       <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       <span class="nb-lbl">Config</span>
     </button>
@@ -1120,11 +1120,9 @@ window.onload = () => {
 
 // Apre un pannello dato il suo ID HTML
 function openPanel(id){
-  // Gestione speciale per il pannello impostazioni
-  if(id === 'impostazioni'){
-    const el = document.getElementById('panel-impostazioni');
-    el.style.display = 'block';
-    // Aggiorna stato notifiche
+  document.getElementById(id).classList.add('open');
+  // Aggiorna stato notifiche quando si apre impostazioni
+  if(id === 'panel-impostazioni'){
     const txt = document.getElementById('imp-notif-txt');
     if(txt){
       const p   = ('Notification' in window) ? Notification.permission : 'non supportato';
@@ -1132,19 +1130,11 @@ function openPanel(id){
       txt.textContent = map[p] || p;
       txt.style.color = p==='granted' ? '#30d158' : p==='denied' ? '#ff3b30' : '';
     }
-    return;
   }
-  document.getElementById(id).classList.add('open');
 }
 
 // Chiude un pannello dato il suo ID HTML
-function closePanel(id){
-  if(id === 'impostazioni'){
-    document.getElementById('panel-impostazioni').style.display = 'none';
-    return;
-  }
-  document.getElementById(id).classList.remove('open');
-}
+function closePanel(id){ document.getElementById(id).classList.remove('open'); }
 
 
 // ══════════════════════════════════════════════
@@ -2400,10 +2390,10 @@ document.addEventListener('fullscreenchange',()=>{
 </div>
 
 <!-- PANNELLO IMPOSTAZIONI -->
-<div id="panel-impostazioni" class="panel" style="display:none">
+<div id="panel-impostazioni" class="panel">
   <div class="panel-head">
     <span class="panel-title">Impostazioni</span>
-    <button class="panel-close" onclick="closePanel('impostazioni')">✕</button>
+    <button class="panel-close" onclick="closePanel('panel-impostazioni')">✕</button>
   </div>
   <div class="panel-body">
 

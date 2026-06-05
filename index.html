@@ -654,17 +654,21 @@ html, body {
   <div class="s-logo">CASA<small>assistente domestico</small></div>
   <div class="s-box">
     <label class="s-lbl">API Key Claude</label>
-    <input class="s-inp" type="password" id="api-input" placeholder="sk-ant-api03-..." autocomplete="off">
-    <label class="s-lbl" style="margin-top:4px">API Key ElevenLabs <span style="color:var(--dim);font-weight:300">(opzionale — voce naturale)</span></label>
+    <input class="s-inp" type="password" id="api-input" placeholder="sk-ant-api03-..." autocomplete="off"
+      onkeydown="if(event.key==='Enter')document.getElementById('el-key-input').focus()">
+    <label class="s-lbl" style="margin-top:6px">API Key ElevenLabs <span style="opacity:.5">(opzionale)</span></label>
     <input class="s-inp" type="password" id="el-key-input" placeholder="sk_..." autocomplete="off">
-    <label class="s-lbl" style="margin-top:4px">Voice ID ElevenLabs</label>
-    <input class="s-inp" id="el-voice-input" placeholder="es. gfKKsLN1k0oYYN9n2dXX" autocomplete="off">
-    <label class="s-lbl" style="margin-top:4px">Supabase Anon Key <span style="color:var(--dim);font-weight:300">(archivio cloud)</span></label>
-    <input class="s-inp" type="password" id="sb-key-input" placeholder="eyJ..." autocomplete="off">
+    <label class="s-lbl" style="margin-top:6px">Voice ID ElevenLabs</label>
+    <input class="s-inp" id="el-voice-input" placeholder="gfKKsLN1k0oYYN9n2dXX" autocomplete="off">
+    <label class="s-lbl" style="margin-top:6px">Supabase Anon Key</label>
+    <input class="s-inp" type="password" id="sb-key-input" placeholder="eyJ..." autocomplete="off"
+      onkeydown="if(event.key==='Enter')saveAndStart()">
     <button class="s-btn" onclick="saveAndStart()">Attiva →</button>
   </div>
-  <p class="s-note">Le chiavi vengono salvate solo su questo dispositivo<br>
-  <a href="https://elevenlabs.io" target="_blank">elevenlabs.io</a> &nbsp;·&nbsp; <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></p>
+  <p class="s-note">Le chiavi restano solo su questo dispositivo<br>
+  <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>
+  &nbsp;·&nbsp;
+  <a href="https://elevenlabs.io" target="_blank">elevenlabs.io</a></p>
 </div>
 
 <!-- HOME -->
@@ -976,7 +980,9 @@ const CAT_COLORS = {
 
 // Chiamata al click su "Attiva →" nella schermata di setup.
 // Valida la chiave Claude, salva tutto nel localStorage, avvia l'app.
-// Valida e salva le chiavi in localStorage (solo locale, mai sul cloud)
+// ══════════════════════════════════════════════
+// SETUP — salva chiavi in localStorage
+// ══════════════════════════════════════════════
 function saveAndStart(){
   const k = document.getElementById('api-input').value.trim();
   if(!k.startsWith('sk-ant-')){ showToast('Chiave Claude non valida'); return; }
@@ -985,14 +991,14 @@ function saveAndStart(){
 
   const elk = document.getElementById('el-key-input').value.trim();
   const elv = document.getElementById('el-voice-input').value.trim();
-  if(elk){ elKey=elk; localStorage.setItem('el_key', elk); }
-  if(elv){ elVoice=elv; localStorage.setItem('el_voice', elv); }
-
   const sbk = document.getElementById('sb-key-input').value.trim();
-  if(sbk){ sbKey=sbk; localStorage.setItem('sb_key', sbk); }
+  if(elk){ elKey=elk;   localStorage.setItem('el_key',   elk); }
+  if(elv){ elVoice=elv; localStorage.setItem('el_voice', elv); }
+  if(sbk){ sbKey=sbk;   localStorage.setItem('sb_key',   sbk); }
 
   boot();
 }
+
 
 // Avvia l'app: nasconde il setup, mostra la home, lancia tutti i moduli.
 function boot(){
@@ -1015,7 +1021,7 @@ function boot(){
 // I dati dell'archivio NON vengono cancellati (hanno una chiave diversa).
 function resetApp(){
   if(confirm('Cambiare configurazione?\nLe chiavi API verranno rimosse da questo dispositivo.')){
-    ['casa_key','el_key','el_voice','sb_key'].forEach(k => localStorage.removeItem(k));
+    ['casa_key','el_key','el_voice','sb_key'].forEach(k=>localStorage.removeItem(k));
     location.reload();
   }
 }
@@ -1028,12 +1034,9 @@ window.onload = () => {
   elVoice = localStorage.getItem('el_voice') || '';
   sbKey   = localStorage.getItem('sb_key')   || '';
 
-  if(k){
-    // Chiave già in localStorage → avvia direttamente senza mostrare setup
-    apiKey = k; boot(); return;
-  }
+  if(k){ apiKey = k; boot(); return; }
 
-  // Prima volta: pre-popola i campi se già esistono
+  // Pre-popola i campi se già esistono (cambio chiave)
   if(elKey)   { const el=document.getElementById('el-key-input');   if(el) el.value=elKey; }
   if(elVoice) { const el=document.getElementById('el-voice-input'); if(el) el.value=elVoice; }
   if(sbKey)   { const el=document.getElementById('sb-key-input');   if(el) el.value=sbKey; }
@@ -1771,23 +1774,33 @@ async function handleVoiceCommand(cmd){
     chatHistory.push({role:'assistant', content:reply});
     if(chatHistory.length > 20) chatHistory = chatHistory.slice(-16);
     addMsg(reply, 'ai');
-    speakText(reply, () => {
-      listenState = 'idle';
-      if(wakeActive) setState('wake-active');
-      else setState('idle');
-    });
+    speakText(reply); // il riavvio del microfono è gestito dentro speakText
   }catch(err){
     const msg = err.message.includes('401') ? 'Chiave API non valida' : 'Errore di connessione';
     addMsg(`[ ${msg} ]`, 'ai');
     listenState = 'idle';
-    if(wakeActive) setState('wake-active');
+    if(wakeActive){ setState('wake-active'); setTimeout(openRecognition, 400); }
     else setState('idle');
   }
 }
 
-// Bottone mic: SPEGNE il sistema (non lo accende)
-// Si accende automaticamente all'avvio
+// Bottone mic:
+//   - Se Claude sta parlando → lo interrompe e riprende l'ascolto
+//   - Se in ascolto → spegne tutto
+//   - Se spento → accende
 function toggleWake(){
+  if(isSpeaking){
+    // Interrompi Claude e riprendi ad ascoltare
+    window.speechSynthesis && window.speechSynthesis.cancel();
+    // Ferma ElevenLabs se attivo
+    if(currentAudio){ try{ currentAudio.pause(); currentAudio=null; }catch(e){} }
+    isSpeaking = false;
+    if(wakeActive){
+      setState('wake-active');
+      setTimeout(openRecognition, 300);
+    }
+    return;
+  }
   if(wakeActive){ stopWakeWord(); }
   else           { startWakeWord(); }
 }
@@ -1850,20 +1863,34 @@ function chime(){
 // TTS — ElevenLabs o browser TTS
 // ══════════════════════════════════════════════
 async function speakText(text, onEnd=null){
+  // Ferma il microfono mentre Claude parla —
+  // altrimenti il recognition capta la voce di Claude e la interpreta come comando
+  if(wakeRecognition){
+    wakeRecognition.onend = null; // impedisce il riavvio automatico
+    try{ wakeRecognition.abort(); }catch(e){}
+    wakeRecognition = null;
+  }
+  setState('speaking');
+
   // Callback garantita: chiamata UNA sola volta in qualsiasi scenario
   let endCalled = false;
   const done = () => {
     if(endCalled) return;
     endCalled = true;
     isSpeaking = false;
-    setState(wakeEnabled ? 'wake-active' : 'idle');
+    // Riavvia il microfono dopo che Claude ha finito di parlare
+    if(wakeActive){
+      setState('wake-active');
+      setTimeout(openRecognition, 600);
+    } else {
+      setState('idle');
+    }
     if(onEnd) onEnd();
   };
 
-  // Timeout di sicurezza: se per qualsiasi motivo done() non viene chiamato
-  // entro 60 secondi, il microfono riparte comunque
+  // Timeout di sicurezza 60s
   const safetyTimer = setTimeout(() => {
-    console.warn('speakText: timeout di sicurezza — forzo ripristino microfono');
+    console.warn('speakText: timeout sicurezza — ripristino microfono');
     done();
   }, 60000);
 
@@ -1905,10 +1932,11 @@ async function speakText(text, onEnd=null){
       if(!blob || blob.size === 0) throw new Error('audio vuoto');
 
       const url   = URL.createObjectURL(blob);
-      const audio = new Audio(url);
+      currentAudio = new Audio(url); // globale — così toggleWake può fermarlo
+      const audio  = currentAudio;
 
-      audio.onended = () => { URL.revokeObjectURL(url); finish(); };
-      audio.onerror = () => { URL.revokeObjectURL(url); finish(); };
+      audio.onended = () => { currentAudio=null; URL.revokeObjectURL(url); finish(); };
+      audio.onerror = () => { currentAudio=null; URL.revokeObjectURL(url); finish(); };
 
       const playPromise = audio.play();
       if(playPromise && typeof playPromise.then === 'function'){

@@ -648,6 +648,33 @@ html, body {
   .nb-icon     { width: 18px; height: 18px; }
   .due-badge   { font-size: .5rem; padding: 3px 9px; top: 6px; right: 10px; }
 }
+
+/* ── Pannello impostazioni ── */
+.imp-section-title{
+  font-family: var(--mono);
+  font-size: .6rem;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.35);
+  padding: 0 0 8px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  margin-bottom: 4px;
+}
+.imp-row{
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.imp-row-label{
+  font-family: var(--mono);
+  font-size: .8rem;
+  color: rgba(255,255,255,.85);
+  margin-bottom: 3px;
+}
+.imp-row-sub{
+  font-family: var(--mono);
+  font-size: .65rem;
+  color: rgba(255,255,255,.35);
+}
 </style>
 </head>
 <body>
@@ -755,13 +782,11 @@ html, body {
       <svg class="nb-icon" id="fs-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
       <span class="nb-lbl">Schermo</span>
     </button>
-    <button class="nb-btn" onclick="resetApp()">
+    <button class="nb-btn" onclick="openPanel('impostazioni')">
       <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       <span class="nb-lbl">Config</span>
     </button>
-        <button style="width:100%;margin-top:8px;padding:10px;background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);font-family:var(--mono);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:4px" onclick="testNotifica()">
-          Test notifiche
-        </button>
+        
   </div>
 </div>
 
@@ -1062,52 +1087,31 @@ window.onload = () => {
 // ══════════════════════════════════════════════
 
 // Apre un pannello dato il suo ID HTML
-function openPanel(id){ document.getElementById(id).classList.add('open'); }
+function openPanel(id){
+  // Gestione speciale per il pannello impostazioni
+  if(id === 'impostazioni'){
+    const el = document.getElementById('panel-impostazioni');
+    el.style.display = 'block';
+    // Aggiorna stato notifiche
+    const txt = document.getElementById('imp-notif-txt');
+    if(txt){
+      const p   = ('Notification' in window) ? Notification.permission : 'non supportato';
+      const map = { granted:'✓ Attive', denied:'✗ Bloccate — abilita in Impostazioni Chrome', default:'Non ancora richiesto' };
+      txt.textContent = map[p] || p;
+      txt.style.color = p==='granted' ? '#30d158' : p==='denied' ? '#ff3b30' : '';
+    }
+    return;
+  }
+  document.getElementById(id).classList.add('open');
+}
 
 // Chiude un pannello dato il suo ID HTML
-function closePanel(id){ document.getElementById(id).classList.remove('open'); }
-
-
-// ══════════════════════════════════════════════
-// 5. CLOCK — Orologio digitale aggiornato ogni secondo
-//
-// L'orologio mostra HH:MM:SS con un glow colorato
-// che cambia in base all'ora del giorno (vedi array PAL).
-//
-// PER CAMBIARE IL FORMATO DATA: modifica la riga
-// document.getElementById('clk-date').textContent = ...
-// ══════════════════════════════════════════════
-
-const GIORNI = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
-const MESI   = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
-
-// Avvia il ciclo orologio: chiama tick() subito e poi ogni 1000ms
-function startClock(){ tick(); setInterval(tick, 1000); }
-
-// Aggiorna le tre cifre dell'orologio (ore, minuti, secondi) e la data.
-// Chiamata ogni secondo da setInterval.
-function tick(){
-  const n  = new Date();
-  const hh = String(n.getHours()).padStart(2,'0');   // es. "08"
-  const mm = String(n.getMinutes()).padStart(2,'0'); // es. "05"
-  const ss = String(n.getSeconds()).padStart(2,'0'); // es. "30"
-
-  // Aggiorna i tre span separati (h, m, s) nell'HTML
-  document.getElementById('clk-h').textContent = hh;
-  document.getElementById('clk-m').textContent = mm;
-  document.getElementById('clk-s').textContent = ss;
-
-  // Aggiorna la data nel formato "Lunedì 4 Giugno 2026"
-  document.getElementById('clk-date').textContent =
-    `${GIORNI[n.getDay()]} ${n.getDate()} ${MESI[n.getMonth()]} ${n.getFullYear()}`;
-
-  // Applica il glow colorato basato sull'ora corrente
-  // Il colore viene preso dall'array PAL[ora] (24 valori, uno per ora)
-  const col = PAL[n.getHours()];
-  ['clk-h','clk-m','clk-s'].forEach(id=>{
-    document.getElementById(id).style.textShadow = `0 0 80px ${col}35`;
-    // 35 in fondo è l'opacità in hex (circa 21%) — aumenta per un glow più forte
-  });
+function closePanel(id){
+  if(id === 'impostazioni'){
+    document.getElementById('panel-impostazioni').style.display = 'none';
+    return;
+  }
+  document.getElementById(id).classList.remove('open');
 }
 
 
@@ -2273,24 +2277,40 @@ async function registerSW(){
 // Forza la richiesta permesso notifiche (usato dal pannello impostazioni)
 async function testNotifica(){
   if(!('Notification' in window)){ showToast('Browser non supportato'); return; }
+  if(!('serviceWorker' in navigator)){ showToast('Service Worker non supportato'); return; }
 
+  // Se bloccate → istruzioni
   if(Notification.permission === 'denied'){
-    showToast('Notifiche bloccate — vai su Impostazioni Chrome → Sito → Notifiche');
+    showToast('Bloccate: Impostazioni Chrome → Sito → Notifiche → Consenti');
     return;
   }
 
+  // Richiedi permesso se non ancora dato
   const perm = await Notification.requestPermission();
   if(perm !== 'granted'){ showToast('Permesso negato'); return; }
 
-  // Mostra notifica di test immediata
-  const reg = await navigator.serviceWorker.ready;
-  await reg.showNotification('CASA — Test notifica', {
-    body: 'Le notifiche funzionano correttamente ✓',
-    icon: '/icon-192.png',
-    tag:  'test'
-  });
-  showToast('Notifica di test inviata');
-  syncSW();
+  try{
+    // Verifica SW registrato
+    const reg = await navigator.serviceWorker.ready;
+    console.log('SW per test:', reg.scope, reg.active?.state);
+
+    await reg.showNotification('CASA — Test ✓', {
+      body:  'Le notifiche funzionano correttamente.',
+      icon:  location.origin + '/icon-192.png',
+      tag:   'test-' + Date.now(),
+      requireInteraction: false
+    });
+    showToast('Notifica inviata — controlla la barra delle notifiche');
+    syncSW();
+
+    // Aggiorna stato nel pannello
+    const txt = document.getElementById('imp-notif-txt');
+    if(txt){ txt.textContent = '✓ Attive'; txt.style.color = '#30d158'; }
+
+  }catch(err){
+    console.error('Errore notifica test:', err);
+    showToast('Errore: ' + err.message);
+  }
 }
 
 // Manda l'archivio aggiornato al service worker
@@ -2344,6 +2364,33 @@ document.addEventListener('fullscreenchange',()=>{
       <div id="detail-come" style="font-family:var(--mono);font-size:.85rem;color:rgba(255,255,255,.85);line-height:1.7;white-space:pre-wrap"></div>
       <div id="detail-loading" style="display:none;font-family:var(--mono);font-size:.75rem;opacity:.4;margin-top:12px;animation:pulse 1.5s infinite">Claude sta elaborando...</div>
     </div>
+  </div>
+</div>
+
+<!-- PANNELLO IMPOSTAZIONI -->
+<div id="panel-impostazioni" class="panel" style="display:none">
+  <div class="panel-head">
+    <span class="panel-title">Impostazioni</span>
+    <button class="panel-close" onclick="closePanel('impostazioni')">✕</button>
+  </div>
+  <div class="panel-body">
+
+    <div class="imp-section-title">Notifiche</div>
+    <div class="imp-row" onclick="testNotifica()" style="cursor:pointer">
+      <div class="imp-row-label">Test notifica</div>
+      <div class="imp-row-sub">Verifica che le notifiche funzionino</div>
+    </div>
+    <div class="imp-row" id="imp-notif-status">
+      <div class="imp-row-label">Stato permesso</div>
+      <div class="imp-row-sub" id="imp-notif-txt">—</div>
+    </div>
+
+    <div class="imp-section-title" style="margin-top:24px">Account</div>
+    <div class="imp-row" onclick="resetApp()" style="cursor:pointer">
+      <div class="imp-row-label" style="color:#ff3b30">Reset API Keys</div>
+      <div class="imp-row-sub">Rimuove le chiavi da questo dispositivo</div>
+    </div>
+
   </div>
 </div>
 </body>

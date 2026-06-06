@@ -15,7 +15,7 @@
   --dim:   rgba(255,255,255,.6);
   --text:  #ffffff;
   --yel:   #FFD60A;
-  --orange:#FF9F0A;
+  --orange:#FF6A00;
   --red:   #FF3B30;
   --r:     40px;
   --mono:  'Roboto Mono', monospace;
@@ -23,6 +23,7 @@
   --sep:   'Hubot Sans', 'Share Tech Mono', monospace;
   --num:   'Hubot Sans', monospace;
   --nb-h:  10vh; /* navbar height */
+  --home-gap: 14px;
   --menu-w: clamp(220px, 31vw, 360px);
 }
 
@@ -108,7 +109,7 @@ html, body {
 .widget-row {
   flex: 1;
   display: flex;
-  gap: 14px;
+  gap: var(--home-gap);
   padding-bottom: 14px;
   min-height: 0;
 }
@@ -126,7 +127,7 @@ html, body {
   position: relative;
   min-width: 0;
   z-index: 5;
-  transition: transform .34s cubic-bezier(.4,0,.2,1), box-shadow .34s cubic-bezier(.4,0,.2,1);
+  transition: transform .34s cubic-bezier(.4,0,.2,1);
 }
 
 .wl-time {
@@ -174,8 +175,8 @@ html, body {
   left: 30px;
   width: 46px;
   height: 46px;
-  border: 1.5px solid rgba(0,0,0,.35);
-  border-radius: 50%;
+  border: none;
+  border-radius: 0;
   background: transparent;
   color: #000;
   display: flex;
@@ -187,10 +188,17 @@ html, body {
 }
 .menu-toggle:active,
 body.menu-open .menu-toggle {
-  background: rgba(0,0,0,.1);
-  border-color: #000;
+  background: transparent;
 }
 .menu-toggle svg { width: 22px; height: 22px; }
+.menu-toggle line {
+  transition: transform .22s cubic-bezier(.4,0,.2,1), opacity .18s;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+body.menu-open .menu-toggle line:nth-child(1) { transform: translateY(5px) rotate(45deg); }
+body.menu-open .menu-toggle line:nth-child(2) { opacity: 0; }
+body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rotate(-45deg); }
 
 /* Mic sul pannello giallo */
 .widget-left .mic-area {
@@ -407,16 +415,16 @@ body.menu-open .menu-toggle {
 .menu-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .menu-item {
   width: 100%;
   border: none;
-  background: rgba(255,255,255,.18);
+  background: transparent;
   color: #000;
-  border-radius: 18px;
-  padding: 16px 14px;
+  border-radius: 0;
+  padding: 14px 0;
   display: grid;
   grid-template-columns: 30px 1fr;
   column-gap: 12px;
@@ -424,7 +432,7 @@ body.menu-open .menu-toggle {
   cursor: pointer;
   text-align: left;
 }
-.menu-item:active { background: rgba(0,0,0,.1); }
+.menu-item:active { opacity: .65; }
 .menu-icon { width: 24px; height: 24px; color: inherit; }
 .menu-item-title {
   display: block;
@@ -445,8 +453,7 @@ body.menu-open .menu-toggle {
 
 body.menu-open .menu-panel { transform: translateX(0); }
 body.menu-open .widget-left {
-  transform: translateX(calc(var(--menu-w) + 10px));
-  box-shadow: 0 0 0 10px #fff;
+  transform: translateX(calc(100% + var(--home-gap) + var(--home-gap)));
 }
 
 /* ══ PANNELLI (chat, archivio, ecc.) ══════════════ */
@@ -708,8 +715,9 @@ body.menu-open .widget-left {
 
 /* ══ LANDSCAPE ════════════════════════════════════ */
 @media (orientation: landscape) {
+  :root { --home-gap: 10px; }
   #home { padding: 10px 10px 0; }
-  .widget-row { gap: 10px; padding-bottom: 10px; }
+  .widget-row { gap: var(--home-gap); padding-bottom: 10px; }
   .widget-left { border-radius: 32px; padding: 14px; gap: 4px; }
   .widget-right { border-radius: 32px; padding: 12px 14px; }
   .wl-hms  { font-size: clamp(3.01rem, 33.4vh, 8.35rem); }

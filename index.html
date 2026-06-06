@@ -16,6 +16,7 @@
   --text:  #ffffff;
   --yel:   #FFD60A;
   --orange:#FF6A00;
+  --blue:  #2FD3FF;
   --red:   #FF3B30;
   --r:     40px;
   --mono:  'Roboto Mono', monospace;
@@ -29,6 +30,8 @@
   --home-gap: 14px;
   --home-bottom-gap: 14px;
   --menu-w: calc((100vw - var(--home-pad-left) - var(--home-pad-right) - var(--home-gap)) / 3);
+  --panel-h: 58dvh;
+  --panel-gap: 14px;
 }
 
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -402,15 +405,18 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
   padding: 30px 20px;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 18px;
   transform: translateX(calc(-100% - 24px));
   transition: transform .34s cubic-bezier(.4,0,.2,1);
   overflow: hidden;
 }
 
 .menu-title {
+  min-height: 30px;
+  display: flex;
+  align-items: center;
   font-size: clamp(0.7rem, 2.4vw, 1.002rem);
-  font-weight: 900;
+  font-weight: 400;
   letter-spacing: .16em;
   text-transform: uppercase;
   color: rgba(0,0,0,.62);
@@ -441,7 +447,8 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
 .menu-item-title {
   display: block;
   font-size: clamp(0.68rem, 2.6vw, 1.136rem);
-  font-weight: 900;
+  font-family: var(--sep);
+  font-weight: 400;
   letter-spacing: .03em;
   text-transform: uppercase;
   line-height: 1.1;
@@ -462,64 +469,78 @@ body.menu-open .widget-left {
 
 /* ══ PANNELLI (chat, archivio, ecc.) ══════════════ */
 .panel {
-  position: fixed; inset: 0;
-  background: var(--bg);
+  position: fixed;
+  left: var(--home-pad-left);
+  right: var(--home-pad-right);
+  bottom: 0;
+  height: var(--panel-h);
+  background: var(--blue);
+  color: #000;
   z-index: 50;
-  display: flex; flex-direction: column;
-  transform: translateY(100%);
-  transition: transform .3s cubic-bezier(.4,0,.2,1);
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r) var(--r) 0 0;
+  overflow: hidden;
+  transform: translateY(calc(100% + var(--panel-gap)));
+  transition: transform .34s cubic-bezier(.4,0,.2,1);
 }
 .panel.open { transform: translateY(0); }
+body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel-gap)) * -1)); }
+#home { transition: transform .34s cubic-bezier(.4,0,.2,1); }
 
 .panel-hdr {
   flex-shrink: 0;
   display: flex; align-items: center; justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--brd2);
+  padding: 30px 24px 12px;
+  border-bottom: none;
 }
 
 .panel-title {
-  font-size: 1.336rem; font-weight: 900;
-  letter-spacing: .1em; text-transform: uppercase;
+  font-family: var(--sep);
+  font-size: clamp(1rem, 4vw, 1.336rem);
+  font-weight: 400;
+  letter-spacing: .08em;
+  text-transform: uppercase;
 }
 
 .panel-close {
-  font-family: var(--mono); font-size: 1.035rem; font-weight: 700;
-  color: rgba(255,255,255,.85); background: transparent;
-  border: 1px solid var(--brd); border-radius: 16px;
-  padding: 6px 12px; cursor: pointer; letter-spacing: .08em;
+  font-family: var(--mono); font-size: 0.902rem; font-weight: 700;
+  color: rgba(0,0,0,.62); background: transparent;
+  border: none;
+  padding: 6px 0 6px 12px; cursor: pointer; letter-spacing: .08em;
   text-transform: uppercase;
 }
-.panel-close:active { background: var(--text); color: var(--bg); }
+.panel-close:active { color: #000; }
 
 /* ── Chat ── */
 .chat-area {
   flex: 1; overflow-y: auto;
-  padding: 16px; display: flex; flex-direction: column; gap: 10px;
+  padding: 0 24px 12px; display: flex; flex-direction: column; gap: 10px;
 }
 
 .msg {
   font-size: 1.303rem; font-weight: 500;
-  line-height: 1.55; padding: 10px 14px;
-  border-radius: 24px; max-width: 88%;
+  line-height: 1.45; padding: 8px 0;
+  border-radius: 0; max-width: 88%;
+  color: #000;
 }
 
 .msg.user {
-  background: var(--yel); color: #000;
+  background: transparent; color: #000;
   align-self: flex-end; font-weight: 700;
-  border-radius: 12px 12px 2px 12px;
+  text-align: right;
 }
 
 .msg.ai {
-  background: rgba(255,255,255,.1);
-  border: 1px solid var(--brd);
+  background: transparent;
+  border: none;
   align-self: flex-start;
-  border-radius: 12px 12px 12px 2px;
+  color: rgba(0,0,0,.78);
 }
 
 .typing { display:none; gap:5px; padding: 10px 14px; }
 .typing.on { display:flex; }
-.dot { width:6px; height:6px; border-radius:50%; background:var(--mid); animation:blink 1.2s infinite; }
+.dot { width:6px; height:6px; border-radius:50%; background:rgba(0,0,0,.55); animation:blink 1.2s infinite; }
 .dot:nth-child(2){ animation-delay:.2s; }
 .dot:nth-child(3){ animation-delay:.4s; }
 @keyframes blink { 0%,80%,100%{opacity:.2} 40%{opacity:1} }
@@ -548,77 +569,137 @@ body.menu-open .widget-left {
   padding: 0 18px; cursor: pointer; letter-spacing: .04em;
 }
 
+.cp-row {
+  flex-shrink: 0;
+  display: flex;
+  gap: 10px;
+  padding: 10px 24px 22px;
+}
+
+.cp-inp {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(0,0,0,.35);
+  border-radius: 0;
+  color: #000;
+  font-family: var(--mono);
+  font-size: 1.136rem;
+  font-weight: 500;
+  padding: 9px 0;
+  outline: none;
+  resize: none;
+  min-height: 40px;
+  max-height: 110px;
+}
+.cp-inp::placeholder { color: rgba(0,0,0,.45); }
+.cp-send {
+  width: 44px;
+  border: none;
+  background: transparent;
+  color: #000;
+  font-size: 1.8rem;
+  cursor: pointer;
+}
+
 /* ── Archivio ── */
 .arch-toolbar {
   flex-shrink: 0;
-  display: flex; gap: 6px;
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--brd2);
+  display: flex; gap: 10px;
+  padding: 0 24px 10px;
+  border-bottom: none;
   overflow-x: auto;
 }
 
 .arch-filter {
   flex-shrink: 0;
   background: transparent;
-  border: 1px solid var(--brd);
-  border-radius: var(--r);
-  color: rgba(255,255,255,.85);
+  border: none;
+  border-radius: 0;
+  color: rgba(0,0,0,.6);
   font-family: var(--mono);
-  font-size: 0.969rem; font-weight: 700;
+  font-size: 0.835rem; font-weight: 700;
   letter-spacing: .08em; text-transform: uppercase;
-  padding: 5px 12px; cursor: pointer;
+  padding: 5px 0; cursor: pointer;
 }
-.arch-filter.active { background: var(--yel); border-color: var(--yel); color: #000; }
+.arch-filter.active { background: transparent; border-color: transparent; color: #000; }
 
-.arch-list { flex: 1; overflow-y: auto; padding: 12px 16px; }
+.arch-list { flex: 1; overflow-y: auto; padding: 0 24px 12px; }
 
 .arch-entry {
   background: transparent;
-  border: 1px solid var(--brd);
-  border-radius: 28px;
-  padding: 14px 16px;
-  margin-bottom: 10px;
+  border: none;
+  border-radius: 0;
+  padding: 14px 0;
+  margin-bottom: 0;
   position: relative;
   overflow: hidden;
 }
-.arch-entry::before {
-  content:''; position:absolute; top:0; left:0; right:0;
-  height:2px; background: var(--ic, var(--brd));
-}
-.arch-entry:active { border-color: var(--text); }
+.arch-entry::before { display: none; }
+.arch-entry:active { opacity: .65; }
 
 .arch-entry-top {
   display: flex; align-items: flex-start;
   justify-content: space-between; gap: 12px;
 }
 
-.arch-entry-title { font-size: 1.503rem; font-weight: 900; line-height: 1.2; }
-.arch-entry-date  { font-size: 1.035rem; font-weight: 500; color: rgba(255,255,255,.85); white-space: nowrap; }
-.arch-entry-cat   { display: inline-block; font-size: 0.902rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; border-radius: 4px; padding: 2px 7px; margin: 6px 0 4px; }
-.arch-entry-note  { font-size: 1.202rem; font-weight: 400; color: rgba(255,255,255,.85); margin-top: 4px; line-height: 1.5; }
+.arch-entry-title { font-family: var(--sep); font-size: 1.303rem; font-weight: 400; line-height: 1.2; color: #000; }
+.arch-entry-date  { font-size: 0.902rem; font-weight: 500; color: rgba(0,0,0,.62); white-space: nowrap; }
+.arch-entry-cat   { display: inline-block; font-size: 0.768rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; border-radius: 0; padding: 0; margin: 6px 0 4px; }
+.arch-entry-note  { font-size: 1.002rem; font-weight: 400; color: rgba(0,0,0,.66); margin-top: 4px; line-height: 1.45; }
 
 .arch-entry-del {
   background: transparent;
-  border: 1px solid var(--brd);
-  border-radius: 6px;
-  color: rgba(255,255,255,.85);
+  border: none;
+  border-radius: 0;
+  color: rgba(0,0,0,.62);
   font-family: var(--mono);
-  font-size: 0.969rem; font-weight: 700;
-  padding: 4px 10px; cursor: pointer; letter-spacing: .06em;
+  font-size: 0.835rem; font-weight: 700;
+  padding: 8px 12px 8px 0; cursor: pointer; letter-spacing: .06em;
 }
-.arch-entry-del:active { background: var(--text); color: var(--bg); }
+.arch-entry-del:active { color: #000; }
 
 .arch-search-wrap {
   flex-shrink:0; padding: 10px 16px 0;
 }
 .arch-search {
-  width:100%; background: rgba(255,255,255,.05);
-  border: 1px solid var(--brd); border-radius: 30px;
-  color: var(--text); font-family: var(--mono);
+  width:100%; background: transparent;
+  border: none; border-bottom: 1px solid rgba(0,0,0,.35); border-radius: 0;
+  color: #000; font-family: var(--mono);
   font-size: 1.252rem; font-weight: 500;
   padding: 9px 14px; outline: none;
 }
-.arch-search:focus { border-color: var(--yel); }
+.arch-search::placeholder { color: rgba(0,0,0,.45); }
+.arch-search:focus { border-color: #000; }
+
+.arch-add-bar {
+  flex-shrink: 0;
+  display: flex;
+  gap: 10px;
+  padding: 8px 24px 22px;
+}
+
+.arch-add-inp {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(0,0,0,.35);
+  border-radius: 0;
+  color: #000;
+  font-family: var(--mono);
+  font-size: 1.136rem;
+  padding: 9px 0;
+  outline: none;
+}
+.arch-add-inp::placeholder { color: rgba(0,0,0,.45); }
+.arch-add-btn {
+  width: 44px;
+  border: none;
+  background: transparent;
+  color: #000;
+  font-size: 1.8rem;
+  cursor: pointer;
+}
 
 /* ── Dialog archivio ── */
 .arch-dialog {
@@ -705,21 +786,21 @@ body.menu-open .widget-left {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 20px 24px;
-  border-bottom: 1px solid rgba(255,255,255,.05);
+  padding: 14px 0;
+  border-bottom: none;
   min-height: 72px;
   justify-content: center;
 }
-.imp-row:active { background: rgba(255,255,255,.08); }
-.imp-title { font-family: var(--mono); font-size: 1.369rem; font-weight: 700; color: var(--text); }
-.imp-sub   { font-family: var(--mono); font-size: 1.136rem; font-weight: 400; color: rgba(255,255,255,.85); }
+.imp-row:active { opacity: .65; }
+.imp-title { font-family: var(--mono); font-size: 1.369rem; font-weight: 700; color: #000; }
+.imp-sub   { font-family: var(--mono); font-size: 1.136rem; font-weight: 400; color: rgba(0,0,0,.66); }
 
 /* ── Log ── */
-#log-list { font-family: var(--mono); font-size: 1.136rem; font-weight: 400; line-height: 1.8; }
+#log-list { font-family: var(--mono); font-size: 1.002rem; font-weight: 400; line-height: 1.8; color: rgba(0,0,0,.68); }
 
 /* ══ LANDSCAPE ════════════════════════════════════ */
 @media (orientation: landscape) {
-  :root { --home-pad-top: 10px; --home-pad-left: 0px; --home-pad-right: 10px; --home-gap: 10px; --home-bottom-gap: 10px; }
+  :root { --home-pad-top: 10px; --home-pad-left: 10px; --home-pad-right: 10px; --home-gap: 10px; --home-bottom-gap: 10px; --panel-h: 56dvh; --panel-gap: 10px; }
   .widget-left { border-radius: 32px; padding: 14px; gap: 4px; }
   .widget-right { border-radius: 32px; padding: 12px 14px; }
   .wl-hms  { font-size: clamp(3.01rem, 33.4vh, 8.35rem); }
@@ -731,18 +812,52 @@ body.menu-open .widget-left {
   .nb-lbl  { display: none; }
   .nb-btn:active { color: #000; }
   .menu-toggle { top: 18px; left: 18px; width: 38px; height: 38px; }
-  .menu-panel { border-radius: 32px; padding: 18px 16px; gap: 14px; }
+  .menu-panel { border-radius: 32px; padding: 30px 16px 18px; gap: 14px; }
   .menu-item { padding: 11px 12px; border-radius: 14px; }
   .menu-item-sub { display: none; }
 }
 
+.panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 24px 22px;
+}
+
+.panel-section-title {
+  font-size: 0.7rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: rgba(0,0,0,.5);
+  padding: 14px 0 6px;
+}
+
+.panel-actions {
+  flex-shrink: 0;
+  display: flex;
+  gap: 14px;
+  padding: 0 24px 10px;
+}
+
+.panel-action {
+  font-family: var(--mono);
+  font-size: 0.835rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  background: transparent;
+  border: none;
+  color: rgba(0,0,0,.62);
+  padding: 8px 0;
+  cursor: pointer;
+}
+.panel-action:active { color: #000; }
+
 @media (orientation: landscape) and (max-height: 450px) {
-  :root { --home-pad-top: 6px; --home-pad-left: 0px; --home-pad-right: 10px; }
+  :root { --home-pad-top: 6px; --home-pad-left: 10px; --home-pad-right: 10px; --panel-h: 54dvh; }
   .wl-hms  { font-size: clamp(2.5rem, 28.39vh, 6.68rem); }
   .wl-sep  { font-size: clamp(1.84rem, 20.88vh, 5.01rem); }
   .wr-temp { font-size: clamp(2.5rem, 28.39vh, 6.68rem); }
   .mic-ring-wrap { width: 34px; height: 34px; }
-  .menu-title { display: none; }
+  .menu-title { min-height: 24px; font-size: 0.7rem; }
   .menu-panel { gap: 8px; padding: 12px; }
   .menu-item-title { font-size: 0.969rem; }
 }
@@ -934,7 +1049,7 @@ body.menu-open .widget-left {
     <button class="arch-filter" id="filt-man" onclick="setFilter('manutenzione')">Man.</button>
     <button class="arch-filter" id="filt-pul" onclick="setFilter('pulizia')">Pul.</button>
     <button class="arch-filter" id="filt-imp" onclick="setFilter('impianto')">Imp.</button>
-    <button class="arch-filter" id="filt-scad" onclick="setFilter('scadenze')" style="color:#ff3b30;border-color:#ff3b3040">⚠ Scad.</button>
+    <button class="arch-filter" id="filt-scad" onclick="setFilter('scadenze')">Scad.</button>
   </div>
   <div class="arch-list" id="arch-list"></div>
   <div class="arch-add-bar">
@@ -1231,7 +1346,11 @@ window.onload = () => {
 function openPanel(id){
   const el = document.getElementById(id);
   if(!el){ console.warn('Pannello non trovato:', id); return; }
+  document.querySelectorAll('.panel.open').forEach(p => {
+    if(p !== el) p.classList.remove('open');
+  });
   el.classList.add('open');
+  refreshPanelState();
   if(id === 'panel-log'){ renderLog(); }
   if(id === 'panel-impostazioni'){
     const txt = document.getElementById('imp-notif-txt');
@@ -1245,7 +1364,15 @@ function openPanel(id){
 }
 
 // Chiude un pannello dato il suo ID HTML
-function closePanel(id){ document.getElementById(id).classList.remove('open'); }
+function closePanel(id){
+  const el = document.getElementById(id);
+  if(el) el.classList.remove('open');
+  refreshPanelState();
+}
+
+function refreshPanelState(){
+  document.body.classList.toggle('panel-open', !!document.querySelector('.panel.open'));
+}
 
 function syncMenuGeometry(){
   const weatherBox = document.getElementById('widget-right');
@@ -1515,7 +1642,7 @@ function renderArch(){
         <div class="arch-entry-title">${e.titolo}</div>
         <div class="arch-entry-date">${dataStr} ${scadStr}</div>
       </div>
-      <span class="arch-entry-cat" style="background:${col}22;color:${col}">${e.cat}</span>
+      <span class="arch-entry-cat" style="color:${col}">${e.cat}</span>
       ${e.note ? `<div class="arch-entry-note" onclick="openDetail('${e.id}')" style="cursor:pointer">${e.note}</div>` : ''}
       ${scadExpired ? `<div class="arch-entry-note" style="color:#ff2d55;margin-top:4px">⚠ Scadenza superata</div>` : ''}
       <div style="display:flex;gap:6px;margin-top:10px">
@@ -2626,10 +2753,10 @@ function renderLog(){
     el.innerHTML = '<div style="opacity:.3;text-align:center;margin-top:40px">Nessun log ancora</div>';
     return;
   }
-  const colors = { log:'rgba(255,255,255,.6)', warn:'#ffd60a', error:'#ff3b30', info:'#0a84ff' };
+  const colors = { log:'rgba(0,0,0,.58)', warn:'#7a4b00', error:'#a90000', info:'#005777' };
   el.innerHTML = appLog.map(l =>
-    `<div style="border-bottom:1px solid rgba(255,255,255,.05);padding:4px 0">
-      <span style="opacity:.35">${l.ts}</span>
+    `<div style="padding:4px 0">
+      <span style="opacity:.45">${l.ts}</span>
       <span style="color:${colors[l.tipo]||colors.log};margin-left:8px">[${l.tipo.toUpperCase()}]</span>
       <span style="margin-left:6px;word-break:break-all">${l.msg}</span>
     </div>`
@@ -2773,10 +2900,10 @@ setupClockFullscreenTap();
     <div class="panel-title">Impostazioni</div>
     <button class="panel-close" onclick="closePanel('panel-impostazioni')">✕ Chiudi</button>
   </div>
-  <div style="padding:16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto">
+  <div class="panel-body">
 
     <!-- Sezione Notifiche -->
-    <div style="font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mid);padding:4px 0 8px;border-bottom:1px solid var(--brd2)">Notifiche</div>
+    <div class="panel-section-title">Notifiche</div>
 
     <div class="arch-entry" style="cursor:pointer" onclick="testNotifica()">
       <div class="arch-entry-title">Test notifica</div>
@@ -2794,14 +2921,14 @@ setupClockFullscreenTap();
     </div>
 
     <!-- Sezione Account -->
-    <div style="font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mid);padding:16px 0 8px;border-bottom:1px solid var(--brd2)">Diagnostica</div>
+    <div class="panel-section-title">Diagnostica</div>
 
     <div class="arch-entry" style="cursor:pointer" onclick="closePanel('panel-impostazioni');openPanel('panel-log')">
       <div class="arch-entry-title">Log di sistema</div>
       <div class="arch-entry-note">Visualizza gli eventi e gli errori dell'app</div>
     </div>
 
-    <div style="font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mid);padding:16px 0 8px;border-bottom:1px solid var(--brd2)">Account</div>
+    <div class="panel-section-title">Account</div>
 
     <div class="arch-entry" style="cursor:pointer" onclick="resetApp()">
       <div class="arch-entry-title" style="color:#ff3b30">Reset API Keys</div>
@@ -2817,11 +2944,11 @@ setupClockFullscreenTap();
     <div class="panel-title">Log di sistema</div>
     <button class="panel-close" onclick="closePanel('panel-log')">✕ Chiudi</button>
   </div>
-  <div style="display:flex;gap:8px;padding:10px 16px;border-bottom:1px solid var(--brd2);flex-shrink:0">
-    <button onclick="clearLog()" style="font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;background:transparent;border:1px solid rgba(255,255,255,.15);color:var(--mid);padding:6px 12px;cursor:pointer;border-radius:4px">Cancella</button>
-    <button onclick="copyLog()" style="font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;background:transparent;border:1px solid rgba(255,255,255,.15);color:var(--mid);padding:6px 12px;cursor:pointer;border-radius:4px">Copia</button>
+  <div class="panel-actions">
+    <button class="panel-action" onclick="clearLog()">Cancella</button>
+    <button class="panel-action" onclick="copyLog()">Copia</button>
   </div>
-  <div id="log-list" style="flex:1;overflow-y:auto;padding:12px 16px;font-family:var(--mono);font-size:.7rem;line-height:1.8;color:rgba(255,255,255,.6)">
+  <div id="log-list" class="panel-body">
     <div style="opacity:.3;text-align:center;margin-top:40px">Nessun log ancora</div>
   </div>
 </div>

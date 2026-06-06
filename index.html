@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>CASA</title>
-<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;700;900&family=Major+Mono+Display&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;700;900&family=Major+Mono+Display&family=Share+Tech+Mono&family=Hubot+Sans:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 
 :root {
@@ -18,8 +18,9 @@
   --red:   #FF3B30;
   --r:     40px;
   --mono:  'Roboto Mono', monospace;
-  --clock: 'Major Mono Display', monospace;
-  --sep:   'Share Tech Mono', monospace;
+  --clock: 'Hubot Sans', 'Major Mono Display', monospace;
+  --sep:   'Hubot Sans', 'Share Tech Mono', monospace;
+  --num:   'Hubot Sans', monospace;
   --nb-h:  10vh; /* navbar height */
 }
 
@@ -130,7 +131,7 @@ html, body {
 }
 
 .wl-hms {
-  font-family: var(--clock);
+  font-family: var(--num);
   font-size: clamp(5.01rem, 26.72vw, 11.69rem);
   font-weight: 400;
   color: #000;
@@ -139,7 +140,7 @@ html, body {
 }
 
 .wl-sep {
-  font-family: var(--sep);
+  font-family: var(--num);
   font-size: clamp(3.67rem, 20.04vw, 8.68rem);
   color: rgba(0,0,0,.4);
   margin: 0 2px;
@@ -154,6 +155,9 @@ html, body {
   color: rgba(0,0,0,.65);
   letter-spacing: .01em;
   text-align: center;
+  position: absolute;
+  top: 30px;
+  left: 0; right: 0;
 }
 
 /* Mic sul pannello giallo */
@@ -233,18 +237,30 @@ html, body {
 /* Meteo */
 #wr-weather { display: flex; flex-direction: column; height: 100%; justify-content: space-between; }
 
-.wr-top { display: flex; align-items: center; gap: 6px; }
+.wr-top {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
 
-.wr-icon { font-size: 2.672rem; line-height: 1; }
+.wr-icon {
+  font-size: 2.672rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
 
 .wr-desc {
   font-size: clamp(1.0rem, 4.17vw, 1.34rem);
   font-weight: 500;
   color: var(--mid);
+  text-align: left;
 }
 
 .wr-temp {
-  font-family: var(--clock);
+  font-family: var(--num);
   font-size: clamp(4.68rem, 23.38vw, 9.18rem);
   color: var(--text);
   line-height: 1;
@@ -568,8 +584,13 @@ html, body {
   border-bottom: 1px solid var(--brd2);
 }
 .imp-row {
-  display: flex; flex-direction: column; gap: 3px;
-  padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,.05);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  min-height: 72px;
+  justify-content: center;
 }
 .imp-row:active { background: rgba(255,255,255,.04); }
 .imp-title { font-family: var(--mono); font-size: 1.369rem; font-weight: 700; color: var(--text); }
@@ -2683,13 +2704,4 @@ let sbKey = ''; // anon key — inserita nel setup
 
 // Stato della conversazione con Claude
 // È un array di oggetti {role: 'user'|'assistant', content: '...'}
-// Viene inviato ad ogni chiamata per mantenere il contesto
-let chatHistory = [];
-
-// Ultimo dato meteo ricevuto dall'API (oggetto JSON di open-meteo)
-let weatherData = null;
-
-// Stato del microfono/TTS
-let isSpeaking = false;         // true se sta parlando via TTS
-let wakeEnabled = false;        // true se il wake word è attivo
-let wakeRecognition = null;     // ista
+// Viene inviato ad ogni chiamata pe

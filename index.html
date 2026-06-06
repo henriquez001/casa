@@ -690,6 +690,211 @@ html, body {
   .imp-title { font-size: .75rem; }
   .imp-sub   { font-size: .62rem; }
 }
+
+/* ══════════════════════════════════════════════
+   WIDGET HOME — layout a due pannelli
+   Ispirato alla grafica Amsterdam weather widget
+══════════════════════════════════════════════ */
+
+#home {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* Riga widget: occupa tutto lo spazio tra top e navbar */
+.widget-row {
+  flex: 1;
+  display: flex;
+  gap: 12px;
+  padding: 14px 14px 10px;
+  min-height: 0;
+}
+
+/* ── Pannello sinistro: sfondo giallo, angoli arrotondati ── */
+.widget-left {
+  flex: 1.1;
+  background: #FFD60A;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 18px 20px 16px;
+  min-width: 0;
+  position: relative;
+}
+
+.wl-time {
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+  line-height: 1;
+}
+
+.wl-hms {
+  font-family: var(--clock);
+  font-size: clamp(2.8rem, 14vw, 5.5rem);
+  font-weight: 400;
+  color: #000;
+  letter-spacing: -.04em;
+}
+
+.wl-sep {
+  font-family: var(--sep);
+  font-size: clamp(2.1rem, 10.5vw, 4.1rem);
+  color: rgba(0,0,0,.5);
+  margin: 0 1px;
+  align-self: baseline;
+}
+
+.wl-date {
+  font-family: var(--mono);
+  font-size: clamp(.62rem, 2.8vw, .85rem);
+  font-weight: 500;
+  color: rgba(0,0,0,.7);
+  letter-spacing: .01em;
+  margin-top: 6px;
+}
+
+/* Mic sul pannello sinistro */
+.widget-left .mic-area {
+  margin-top: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.widget-left .mic-ring-wrap {
+  width: 48px; height: 48px;
+}
+
+.widget-left .mic-btn {
+  border-color: rgba(0,0,0,.25);
+  color: #000;
+}
+
+.widget-left .mic-ring {
+  border-color: rgba(0,0,0,.15);
+}
+
+/* Stati microfono sul pannello giallo */
+.widget-left .state-wake-active  .mic-btn { border-color: rgba(0,0,0,.5); }
+.widget-left .state-listening    .mic-btn { border-color: #000; }
+.widget-left .state-thinking     .mic-btn { border-color: rgba(0,0,0,.4); }
+.widget-left .state-speaking     .mic-btn { border-color: rgba(0,0,0,.4); }
+.widget-left .state-idle-manual  .mic-btn { border-color: #c0392b; color: #c0392b; }
+
+/* ── Pannello destro: sfondo scuro con bordo ── */
+.widget-right {
+  flex: 1;
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--brd);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 18px 18px 16px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Meteo nel pannello destro */
+#wr-weather {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: space-between;
+}
+
+.wr-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wr-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.wr-desc {
+  font-family: var(--mono);
+  font-size: clamp(.62rem, 2.6vw, .82rem);
+  color: var(--mid);
+  font-weight: 300;
+}
+
+.wr-temp {
+  font-family: var(--clock);
+  font-size: clamp(2.8rem, 14vw, 5.5rem);
+  color: var(--text);
+  line-height: 1;
+  letter-spacing: -.04em;
+}
+
+.wr-loc {
+  font-family: var(--mono);
+  font-size: clamp(.65rem, 2.8vw, .85rem);
+  color: var(--mid);
+  font-weight: 300;
+}
+
+.wr-extra {
+  font-family: var(--mono);
+  font-size: clamp(.58rem, 2.2vw, .72rem);
+  color: var(--dim);
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+/* Attività in scadenza nel pannello destro */
+#wr-scadenze { height: 100%; display: flex; flex-direction: column; gap: 6px; }
+
+.wr-scad-title {
+  font-family: var(--mono);
+  font-size: .6rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #ff3b30;
+  margin-bottom: 4px;
+}
+
+.wr-scad-item {
+  font-family: var(--mono);
+  font-size: clamp(.65rem, 2.8vw, .8rem);
+  color: var(--text);
+  border-left: 2px solid #ff3b30;
+  padding-left: 8px;
+  line-height: 1.3;
+}
+
+.wr-scad-item .wr-scad-sub {
+  font-size: .6rem;
+  color: var(--mid);
+  margin-top: 1px;
+}
+
+/* ── Landscape: pannelli side-by-side più stretti ── */
+@media (orientation: landscape) {
+  .widget-row    { padding: 8px 10px 6px; gap: 8px; }
+  .widget-left   { border-radius: 16px; padding: 12px 16px 12px; flex: 1.2; }
+  .widget-right  { border-radius: 16px; padding: 12px 14px 12px; }
+  .wl-hms        { font-size: clamp(1.8rem, 18vh, 4.5rem); }
+  .wl-sep        { font-size: clamp(1.35rem, 13.5vh, 3.4rem); }
+  .wl-date       { font-size: clamp(.55rem, 1.6vh, .75rem); }
+  .wr-temp       { font-size: clamp(1.8rem, 18vh, 4.5rem); }
+  .widget-left .mic-ring-wrap { width: 36px; height: 36px; }
+}
+
+@media (orientation: landscape) and (max-height: 450px) {
+  .widget-row    { padding: 5px 8px 4px; gap: 6px; }
+  .wl-hms        { font-size: clamp(1.5rem, 16vh, 3.5rem); }
+  .wl-sep        { font-size: clamp(1.1rem, 12vh, 2.6rem); }
+  .wr-temp       { font-size: clamp(1.5rem, 16vh, 3.5rem); }
+}
+
 </style>
 </head>
 <body>
@@ -719,88 +924,60 @@ html, body {
 <!-- HOME -->
 <div id="home">
 
-  <!-- BARRA METEO TOP scrolling -->
-  <div class="weather-bar">
-    <div class="weather-scroll" id="weather-scroll">
-      <span class="w-item" id="w-main">
-        <span class="w-icon" id="w-icon">—</span>
-        <span class="w-loc">Cervare</span>
-        <span class="w-temp" id="w-temp">—°</span>
-        <span class="w-desc" id="w-desc">Caricamento...</span>
-      </span>
-      <span class="w-sep"></span>
-      <span class="w-item" id="w-extra">
-        <span id="w-extra-txt"></span>
-      </span>
-      <!-- duplicato per loop continuo -->
-      <span class="w-item" id="w-main2" aria-hidden="true">
-        <span class="w-icon" id="w-icon2">—</span>
-        <span class="w-loc">Cervare</span>
-        <span class="w-temp" id="w-temp2">—°</span>
-        <span class="w-desc" id="w-desc2">Caricamento...</span>
-      </span>
-      <span class="w-sep"></span>
-      <span class="w-item" id="w-extra2" aria-hidden="true">
-        <span id="w-extra-txt2"></span>
-      </span>
-    </div>
-  </div>
+  <!-- WIDGET PRINCIPALE: due pannelli -->
+  <div class="widget-row">
 
-  <!-- CORPO: orologio + mic -->
-  <div class="clock-body">
-
-    <!-- badge scadenze -->
-    <div id="due-corner"></div>
-
-    <!-- orologio HH:MM:SS -->
-    <div class="clock-digits">
-      <span class="clock-hms" id="clk-h">00</span>
-      <span class="clock-sep">:</span>
-      <span class="clock-hms" id="clk-m">00</span>
-      <span class="clock-sep">:</span>
-      <span class="clock-hms" id="clk-s">00</span>
-    </div>
-
-    <!-- data -->
-    <div class="clock-date" id="clk-date">Giovedì 4 Giugno 2026</div>
-
-    <!-- mic -->
-    <div class="mic-area">
-      <div class="mic-ring-wrap" id="mic-wrap">
-        <div class="mic-ring"></div>
-        <button class="mic-btn" id="mic-btn" onclick="toggleWake()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></button>
+    <!-- PANNELLO SINISTRO: data e ora -->
+    <div class="widget-left">
+      <div class="wl-time">
+        <span class="wl-hms" id="clk-h">00</span><span class="wl-sep">:</span><span class="wl-hms" id="clk-m">00</span><span class="wl-sep">:</span><span class="wl-hms" id="clk-s">00</span>
+      </div>
+      <div class="wl-date" id="clk-date">—</div>
+      <!-- mic centrato in basso -->
+      <div class="mic-area">
+        <div class="mic-ring-wrap" id="mic-wrap">
+          <div class="mic-ring"></div>
+          <button class="mic-btn" id="mic-btn" onclick="toggleWake()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></button>
+        </div>
       </div>
     </div>
+
+    <!-- PANNELLO DESTRO: meteo o attività in scadenza -->
+    <div class="widget-right" id="widget-right">
+
+      <!-- Vista meteo (default) -->
+      <div id="wr-weather">
+        <div class="wr-top">
+          <span class="wr-icon" id="wr-icon">—</span>
+          <span class="wr-desc" id="wr-desc">Caricamento...</span>
+        </div>
+        <div class="wr-temp" id="wr-temp">—°</div>
+        <div class="wr-loc">Cervare, MC</div>
+        <div class="wr-extra" id="wr-extra"></div>
+      </div>
+
+      <!-- Vista attività in scadenza (se presenti) -->
+      <div id="wr-scadenze" style="display:none">
+        <div class="wr-scad-title">⚠ In scadenza</div>
+        <div id="wr-scad-list"></div>
+      </div>
+
+    </div>
   </div>
 
-  <!-- NAVBAR BOTTOM -->
-  <div class="navbar">
-    <button class="nb-btn" onclick="openPanel('chat-panel')">
-      <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      <span class="nb-lbl">Chat</span>
-    </button>
-    <button class="nb-btn" onclick="openPanel('att-panel');setFilter('all')">
-      <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
-      <span class="nb-lbl">Archivio</span>
-    </button>
-    <button class="nb-btn" onclick="quickAsk('Cosa devo fare oggi in casa?')">
-      <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      <span class="nb-lbl">Oggi</span>
-    </button>
-    <button class="nb-btn" onclick="quickAsk('Meteo nei prossimi giorni')">
-      <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-      <span class="nb-lbl">Meteo</span>
-    </button>
-    <button class="nb-btn" onclick="toggleFullscreen()">
-      <svg class="nb-icon" id="fs-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
-      <span class="nb-lbl">Schermo</span>
-    </button>
-    <button class="nb-btn" onclick="openPanel('panel-impostazioni')">
-      <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      <span class="nb-lbl">Config</span>
-    </button>
-        
+  <!-- badge scadenze (manteniamo per compatibilità) -->
+  <div id="due-corner"></div>
+
+  <!-- Barra meteo scrolling (nascosta — dati usati dal widget) -->
+  <div style="display:none" aria-hidden="true">
+    <span id="w-icon">—</span><span id="w-temp">—</span>
+    <span id="w-desc">—</span><span id="w-extra-txt"></span>
+    <span id="w-icon2">—</span><span id="w-temp2">—</span>
+    <span id="w-desc2">—</span><span id="w-extra-txt2"></span>
   </div>
+
+  <!-- NAVBAR 
+
 </div>
 
 <!-- CHAT PANEL -->
@@ -1032,11 +1209,7 @@ function tick(){
   if(elS) elS.textContent = ss;
   if(elD) elD.textContent = GIORNI[n.getDay()] + ' ' + n.getDate() + ' ' + MESI[n.getMonth()] + ' ' + n.getFullYear();
 
-  const col = PAL[n.getHours()];
-  ['clk-h','clk-m','clk-s'].forEach(id => {
-    const el = document.getElementById(id);
-    if(el) el.style.textShadow = '0 0 80px ' + col + '35';
-  });
+  // Nessun glow sul pannello giallo — il colore è fisso
 }
 
 
@@ -1196,12 +1369,60 @@ function wDesc(c){
 // Aggiorna la barra meteo (sia la copia originale che quella duplicata per il loop).
 // La barra contiene il contenuto duplicato per creare l'animazione di scorrimento infinito.
 function setWeatherBar(icon, temp, desc, extra){
+  // Aggiorna elementi nascosti (retrocompatibilità)
   ['','2'].forEach(s=>{
-    document.getElementById('w-icon'+s).innerHTML = icon; // SVG inline
-    document.getElementById('w-temp'+s).textContent = temp;
-    document.getElementById('w-desc'+s).textContent = desc;
-    document.getElementById('w-extra-txt'+s).textContent = extra;
+    const wi=document.getElementById('w-icon'+s);
+    const wt=document.getElementById('w-temp'+s);
+    const wd=document.getElementById('w-desc'+s);
+    const we=document.getElementById('w-extra-txt'+s);
+    if(wi) wi.innerHTML = icon;
+    if(wt) wt.textContent = temp;
+    if(wd) wd.textContent = desc;
+    if(we) we.textContent = extra;
   });
+  // Aggiorna il nuovo widget pannello destro
+  const wrIcon = document.getElementById('wr-icon');
+  const wrTemp = document.getElementById('wr-temp');
+  const wrDesc = document.getElementById('wr-desc');
+  const wrExtra= document.getElementById('wr-extra');
+  if(wrIcon) wrIcon.innerHTML = icon;
+  if(wrTemp) wrTemp.textContent = temp;
+  if(wrDesc) wrDesc.textContent = desc;
+  if(wrExtra) wrExtra.textContent = extra;
+  // Aggiorna anche il pannello destro (meteo vs scadenze)
+  aggiornaWidgetDestro();
+}
+
+// Mostra meteo o attività in scadenza nel pannello destro
+function aggiornaWidgetDestro(){
+  const oggi = new Date(); oggi.setHours(0,0,0,0);
+  const scadImminenti = archivio.filter(e => {
+    if(!e.scad) return false;
+    const diff = Math.ceil((new Date(e.scad+'T00:00:00') - oggi) / (1000*60*60*24));
+    return diff <= 7; // entro 7 giorni o scadute
+  });
+
+  const wrWeather  = document.getElementById('wr-weather');
+  const wrScadenze = document.getElementById('wr-scadenze');
+  const wrScadList = document.getElementById('wr-scad-list');
+
+  if(scadImminenti.length > 0){
+    // Mostra le attività in scadenza
+    if(wrWeather)  wrWeather.style.display  = 'none';
+    if(wrScadenze) wrScadenze.style.display = 'flex';
+    if(wrScadList){
+      wrScadList.innerHTML = scadImminenti.slice(0,4).map(e => {
+        const scad = new Date(e.scad+'T00:00:00');
+        const diff = Math.ceil((scad - oggi) / (1000*60*60*24));
+        const sub  = diff <= 0 ? 'Scaduta' : diff === 1 ? 'Domani' : 'Tra ' + diff + ' giorni';
+        return '<div class="wr-scad-item">' + e.titolo + '<div class="wr-scad-sub">' + sub + '</div></div>';
+      }).join('');
+    }
+  } else {
+    // Nessuna scadenza imminente → mostra meteo
+    if(wrWeather)  wrWeather.style.display  = 'flex';
+    if(wrScadenze) wrScadenze.style.display = 'none';
+  }
 }
 
 // Carica i dati meteo dall'API open-meteo (gratuita, senza chiave).
@@ -1438,6 +1659,7 @@ function salvaArch(){
   saveArch(archivio);
   renderArch();
   checkScadenze();
+  if(typeof aggiornaWidgetDestro === 'function') aggiornaWidgetDestro();
   closeArchDialog();
 }
 
@@ -1515,7 +1737,9 @@ ISTRUZIONI IMPORTANTI:
 - Se un intervento ha una scadenza imminente o superata, segnalalo proattivamente
 - Quando Leo chiede "come si fa" qualcosa, controlla prima se c'è una nota nell'archivio
 - Suggerisci attività in base al meteo e alla stagione
-- Tono diretto, amichevole, pratico${breve ? '\n- Rispondi in MASSIMO 2 frasi brevi (risposta vocale)' : ''}`;
+- Tono diretto, amichevole, pratico${breve ? '\n- Rispondi in MASSIMO 2 frasi brevi (risposta vocale)' : ''}
+
+GESTIONE ARCHIVIO VOCALE: Se Leo dice di aver fatto un intervento o vuole aggiungere qualcosa all'archivio, crea la voce e rispondi con ARCHIVIO_ADD:{"titolo":"...","cat":"manutenzione|pulizia|impianto|riparazione|acquisto|altro","data":"YYYY-MM-DD o null","note":"...","scad":"YYYY-MM-DD o null"} su una riga separata, poi una conferma breve. Per eliminare: ARCHIVIO_DEL:{"titolo":"..."}. Se Leo menziona un intervento senza chiedere di salvarlo, proponilo tu.`;
 }
 
 // Funzione base per chiamare l'API Claude.
@@ -1844,8 +2068,10 @@ async function handleVoiceCommand(cmd){
     chatHistory.push({role:'user', content:cmd});
     chatHistory.push({role:'assistant', content:reply});
     if(chatHistory.length > 20) chatHistory = chatHistory.slice(-16);
-    addMsg(reply, 'ai');
-    speakText(reply); // il riavvio del microfono è gestito dentro speakText
+    // Intercetta comandi archivio nella risposta
+    const replyClean = handleArchivioCmd(reply);
+    addMsg(replyClean, 'ai');
+    speakText(replyClean);
   }catch(err){
     const msg = err.message.includes('401') ? 'Chiave API non valida' : 'Errore di connessione';
     addMsg(`[ ${msg} ]`, 'ai');
@@ -1918,7 +2144,7 @@ function chime(){
         o.connect(g); g.connect(ctx.destination);
         o.type = 'sine'; o.frequency.value = freq;
         g.gain.setValueAtTime(0, start);
-        g.gain.linearRampToValueAtTime(0.15, start+0.05);
+        g.gain.linearRampToValueAtTime(0.45, start+0.05);
         g.gain.exponentialRampToValueAtTime(0.001, start+dur);
         o.start(start); o.stop(start+dur);
       }
@@ -2476,6 +2702,58 @@ console.info  = (...a) => { _con.info(...a);  addLog('info',  a); };
 window.addEventListener('error', e => addLog('error', [e.message, e.filename + ':' + e.lineno]));
 window.addEventListener('unhandledrejection', e => addLog('error', ['Promise:', e.reason?.message || e.reason]));
 
+// ══════════════════════════════════════════════
+// GESTIONE COMANDI ARCHIVIO VOCALE
+// Intercetta ARCHIVIO_ADD e ARCHIVIO_DEL nella
+// risposta di Claude e agisce di conseguenza.
+// ══════════════════════════════════════════════
+function handleArchivioCmd(reply){
+  // Cerca ARCHIVIO_ADD
+  const addMatch = reply.match(/ARCHIVIO_ADD:(\{[^}]+\})/);
+  if(addMatch){
+    try{
+      const obj = JSON.parse(addMatch[1]);
+      const nuova = {
+        id:     Date.now().toString(),
+        titolo: obj.titolo || 'Intervento',
+        cat:    obj.cat    || 'altro',
+        data:   obj.data   || null,
+        note:   obj.note   || '',
+        scad:   obj.scad   || null
+      };
+      archivio.unshift(nuova);
+      saveArch(archivio);
+      renderArch();
+      console.log('Archivio vocale: aggiunto', nuova.titolo);
+    }catch(e){
+      console.warn('handleArchivioCmd ADD parse error:', e);
+    }
+    // Rimuovi il tag dalla risposta mostrata all'utente
+    return reply.replace(/ARCHIVIO_ADD:\{[^}]+\}/, '').trim();
+  }
+
+  // Cerca ARCHIVIO_DEL
+  const delMatch = reply.match(/ARCHIVIO_DEL:(\{[^}]+\})/);
+  if(delMatch){
+    try{
+      const obj    = JSON.parse(delMatch[1]);
+      const titolo = (obj.titolo || '').toLowerCase();
+      const prima  = archivio.length;
+      archivio = archivio.filter(e => !e.titolo.toLowerCase().includes(titolo));
+      if(archivio.length < prima){
+        saveArch(archivio);
+        renderArch();
+        console.log('Archivio vocale: eliminato', obj.titolo);
+      }
+    }catch(e){
+      console.warn('handleArchivioCmd DEL parse error:', e);
+    }
+    return reply.replace(/ARCHIVIO_DEL:\{[^}]+\}/, '').trim();
+  }
+
+  return reply;
+}
+
 function showToast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg; t.classList.add('show');
@@ -2519,66 +2797,3 @@ document.addEventListener('fullscreenchange',()=>{
       <div id="detail-loading" style="display:none;font-family:var(--mono);font-size:.75rem;opacity:.4;margin-top:12px;animation:pulse 1.5s infinite">Claude sta elaborando...</div>
     </div>
   </div>
-</div>
-
-<!-- PANNELLO IMPOSTAZIONI -->
-<div class="panel" id="panel-impostazioni">
-  <div class="panel-hdr">
-    <div class="panel-title">Impostazioni</div>
-    <button class="panel-close" onclick="closePanel('panel-impostazioni')">✕ Chiudi</button>
-  </div>
-  <div style="padding:16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto">
-
-    <!-- Sezione Notifiche -->
-    <div style="font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mid);padding:4px 0 8px;border-bottom:1px solid var(--brd2)">Notifiche</div>
-
-    <div class="arch-entry" style="cursor:pointer" onclick="testNotifica()">
-      <div class="arch-entry-title">Test notifica</div>
-      <div class="arch-entry-note">Invia una notifica di prova immediata</div>
-    </div>
-
-    <div class="arch-entry" style="cursor:pointer" onclick="forceCheck()">
-      <div class="arch-entry-title">Controlla attività ora</div>
-      <div class="arch-entry-note">Forza il controllo scadenze e meteo adesso</div>
-    </div>
-
-    <div class="arch-entry">
-      <div class="arch-entry-title">Stato permesso</div>
-      <div class="arch-entry-note" id="imp-notif-txt">—</div>
-    </div>
-
-    <!-- Sezione Account -->
-    <div style="font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mid);padding:16px 0 8px;border-bottom:1px solid var(--brd2)">Diagnostica</div>
-
-    <div class="arch-entry" style="cursor:pointer" onclick="closePanel('panel-impostazioni');openPanel('panel-log')">
-      <div class="arch-entry-title">Log di sistema</div>
-      <div class="arch-entry-note">Visualizza gli eventi e gli errori dell'app</div>
-    </div>
-
-    <div style="font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mid);padding:16px 0 8px;border-bottom:1px solid var(--brd2)">Account</div>
-
-    <div class="arch-entry" style="cursor:pointer" onclick="resetApp()">
-      <div class="arch-entry-title" style="color:#ff3b30">Reset API Keys</div>
-      <div class="arch-entry-note">Rimuove le chiavi da questo dispositivo</div>
-    </div>
-
-  </div>
-</div>
-
-<!-- PANNELLO LOG -->
-<div class="panel" id="panel-log">
-  <div class="panel-hdr">
-    <div class="panel-title">Log di sistema</div>
-    <button class="panel-close" onclick="closePanel('panel-log')">✕ Chiudi</button>
-  </div>
-  <div style="display:flex;gap:8px;padding:10px 16px;border-bottom:1px solid var(--brd2);flex-shrink:0">
-    <button onclick="clearLog()" style="font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;background:transparent;border:1px solid rgba(255,255,255,.15);color:var(--mid);padding:6px 12px;cursor:pointer;border-radius:4px">Cancella</button>
-    <button onclick="copyLog()" style="font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;background:transparent;border:1px solid rgba(255,255,255,.15);color:var(--mid);padding:6px 12px;cursor:pointer;border-radius:4px">Copia</button>
-  </div>
-  <div id="log-list" style="flex:1;overflow-y:auto;padding:12px 16px;font-family:var(--mono);font-size:.7rem;line-height:1.8;color:rgba(255,255,255,.6)">
-    <div style="opacity:.3;text-align:center;margin-top:40px">Nessun log ancora</div>
-  </div>
-</div>
-
-</body>
-</html>

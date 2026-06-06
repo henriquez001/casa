@@ -222,8 +222,9 @@ html, body {
   border-radius: var(--r);
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  padding: 20px 20px 24px;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px 20px;
   min-width: 0;
   overflow: hidden;
   transition: background .3s, border-color .3s;
@@ -236,7 +237,7 @@ html, body {
 }
 
 /* Meteo */
-#wr-weather { display: flex; flex-direction: column; justify-content: flex-end; height: 100%; }
+#wr-weather { display: flex; flex-direction: column; justify-content: center; height: 100%; }
 
 .wr-top {
   position: absolute;
@@ -2696,5 +2697,4 @@ let sbKey = ''; // anon key — inserita nel setup
 
 // Stato della conversazione con Claude
 // È un array di oggetti {role: 'user'|'assistant', content: '...'}
-// Viene inviato ad ogni chiamata per mantenere il contesto
-le
+// Viene inviato ad ogni chiamata per manten

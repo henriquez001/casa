@@ -15,6 +15,7 @@
   --dim:   rgba(255,255,255,.6);
   --text:  #ffffff;
   --yel:   #FFD60A;
+  --orange:#FF9F0A;
   --red:   #FF3B30;
   --r:     40px;
   --mono:  'Roboto Mono', monospace;
@@ -22,6 +23,7 @@
   --sep:   'Hubot Sans', 'Share Tech Mono', monospace;
   --num:   'Hubot Sans', monospace;
   --nb-h:  10vh; /* navbar height */
+  --menu-w: clamp(220px, 31vw, 360px);
 }
 
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -98,6 +100,8 @@ html, body {
   height: 100dvh;
   padding: 16px 16px 0;
   gap: 0;
+  position: relative;
+  overflow: hidden;
 }
 
 /* ── Widget row ── */
@@ -121,6 +125,8 @@ html, body {
   padding: 20px 18px 90px;
   position: relative;
   min-width: 0;
+  z-index: 5;
+  transition: transform .34s cubic-bezier(.4,0,.2,1), box-shadow .34s cubic-bezier(.4,0,.2,1);
 }
 
 .wl-time {
@@ -128,6 +134,8 @@ html, body {
   align-items: baseline;
   justify-content: center;
   gap: 0;
+  cursor: pointer;
+  touch-action: manipulation;
 }
 
 .wl-hms {
@@ -159,6 +167,30 @@ html, body {
   top: 30px;
   left: 0; right: 0;
 }
+
+.menu-toggle {
+  position: absolute;
+  top: 30px;
+  left: 30px;
+  width: 46px;
+  height: 46px;
+  border: 1.5px solid rgba(0,0,0,.35);
+  border-radius: 50%;
+  background: transparent;
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 8;
+  transition: background .15s, border-color .15s;
+}
+.menu-toggle:active,
+body.menu-open .menu-toggle {
+  background: rgba(0,0,0,.1);
+  border-color: #000;
+}
+.menu-toggle svg { width: 22px; height: 22px; }
 
 /* Mic sul pannello giallo */
 .widget-left .mic-area {
@@ -324,6 +356,8 @@ html, body {
   padding: 0 4px;
 }
 
+#home > .navbar { display: none; }
+
 .nb-btn {
   flex: 1;
   background: transparent;
@@ -342,6 +376,78 @@ html, body {
 .nb-btn:active { color: #000; background: rgba(0,0,0,.06); }
 .nb-icon { width: 22px; height: 22px; color: inherit; }
 .nb-lbl  { font-size: 0.835rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: inherit; }
+
+.menu-panel {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  bottom: 14px;
+  width: var(--menu-w);
+  background: var(--orange);
+  border-radius: var(--r);
+  color: #000;
+  z-index: 4;
+  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  transform: translateX(calc(-100% - 24px));
+  transition: transform .34s cubic-bezier(.4,0,.2,1);
+  overflow: hidden;
+}
+
+.menu-title {
+  font-size: 1.002rem;
+  font-weight: 900;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: rgba(0,0,0,.62);
+}
+
+.menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.menu-item {
+  width: 100%;
+  border: none;
+  background: rgba(255,255,255,.18);
+  color: #000;
+  border-radius: 18px;
+  padding: 16px 14px;
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  column-gap: 12px;
+  align-items: center;
+  cursor: pointer;
+  text-align: left;
+}
+.menu-item:active { background: rgba(0,0,0,.1); }
+.menu-icon { width: 24px; height: 24px; color: inherit; }
+.menu-item-title {
+  display: block;
+  font-size: 1.136rem;
+  font-weight: 900;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+.menu-item-sub {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.835rem;
+  font-weight: 700;
+  color: rgba(0,0,0,.62);
+  line-height: 1.25;
+}
+
+body.menu-open .menu-panel { transform: translateX(0); }
+body.menu-open .widget-left {
+  transform: translateX(calc(var(--menu-w) + 10px));
+  box-shadow: 0 0 0 10px #fff;
+}
 
 /* ══ PANNELLI (chat, archivio, ecc.) ══════════════ */
 .panel {
@@ -614,6 +720,10 @@ html, body {
   .navbar  { border-radius: 12px 12px 0 0; }
   .nb-lbl  { display: none; }
   .nb-btn:active { color: #000; }
+  .menu-toggle { top: 18px; left: 18px; width: 38px; height: 38px; }
+  .menu-panel { top: 10px; left: 10px; bottom: 10px; border-radius: 32px; padding: 18px 16px; gap: 14px; }
+  .menu-item { padding: 11px 12px; border-radius: 14px; }
+  .menu-item-sub { display: none; }
 }
 
 @media (orientation: landscape) and (max-height: 450px) {
@@ -622,6 +732,9 @@ html, body {
   .wl-sep  { font-size: clamp(1.84rem, 20.88vh, 5.01rem); }
   .wr-temp { font-size: clamp(2.5rem, 28.39vh, 6.68rem); }
   .mic-ring-wrap { width: 34px; height: 34px; }
+  .menu-title { display: none; }
+  .menu-panel { gap: 8px; padding: 12px; }
+  .menu-item-title { font-size: 0.969rem; }
 }
 
 /* Impostazioni landscape */
@@ -673,6 +786,13 @@ html, body {
 
     <!-- PANNELLO SINISTRO (2/3): ora e data -->
     <div class="widget-left">
+      <button class="menu-toggle" id="menu-toggle" onclick="toggleMenu()" aria-label="Apri menu" aria-controls="burger-menu" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="4" y1="7" x2="20" y2="7"/>
+          <line x1="4" y1="12" x2="20" y2="12"/>
+          <line x1="4" y1="17" x2="20" y2="17"/>
+        </svg>
+      </button>
       <div class="wl-time">
         <span class="wl-hms" id="clk-h">00</span>
         <span class="wl-sep">:</span>
@@ -725,6 +845,34 @@ html, body {
   </div>
   <div id="due-corner" style="display:none"></div>
 
+  <!-- MENU BURGER -->
+  <div class="menu-panel" id="burger-menu" aria-hidden="true">
+    <div class="menu-title">Menu</div>
+    <div class="menu-list">
+      <button class="menu-item" onclick="closeMenu();openPanel('chat-panel')">
+        <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span>
+          <span class="menu-item-title">Chat</span>
+          <span class="menu-item-sub">Conversazioni</span>
+        </span>
+      </button>
+      <button class="menu-item" onclick="closeMenu();openPanel('att-panel');setFilter('all')">
+        <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+        <span>
+          <span class="menu-item-title">Archivio</span>
+          <span class="menu-item-sub">Interventi</span>
+        </span>
+      </button>
+      <button class="menu-item" onclick="closeMenu();openPanel('panel-impostazioni')">
+        <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>
+          <span class="menu-item-title">Impostazioni</span>
+          <span class="menu-item-sub">Preferenze</span>
+        </span>
+      </button>
+    </div>
+  </div>
+
   <!-- NAVBAR BIANCA -->
   <div class="navbar">
     <button class="nb-btn" onclick="openPanel('chat-panel')">
@@ -736,10 +884,6 @@ html, body {
       <span class="nb-lbl">Archivio</span>
     </button>
 
-    <button class="nb-btn" onclick="toggleFullscreen()">
-      <svg class="nb-icon" id="fs-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
-      <span class="nb-lbl">Schermo</span>
-    </button>
     <button class="nb-btn" onclick="openPanel('panel-impostazioni')">
       <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       <span class="nb-lbl">Impostazioni</span>
@@ -1092,6 +1236,26 @@ function openPanel(id){
 
 // Chiude un pannello dato il suo ID HTML
 function closePanel(id){ document.getElementById(id).classList.remove('open'); }
+
+function setMenuOpen(open){
+  document.body.classList.toggle('menu-open', open);
+  const btn = document.getElementById('menu-toggle');
+  const menu = document.getElementById('burger-menu');
+  if(btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if(menu) menu.setAttribute('aria-hidden', open ? 'false' : 'true');
+}
+
+function toggleMenu(){
+  setMenuOpen(!document.body.classList.contains('menu-open'));
+}
+
+function closeMenu(){
+  setMenuOpen(false);
+}
+
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape') closeMenu();
+});
 
 
 // ══════════════════════════════════════════════
@@ -2535,12 +2699,25 @@ function toggleFullscreen(){
     (document.exitFullscreen||document.webkitExitFullscreen||document.mozCancelFullScreen||document.msExitFullscreen).call(document);
   }
 }
-document.addEventListener('fullscreenchange',()=>{
-  const ic=document.getElementById('fs-icon');
-  if(ic)ic.innerHTML=document.fullscreenElement
-    ?'<path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>'
-    :'<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>';
-});
+
+let lastClockTap = 0;
+function handleClockFullscreenTap(e){
+  const now = Date.now();
+  if(now - lastClockTap < 360){
+    lastClockTap = 0;
+    e.preventDefault();
+    toggleFullscreen();
+    return;
+  }
+  lastClockTap = now;
+}
+
+function setupClockFullscreenTap(){
+  const clock = document.querySelector('.wl-time');
+  if(clock) clock.addEventListener('pointerup', handleClockFullscreenTap);
+}
+
+setupClockFullscreenTap();
 
 </script>
 

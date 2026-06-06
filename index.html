@@ -23,9 +23,11 @@
   --sep:   'Hubot Sans', 'Share Tech Mono', monospace;
   --num:   'Hubot Sans', monospace;
   --nb-h:  10vh; /* navbar height */
+  --home-pad-top: 16px;
   --home-pad-x: 16px;
   --home-gap: 14px;
-  --menu-w: calc((100vw - (var(--home-pad-x) * 2) - var(--home-gap)) / 3);
+  --home-bottom-gap: 14px;
+  --menu-w: 30vw;
 }
 
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -100,7 +102,7 @@ html, body {
   display: flex;
   flex-direction: column;
   height: 100dvh;
-  padding: 16px 16px 0;
+  padding: var(--home-pad-top) var(--home-pad-x) 0;
   gap: 0;
   position: relative;
   overflow: hidden;
@@ -111,7 +113,7 @@ html, body {
   flex: 1;
   display: flex;
   gap: var(--home-gap);
-  padding-bottom: 14px;
+  padding-bottom: var(--home-bottom-gap);
   min-height: 0;
 }
 
@@ -388,9 +390,9 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
 
 .menu-panel {
   position: absolute;
-  top: 16px;
+  top: var(--home-pad-top);
   left: var(--home-pad-x);
-  bottom: 14px;
+  bottom: var(--home-bottom-gap);
   width: var(--menu-w);
   background: var(--orange);
   border-radius: var(--r);
@@ -454,7 +456,7 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
 
 body.menu-open .menu-panel { transform: translateX(0); }
 body.menu-open .widget-left {
-  transform: translateX(calc(var(--menu-w) + var(--home-gap)));
+  transform: translateX(calc(100% + var(--home-gap)));
 }
 
 /* ══ PANNELLI (chat, archivio, ecc.) ══════════════ */
@@ -716,9 +718,7 @@ body.menu-open .widget-left {
 
 /* ══ LANDSCAPE ════════════════════════════════════ */
 @media (orientation: landscape) {
-  :root { --home-pad-x: 10px; --home-gap: 10px; }
-  #home { padding: 10px 10px 0; }
-  .widget-row { gap: var(--home-gap); padding-bottom: 10px; }
+  :root { --home-pad-top: 10px; --home-pad-x: 10px; --home-gap: 10px; --home-bottom-gap: 10px; }
   .widget-left { border-radius: 32px; padding: 14px; gap: 4px; }
   .widget-right { border-radius: 32px; padding: 12px 14px; }
   .wl-hms  { font-size: clamp(3.01rem, 33.4vh, 8.35rem); }
@@ -730,14 +730,13 @@ body.menu-open .widget-left {
   .nb-lbl  { display: none; }
   .nb-btn:active { color: #000; }
   .menu-toggle { top: 18px; left: 18px; width: 38px; height: 38px; }
-  .menu-panel { top: 10px; left: var(--home-pad-x); bottom: 10px; border-radius: 32px; padding: 18px 16px; gap: 14px; }
+  .menu-panel { border-radius: 32px; padding: 18px 16px; gap: 14px; }
   .menu-item { padding: 11px 12px; border-radius: 14px; }
   .menu-item-sub { display: none; }
 }
 
 @media (orientation: landscape) and (max-height: 450px) {
-  :root { --home-pad-x: 8px; }
-  #home { padding: 6px 8px 0; }
+  :root { --home-pad-top: 6px; --home-pad-x: 8px; }
   .wl-hms  { font-size: clamp(2.5rem, 28.39vh, 6.68rem); }
   .wl-sep  { font-size: clamp(1.84rem, 20.88vh, 5.01rem); }
   .wr-temp { font-size: clamp(2.5rem, 28.39vh, 6.68rem); }
@@ -1247,7 +1246,17 @@ function openPanel(id){
 // Chiude un pannello dato il suo ID HTML
 function closePanel(id){ document.getElementById(id).classList.remove('open'); }
 
+function syncMenuGeometry(){
+  const weatherBox = document.getElementById('widget-right');
+  if(!weatherBox) return;
+  const width = weatherBox.getBoundingClientRect().width;
+  if(width > 0){
+    document.documentElement.style.setProperty('--menu-w', `${width}px`);
+  }
+}
+
 function setMenuOpen(open){
+  if(open) syncMenuGeometry();
   document.body.classList.toggle('menu-open', open);
   const btn = document.getElementById('menu-toggle');
   const menu = document.getElementById('burger-menu');
@@ -1266,6 +1275,10 @@ function closeMenu(){
 document.addEventListener('keydown', e => {
   if(e.key === 'Escape') closeMenu();
 });
+
+window.addEventListener('resize', syncMenuGeometry);
+window.addEventListener('orientationchange', () => setTimeout(syncMenuGeometry, 120));
+syncMenuGeometry();
 
 
 // ══════════════════════════════════════════════

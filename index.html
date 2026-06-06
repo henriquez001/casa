@@ -16,7 +16,7 @@
   --text:  #ffffff;
   --yel:   #FFD60A;
   --red:   #FF3B30;
-  --r:     20px;
+  --r:     40px;
   --mono:  'Roboto Mono', monospace;
   --clock: 'Major Mono Display', monospace;
   --sep:   'Share Tech Mono', monospace;
@@ -46,11 +46,11 @@ html, body {
 #setup.hidden { display: none; }
 
 .s-logo {
-  font-size: 2rem; font-weight: 900;
+  font-size: 3.34rem; font-weight: 900;
   letter-spacing: -.03em;
 }
 .s-logo small {
-  display: block; font-size: .58rem; font-weight: 400;
+  display: block; font-size: 0.969rem; font-weight: 400;
   color: var(--mid); letter-spacing: .2em;
   text-transform: uppercase; margin-top: 6px;
 }
@@ -61,7 +61,7 @@ html, body {
   padding: 24px 22px;
 }
 .s-lbl {
-  font-size: .58rem; font-weight: 700;
+  font-size: 0.969rem; font-weight: 700;
   color: var(--mid); letter-spacing: .16em;
   text-transform: uppercase;
   display: block; margin-bottom: 7px;
@@ -69,23 +69,23 @@ html, body {
 .s-inp {
   width: 100%; background: transparent;
   border: 1px solid var(--brd);
-  border-radius: 8px;
+  border-radius: 16px;
   color: var(--text); font-family: var(--mono);
-  font-size: .8rem; font-weight: 500;
+  font-size: 1.336rem; font-weight: 500;
   padding: 10px 12px; margin-bottom: 14px;
   outline: none;
 }
 .s-inp:focus { border-color: var(--yel); }
 .s-btn {
   width: 100%; background: var(--yel);
-  border: none; border-radius: 10px;
+  border: none; border-radius: 30px;
   color: #000; font-family: var(--mono);
-  font-size: .78rem; font-weight: 900;
+  font-size: 1.303rem; font-weight: 900;
   letter-spacing: .06em; text-transform: uppercase;
   padding: 13px; cursor: pointer;
 }
 .s-note {
-  font-size: .58rem; color: var(--dim);
+  font-size: 0.969rem; color: var(--dim);
   text-align: center; line-height: 1.6;
 }
 .s-note a { color: var(--mid); }
@@ -117,10 +117,9 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 20px 18px;
+  padding: 20px 18px 90px;
   position: relative;
   min-width: 0;
-  gap: 8px;
 }
 
 .wl-time {
@@ -132,7 +131,7 @@ html, body {
 
 .wl-hms {
   font-family: var(--clock);
-  font-size: clamp(3rem, 16vw, 7rem);
+  font-size: clamp(5.01rem, 26.72vw, 11.69rem);
   font-weight: 400;
   color: #000;
   letter-spacing: -.05em;
@@ -141,7 +140,7 @@ html, body {
 
 .wl-sep {
   font-family: var(--sep);
-  font-size: clamp(2.2rem, 12vw, 5.2rem);
+  font-size: clamp(3.67rem, 20.04vw, 8.68rem);
   color: rgba(0,0,0,.4);
   margin: 0 2px;
   line-height: 1;
@@ -150,7 +149,7 @@ html, body {
 
 .wl-date {
   font-family: var(--mono);
-  font-size: clamp(.75rem, 3.5vw, 1.1rem);
+  font-size: clamp(1.25rem, 5.84vw, 1.84rem);
   font-weight: 700;
   color: rgba(0,0,0,.65);
   letter-spacing: .01em;
@@ -159,7 +158,10 @@ html, body {
 
 /* Mic sul pannello giallo */
 .widget-left .mic-area {
-  margin-top: 4px;
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .mic-area {
@@ -233,30 +235,30 @@ html, body {
 
 .wr-top { display: flex; align-items: center; gap: 6px; }
 
-.wr-icon { font-size: 1.6rem; line-height: 1; }
+.wr-icon { font-size: 2.672rem; line-height: 1; }
 
 .wr-desc {
-  font-size: clamp(.6rem, 2.5vw, .8rem);
+  font-size: clamp(1.0rem, 4.17vw, 1.34rem);
   font-weight: 500;
   color: var(--mid);
 }
 
 .wr-temp {
   font-family: var(--clock);
-  font-size: clamp(2.8rem, 14vw, 5.5rem);
+  font-size: clamp(4.68rem, 23.38vw, 9.18rem);
   color: var(--text);
   line-height: 1;
   letter-spacing: -.04em;
 }
 
 .wr-loc {
-  font-size: clamp(.62rem, 2.6vw, .82rem);
+  font-size: clamp(1.04rem, 4.34vw, 1.37rem);
   font-weight: 700;
   color: var(--mid);
 }
 
 .wr-extra {
-  font-size: clamp(.55rem, 2vw, .7rem);
+  font-size: clamp(0.92rem, 3.34vw, 1.17rem);
   font-weight: 500;
   color: var(--dim);
   line-height: 1.5;
@@ -266,7 +268,7 @@ html, body {
 #wr-scadenze { height: 100%; display: flex; flex-direction: column; gap: 8px; }
 
 .wr-scad-title {
-  font-size: clamp(1.4rem, 7vw, 2.2rem);
+  font-size: clamp(2.34rem, 11.69vw, 3.67rem);
   font-weight: 900;
   color: #000;
   line-height: 1;
@@ -274,7 +276,7 @@ html, body {
 }
 
 .wr-scad-item {
-  font-size: clamp(.65rem, 2.8vw, .82rem);
+  font-size: clamp(1.09rem, 4.68vw, 1.37rem);
   font-weight: 700;
   color: #000;
   border-left: 3px solid rgba(0,0,0,.3);
@@ -283,7 +285,7 @@ html, body {
 }
 
 .wr-scad-sub {
-  font-size: .58rem;
+  font-size: 0.969rem;
   font-weight: 500;
   color: rgba(0,0,0,.6);
   margin-top: 1px;
@@ -317,12 +319,12 @@ html, body {
   cursor: pointer;
   color: rgba(0,0,0,.35);
   transition: color .15s;
-  border-radius: 14px;
+  border-radius: 28px;
 }
 
 .nb-btn:active { color: #000; background: rgba(0,0,0,.06); }
 .nb-icon { width: 22px; height: 22px; color: inherit; }
-.nb-lbl  { font-size: .5rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: inherit; }
+.nb-lbl  { font-size: 0.835rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: inherit; }
 
 /* ══ PANNELLI (chat, archivio, ecc.) ══════════════ */
 .panel {
@@ -343,14 +345,14 @@ html, body {
 }
 
 .panel-title {
-  font-size: .8rem; font-weight: 900;
+  font-size: 1.336rem; font-weight: 900;
   letter-spacing: .1em; text-transform: uppercase;
 }
 
 .panel-close {
-  font-family: var(--mono); font-size: .62rem; font-weight: 700;
+  font-family: var(--mono); font-size: 1.035rem; font-weight: 700;
   color: var(--mid); background: transparent;
-  border: 1px solid var(--brd); border-radius: 8px;
+  border: 1px solid var(--brd); border-radius: 16px;
   padding: 6px 12px; cursor: pointer; letter-spacing: .08em;
   text-transform: uppercase;
 }
@@ -363,9 +365,9 @@ html, body {
 }
 
 .msg {
-  font-size: .78rem; font-weight: 500;
+  font-size: 1.303rem; font-weight: 500;
   line-height: 1.55; padding: 10px 14px;
-  border-radius: 12px; max-width: 88%;
+  border-radius: 24px; max-width: 88%;
 }
 
 .msg.user {
@@ -397,18 +399,18 @@ html, body {
 
 .chat-inp {
   flex: 1; background: rgba(255,255,255,.06);
-  border: 1px solid var(--brd); border-radius: 10px;
+  border: 1px solid var(--brd); border-radius: 30px;
   color: var(--text); font-family: var(--mono);
-  font-size: .78rem; font-weight: 500;
+  font-size: 1.303rem; font-weight: 500;
   padding: 10px 14px; outline: none; resize: none;
   min-height: 42px; max-height: 120px;
 }
 .chat-inp:focus { border-color: var(--yel); }
 
 .chat-send {
-  background: var(--yel); border: none; border-radius: 10px;
+  background: var(--yel); border: none; border-radius: 30px;
   color: #000; font-family: var(--mono);
-  font-size: .72rem; font-weight: 900;
+  font-size: 1.202rem; font-weight: 900;
   padding: 0 18px; cursor: pointer; letter-spacing: .04em;
 }
 
@@ -425,10 +427,10 @@ html, body {
   flex-shrink: 0;
   background: transparent;
   border: 1px solid var(--brd);
-  border-radius: 20px;
+  border-radius: var(--r);
   color: var(--mid);
   font-family: var(--mono);
-  font-size: .58rem; font-weight: 700;
+  font-size: 0.969rem; font-weight: 700;
   letter-spacing: .08em; text-transform: uppercase;
   padding: 5px 12px; cursor: pointer;
 }
@@ -439,7 +441,7 @@ html, body {
 .arch-entry {
   background: transparent;
   border: 1px solid var(--brd);
-  border-radius: 14px;
+  border-radius: 28px;
   padding: 14px 16px;
   margin-bottom: 10px;
   position: relative;
@@ -456,10 +458,10 @@ html, body {
   justify-content: space-between; gap: 12px;
 }
 
-.arch-entry-title { font-size: .9rem; font-weight: 900; line-height: 1.2; }
-.arch-entry-date  { font-size: .62rem; font-weight: 500; color: var(--mid); white-space: nowrap; }
-.arch-entry-cat   { display: inline-block; font-size: .54rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; border-radius: 4px; padding: 2px 7px; margin: 6px 0 4px; }
-.arch-entry-note  { font-size: .72rem; font-weight: 400; color: var(--mid); margin-top: 4px; line-height: 1.5; }
+.arch-entry-title { font-size: 1.503rem; font-weight: 900; line-height: 1.2; }
+.arch-entry-date  { font-size: 1.035rem; font-weight: 500; color: var(--mid); white-space: nowrap; }
+.arch-entry-cat   { display: inline-block; font-size: 0.902rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; border-radius: 4px; padding: 2px 7px; margin: 6px 0 4px; }
+.arch-entry-note  { font-size: 1.202rem; font-weight: 400; color: var(--mid); margin-top: 4px; line-height: 1.5; }
 
 .arch-entry-del {
   background: transparent;
@@ -467,7 +469,7 @@ html, body {
   border-radius: 6px;
   color: var(--mid);
   font-family: var(--mono);
-  font-size: .58rem; font-weight: 700;
+  font-size: 0.969rem; font-weight: 700;
   padding: 4px 10px; cursor: pointer; letter-spacing: .06em;
 }
 .arch-entry-del:active { background: var(--text); color: var(--bg); }
@@ -477,9 +479,9 @@ html, body {
 }
 .arch-search {
   width:100%; background: rgba(255,255,255,.05);
-  border: 1px solid var(--brd); border-radius: 10px;
+  border: 1px solid var(--brd); border-radius: 30px;
   color: var(--text); font-family: var(--mono);
-  font-size: .75rem; font-weight: 500;
+  font-size: 1.252rem; font-weight: 500;
   padding: 9px 14px; outline: none;
 }
 .arch-search:focus { border-color: var(--yel); }
@@ -498,23 +500,23 @@ html, body {
   display: flex; flex-direction: column; gap: 12px;
   max-height: 90vh; overflow-y: auto;
 }
-.arch-dialog-title { font-size: .88rem; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 4px; }
+.arch-dialog-title { font-size: 1.47rem; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 4px; }
 
-.a-lbl { font-size: .56rem; font-weight: 700; color: var(--mid); letter-spacing: .14em; text-transform: uppercase; display: block; margin-bottom: 5px; }
+.a-lbl { font-size: 0.935rem; font-weight: 700; color: var(--mid); letter-spacing: .14em; text-transform: uppercase; display: block; margin-bottom: 5px; }
 .a-inp {
   width:100%; background: rgba(255,255,255,.06);
-  border: 1px solid var(--brd); border-radius: 8px;
+  border: 1px solid var(--brd); border-radius: 16px;
   color: var(--text); font-family: var(--mono);
-  font-size: .78rem; font-weight: 500;
+  font-size: 1.303rem; font-weight: 500;
   padding: 9px 12px; outline: none;
 }
 .a-inp:focus { border-color: var(--yel); }
 
 .a-sel {
   width:100%; background: rgba(255,255,255,.06);
-  border: 1px solid var(--brd); border-radius: 8px;
+  border: 1px solid var(--brd); border-radius: 16px;
   color: var(--text); font-family: var(--mono);
-  font-size: .78rem; font-weight: 500;
+  font-size: 1.303rem; font-weight: 500;
   padding: 9px 12px; outline: none;
   -webkit-appearance: none;
 }
@@ -524,18 +526,18 @@ html, body {
 
 .a-btn {
   width:100%; background: var(--yel);
-  border: none; border-radius: 10px;
+  border: none; border-radius: 30px;
   color: #000; font-family: var(--mono);
-  font-size: .78rem; font-weight: 900;
+  font-size: 1.303rem; font-weight: 900;
   letter-spacing: .06em; text-transform: uppercase;
   padding: 13px; cursor: pointer; margin-top: 4px;
 }
 
 .a-btn-sec {
   width:100%; background: transparent;
-  border: 1px solid var(--brd); border-radius: 10px;
+  border: 1px solid var(--brd); border-radius: 30px;
   color: var(--mid); font-family: var(--mono);
-  font-size: .72rem; font-weight: 700;
+  font-size: 1.202rem; font-weight: 700;
   padding: 11px; cursor: pointer;
 }
 
@@ -551,8 +553,8 @@ html, body {
   position: fixed; bottom: calc(var(--nb-h) + 12px); left: 50%;
   transform: translateX(-50%) translateY(20px);
   background: var(--yel); color: #000;
-  font-family: var(--mono); font-size: .72rem; font-weight: 900;
-  border-radius: 20px; padding: 9px 18px;
+  font-family: var(--mono); font-size: 1.202rem; font-weight: 900;
+  border-radius: var(--r); padding: 9px 18px;
   opacity: 0; transition: all .25s; z-index: 300;
   white-space: nowrap;
 }
@@ -560,7 +562,7 @@ html, body {
 
 /* ── Impostazioni ── */
 .imp-group {
-  font-family: var(--mono); font-size: .58rem; font-weight: 700;
+  font-family: var(--mono); font-size: 0.969rem; font-weight: 700;
   letter-spacing: .14em; text-transform: uppercase;
   color: var(--mid); padding: 16px 20px 8px;
   border-bottom: 1px solid var(--brd2);
@@ -570,22 +572,22 @@ html, body {
   padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,.05);
 }
 .imp-row:active { background: rgba(255,255,255,.04); }
-.imp-title { font-family: var(--mono); font-size: .82rem; font-weight: 700; color: var(--text); }
-.imp-sub   { font-family: var(--mono); font-size: .68rem; font-weight: 400; color: var(--mid); }
+.imp-title { font-family: var(--mono); font-size: 1.369rem; font-weight: 700; color: var(--text); }
+.imp-sub   { font-family: var(--mono); font-size: 1.136rem; font-weight: 400; color: var(--mid); }
 
 /* ── Log ── */
-#log-list { font-family: var(--mono); font-size: .68rem; font-weight: 400; line-height: 1.8; }
+#log-list { font-family: var(--mono); font-size: 1.136rem; font-weight: 400; line-height: 1.8; }
 
 /* ══ LANDSCAPE ════════════════════════════════════ */
 @media (orientation: landscape) {
   #home { padding: 10px 10px 0; }
   .widget-row { gap: 10px; padding-bottom: 10px; }
-  .widget-left { border-radius: 16px; padding: 14px; gap: 4px; }
-  .widget-right { border-radius: 16px; padding: 12px 14px; }
-  .wl-hms  { font-size: clamp(1.8rem, 20vh, 5rem); }
-  .wl-sep  { font-size: clamp(1.35rem, 15vh, 3.7rem); }
-  .wl-date { font-size: clamp(.6rem, 1.8vh, .88rem); }
-  .wr-temp { font-size: clamp(1.8rem, 20vh, 5rem); }
+  .widget-left { border-radius: 32px; padding: 14px; gap: 4px; }
+  .widget-right { border-radius: 32px; padding: 12px 14px; }
+  .wl-hms  { font-size: clamp(3.01rem, 33.4vh, 8.35rem); }
+  .wl-sep  { font-size: clamp(2.25rem, 25.05vh, 6.18rem); }
+  .wl-date { font-size: clamp(1.0rem, 3.01vh, 1.47rem); }
+  .wr-temp { font-size: clamp(3.01rem, 33.4vh, 8.35rem); }
   .mic-ring-wrap { width: 42px; height: 42px; }
   .navbar  { border-radius: 12px 12px 0 0; }
   .nb-lbl  { display: none; }
@@ -594,18 +596,18 @@ html, body {
 
 @media (orientation: landscape) and (max-height: 450px) {
   #home { padding: 6px 8px 0; }
-  .wl-hms  { font-size: clamp(1.5rem, 17vh, 4rem); }
-  .wl-sep  { font-size: clamp(1.1rem, 12.5vh, 3rem); }
-  .wr-temp { font-size: clamp(1.5rem, 17vh, 4rem); }
+  .wl-hms  { font-size: clamp(2.5rem, 28.39vh, 6.68rem); }
+  .wl-sep  { font-size: clamp(1.84rem, 20.88vh, 5.01rem); }
+  .wr-temp { font-size: clamp(2.5rem, 28.39vh, 6.68rem); }
   .mic-ring-wrap { width: 34px; height: 34px; }
 }
 
 /* Impostazioni landscape */
 @media (orientation: landscape) {
-  .imp-group { padding: 6px 16px 4px; font-size: .52rem; }
+  .imp-group { padding: 6px 16px 4px; font-size: 0.868rem; }
   .imp-row   { min-height: 44px; padding: 6px 16px; gap: 2px; justify-content: center; }
-  .imp-title { font-size: .75rem; }
-  .imp-sub   { font-size: .62rem; }
+  .imp-title { font-size: 1.252rem; }
+  .imp-sub   { font-size: 1.035rem; }
 }
 
 /* Scrollbar */
@@ -710,10 +712,7 @@ html, body {
       <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
       <span class="nb-lbl">Archivio</span>
     </button>
-    <button class="nb-btn" onclick="loadWeather()">
-      <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
-      <span class="nb-lbl">Meteo</span>
-    </button>
+
     <button class="nb-btn" onclick="toggleFullscreen()">
       <svg class="nb-icon" id="fs-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
       <span class="nb-lbl">Schermo</span>
@@ -2692,4 +2691,5 @@ let weatherData = null;
 
 // Stato del microfono/TTS
 let isSpeaking = false;         // true se sta parlando via TTS
-let wakeEnabl
+let wakeEnabled = false;        // true se il wake word è attivo
+let wakeRecognition = null;     // ista

@@ -4,26 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>CASA</title>
-<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;700&family=Major+Mono+Display&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;700;900&family=Major+Mono+Display&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
-/* ═══════════════════════════════════════════════
-   DESIGN SYSTEM
-   Sfondo: nero puro
-   Box: trasparenti con solo contorno bianco 1px
-   Font: Roboto Mono
-   Stile: pulito, gerarchico, label piccola + valore grande
-═══════════════════════════════════════════════ */
+
 :root {
-  --bg:   #000000;               /* sfondo */
-  --brd:  rgba(255,255,255,.18); /* bordo box — bianco 18% */
-  --brd2: rgba(255,255,255,.08); /* bordo secondario più sottile */
-  --mid:  rgba(255,255,255,.45); /* testo secondario */
-  --dim:  rgba(255,255,255,.2);  /* testo dimesso */
-  --text: #ffffff;               /* testo principale */
-  --r:    14px;                  /* border-radius base */
-  --mono: 'Roboto Mono', monospace;
+  --bg:    #0a0a0a;
+  --brd:   rgba(255,255,255,.15);
+  --brd2:  rgba(255,255,255,.07);
+  --mid:   rgba(255,255,255,.5);
+  --dim:   rgba(255,255,255,.22);
+  --text:  #ffffff;
+  --yel:   #FFD60A;
+  --red:   #FF3B30;
+  --r:     20px;
+  --mono:  'Roboto Mono', monospace;
   --clock: 'Major Mono Display', monospace;
-  --sep: 'Share Tech Mono', monospace;
+  --sep:   'Share Tech Mono', monospace;
+  --nb-h:  10vh; /* navbar height */
 }
 
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -38,792 +35,210 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ══════════════════════════════
-   SETUP
-══════════════════════════════ */
+/* ══ SETUP ══════════════════════════════════════ */
 #setup {
   position: fixed; inset: 0;
   background: var(--bg);
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  padding: 28px; gap: 24px; z-index: 200;
+  padding: 28px; gap: 20px; z-index: 200;
 }
 #setup.hidden { display: none; }
 
 .s-logo {
-  font-size: 1.8rem; font-weight: 700;
-  letter-spacing: -.02em; text-align: center;
+  font-size: 2rem; font-weight: 900;
+  letter-spacing: -.03em;
 }
 .s-logo small {
-  display: block; font-size: .6rem; font-weight: 300;
+  display: block; font-size: .58rem; font-weight: 400;
   color: var(--mid); letter-spacing: .2em;
   text-transform: uppercase; margin-top: 6px;
 }
-
-/* Box setup: trasparente con solo contorno */
 .s-box {
   width: 100%; max-width: 360px;
-  background: transparent;
   border: 1px solid var(--brd);
   border-radius: var(--r);
   padding: 24px 22px;
 }
-
 .s-lbl {
-  font-size: .58rem; font-weight: 400;
+  font-size: .58rem; font-weight: 700;
   color: var(--mid); letter-spacing: .16em;
   text-transform: uppercase;
   display: block; margin-bottom: 7px;
 }
-
-/* Input: trasparente, solo bordo */
 .s-inp {
-  width: 100%;
-  background: transparent;
+  width: 100%; background: transparent;
   border: 1px solid var(--brd);
   border-radius: 8px;
-  padding: 12px 14px; color: var(--text);
-  font-family: var(--mono); font-size: .82rem; font-weight: 300;
-  outline: none; margin-bottom: 14px;
-  transition: border-color .15s;
+  color: var(--text); font-family: var(--mono);
+  font-size: .8rem; font-weight: 500;
+  padding: 10px 12px; margin-bottom: 14px;
+  outline: none;
 }
-.s-inp:focus { border-color: var(--text); }
-.s-inp::placeholder { color: var(--dim); }
-
+.s-inp:focus { border-color: var(--yel); }
 .s-btn {
-  width: 100%; background: var(--text); color: var(--bg);
-  border: none; border-radius: 8px; padding: 14px;
-  font-family: var(--mono); font-size: .78rem;
-  font-weight: 700; letter-spacing: .1em;
-  text-transform: uppercase; cursor: pointer;
+  width: 100%; background: var(--yel);
+  border: none; border-radius: 10px;
+  color: #000; font-family: var(--mono);
+  font-size: .78rem; font-weight: 900;
+  letter-spacing: .06em; text-transform: uppercase;
+  padding: 13px; cursor: pointer;
 }
-.s-btn:active { opacity: .85; }
-
 .s-note {
-  font-size: .62rem; font-weight: 300;
-  color: var(--dim); text-align: center; line-height: 2;
+  font-size: .58rem; color: var(--dim);
+  text-align: center; line-height: 1.6;
 }
 .s-note a { color: var(--mid); }
 
-/* ══════════════════════════════
-   HOME
-══════════════════════════════ */
-#home {
-  position: fixed; inset: 0;
-  display: none; flex-direction: column;
-}
-
-/* ── BARRA METEO TOP ── */
-.weather-bar {
-  flex-shrink: 0; height: 48px;
-  background: transparent;
-  border-bottom: 1px solid var(--brd2);
-  overflow: hidden;
-}
-.weather-scroll {
-  display: flex; align-items: center;
-  height: 100%; white-space: nowrap;
-  animation: scroll-left 32s linear infinite;
-  will-change: transform;
-}
-.weather-scroll:hover { animation-play-state: paused; }
-@keyframes scroll-left {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
-}
-.w-item {
-  display: inline-flex; align-items: center;
-  gap: 10px; margin-right: 56px;
-  font-size: .88rem; font-weight: 300; color: var(--mid);
-}
-.w-item .w-loc  { font-weight: 700; color: var(--text); }
-.w-item .w-temp { font-weight: 700; color: var(--text); font-size: .96rem; }
-.w-item .w-desc { color: var(--mid); }
-.w-item .w-icon { display: flex; align-items: center; }
-.w-sep {
-  display: inline-block; width: 1px; height: 12px;
-  background: var(--brd); margin-right: 48px;
-  vertical-align: middle;
-}
-
-/* ── CORPO — orologio centrato ── */
-.clock-body {
-  flex: 1; display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  position: relative; overflow: hidden;
-  gap: 0;
-}
-/* Glow palette sottile */
-.clock-body::before {
-  content: '';
-  position: absolute; top: 50%; left: 50%;
-  transform: translate(-50%,-50%);
-  width: 120vmax; height: 120vmax;
-  background: conic-gradient(
-    from 0deg,
-    #ff2d5504, #ff6b0004 60deg, #ffd60a04 120deg,
-    #30d15804 180deg, #0a84ff04 240deg, #bf5af204 300deg, #ff2d5504
-  );
-  border-radius: 50%;
-  animation: spin 90s linear infinite;
-  pointer-events: none;
-}
-@keyframes spin { to { transform: translate(-50%,-50%) rotate(360deg); } }
-
-/* Orologio HH:MM:SS */
-.clock-digits {
-  display: flex; align-items: baseline;
-  position: relative; z-index: 1;
-  order: 2;
-}
-.clock-hms {
-  font-family: var(--clock);
-  font-size: clamp(1.56rem, 11.7vw, 5.85rem);
-  font-weight: 400; line-height: 1;
-  letter-spacing: -.12em; color: var(--text);
-  transition: text-shadow 3s ease;
-}
-.clock-sep {
-  font-family: var(--sep);
-  font-size: clamp(1.17rem, 9.1vw, 4.55rem);
-  font-weight: 400; color: var(--brd);
-  line-height: 1; padding: 0 2px;
-  animation: blink 1s step-start infinite;
-}
-@keyframes blink { 50% { opacity: .1; } }
-
-.clock-date {
-  font-size: clamp(.75rem, 2.2vw, 1rem);
-  font-weight: 300; color: var(--mid);
-  letter-spacing: .04em;
-  margin-top: 0;
-  margin-bottom: 14px; /* distanza minima dall'orologio */
-  position: relative; z-index: 1;
-  order: 1; /* va sopra le cifre nel flex column */
-}
-
-/* Badge scadenze */
-.due-badge {
-  position: absolute; top: 14px; right: 16px;
-  background: transparent;
-  border: 1px solid #ff3b30; color: #ff3b30;
-  font-size: .58rem; font-weight: 700;
-  letter-spacing: .08em; text-transform: uppercase;
-  padding: 5px 12px; border-radius: 20px;
-  cursor: pointer; z-index: 2;
-  animation: fadeIn .3s ease;
-}
-@keyframes fadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
-
-/* ── MICROFONO ── */
-.mic-area {
-  display: flex; flex-direction: column;
-  align-items: center; gap: 8px;
-  margin-top: 28px; position: relative; z-index: 1;
-  order: 3;
-}
-.mic-ring-wrap { position: relative; width: 54px; height: 54px; }
-.mic-ring {
-  position: absolute; inset: -6px;
-  border-radius: 50%; border: 1px solid transparent;
-  pointer-events: none;
-}
-.mic-btn {
-  position: absolute; inset: 0;
-  border-radius: 50%;
-  border: 1px solid var(--brd);
-  background: transparent; color: var(--dim);
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all .2s;
-}
-/* stati microfono */
-.state-wake-active .mic-btn  { border-color: var(--brd); color: var(--mid); }
-.state-wake-active .mic-ring { border-color: var(--brd2); animation: ringrot 4s linear infinite; }
-.state-listening  .mic-btn   { border-color: var(--text); background: var(--text); color: var(--bg); }
-.state-thinking   .mic-btn   { border-color: var(--mid); color: var(--mid); }
-.state-speaking   .mic-btn   { border-color: #30d158; color: #30d158; }
-.state-speaking   .mic-ring  { border-color: #30d15830; animation: ringrot 1.2s linear infinite; }
-
-.state-idle-manual .mic-btn  { border-color: #ff3b30; color: #ff3b30; }
-.state-idle-manual .mic-ring { border-color: #ff3b3030; }
-@keyframes ringrot { to { transform: rotate(360deg); } }
-
-.mic-lbl {
-  font-size: .54rem; font-weight: 400;
-  color: var(--mid); letter-spacing: .12em;
-  text-transform: uppercase; min-height: 12px; text-align: center;
-}
-.mic-hint {
-  font-size: .5rem; font-weight: 300;
-  color: var(--dim); letter-spacing: .08em;
-}
-
-/* ── NAVBAR BOTTOM ── */
-.navbar {
-  flex-shrink: 0; height: 68px;
-  background: transparent;
-  border-top: 1px solid var(--brd2);
-  display: flex; align-items: stretch;
-}
-.nb-btn {
-  flex: 1; background: transparent; border: none;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 4px; cursor: pointer; color: var(--dim);
-  transition: color .15s;
-}
-.nb-btn:active { color: var(--text); }
-.nb-icon { width: 22px; height: 22px; color: inherit; }
-.nb-lbl  { font-size: .6rem; font-weight: 400; letter-spacing: .08em; text-transform: uppercase; }
-
-/* ══════════════════════════════
-   PANELS
-══════════════════════════════ */
-.panel {
-  position: fixed; inset: 0;
-  background: var(--bg); z-index: 50;
-  display: flex; flex-direction: column;
-  transform: translateY(100%);
-  transition: transform .28s cubic-bezier(.4,0,.2,1);
-}
-.panel.open { transform: translateY(0); }
-
-.panel-hdr {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--brd2);
-  flex-shrink: 0;
-}
-.panel-title {
-  font-size: .72rem; font-weight: 700;
-  letter-spacing: .14em; text-transform: uppercase;
-}
-.panel-close {
-  font-family: var(--mono); font-size: .6rem; font-weight: 400;
-  color: var(--mid); background: transparent;
-  border: 1px solid var(--brd); border-radius: 6px;
-  padding: 6px 14px; cursor: pointer;
-  letter-spacing: .08em; text-transform: uppercase;
-  transition: all .15s;
-}
-.panel-close:active { background: var(--text); color: var(--bg); border-color: var(--text); }
-
-/* Chat */
-.chat-area {
-  flex: 1; padding: 16px 18px;
-  overflow-y: auto;
-  display: flex; flex-direction: column; gap: 10px;
-}
-.msg {
-  max-width: 88%; padding: 11px 15px;
-  font-size: .86rem; font-weight: 300; line-height: 1.7;
-  animation: fadeIn .2s ease;
-}
-/* Messaggio AI: contorno bianco, trasparente */
-.msg.ai {
-  background: transparent;
-  border: 1px solid var(--brd);
-  border-radius: 4px 14px 14px 4px;
-  align-self: flex-start;
-}
-.msg.ai .lbl {
-  font-size: .54rem; font-weight: 400;
-  color: var(--dim); letter-spacing: .14em;
-  text-transform: uppercase; margin-bottom: 6px;
-}
-/* Messaggio utente: sfondo bianco pieno */
-.msg.user {
-  background: var(--text); color: var(--bg);
-  align-self: flex-end; font-weight: 500;
-  border-radius: 14px 4px 4px 14px;
-}
-.typing {
-  display: none; align-items: center; gap: 5px;
-  padding: 11px 15px;
-  background: transparent; border: 1px solid var(--brd2);
-  border-radius: 4px 14px 14px 4px;
-  width: fit-content;
-}
-.typing.on { display: flex; }
-.dot {
-  width: 4px; height: 4px;
-  background: var(--dim); border-radius: 50%;
-  animation: db 1.2s infinite;
-}
-.dot:nth-child(2){animation-delay:.2s}
-.dot:nth-child(3){animation-delay:.4s}
-@keyframes db {
-  0%,60%,100%{transform:translateY(0);opacity:.3}
-  30%{transform:translateY(-5px);opacity:1}
-}
-
-.cp-row {
-  display: flex; gap: 10px;
-  padding: 12px 16px 22px;
-  border-top: 1px solid var(--brd2);
-  flex-shrink: 0;
-}
-.cp-inp {
-  flex: 1; background: transparent;
-  border: 1px solid var(--brd); border-radius: 10px;
-  padding: 12px 14px; color: var(--text);
-  font-family: var(--mono); font-size: .86rem; font-weight: 300;
-  outline: none; resize: none;
-  min-height: 44px; max-height: 110px; line-height: 1.5;
-  transition: border-color .15s;
-}
-.cp-inp:focus { border-color: var(--text); }
-.cp-inp::placeholder { color: var(--dim); font-size: .8rem; }
-.cp-send {
-  width: 44px; height: 44px;
-  background: var(--text); color: var(--bg);
-  border: none; border-radius: 10px;
-  cursor: pointer; font-size: 1.1rem; font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-}
-
-/* Archivio */
-.arch-toolbar {
-  display: flex; gap: 8px;
-  padding: 14px 16px 0; flex-shrink: 0;
-}
-.arch-search {
-  flex: 1; background: transparent;
-  border: 1px solid var(--brd); border-radius: 8px;
-  padding: 9px 13px; color: var(--text);
-  font-family: var(--mono); font-size: .78rem; font-weight: 300;
-  outline: none; transition: border-color .15s;
-}
-.arch-search:focus { border-color: var(--text); }
-.arch-search::placeholder { color: var(--dim); }
-
-.arch-filter {
-  background: transparent; border: 1px solid var(--brd);
-  border-radius: 8px; padding: 0 12px;
-  color: var(--mid); font-family: var(--mono);
-  font-size: .6rem; font-weight: 400;
-  letter-spacing: .1em; text-transform: uppercase;
-  cursor: pointer; white-space: nowrap;
-  transition: all .15s;
-}
-.arch-filter.active { background: var(--text); color: var(--bg); border-color: var(--text); }
-
-.arch-list { flex: 1; overflow-y: auto; padding: 14px 16px; }
-
-.arch-empty {
-  text-align: center; color: var(--dim);
-  font-size: .66rem; font-weight: 300;
-  letter-spacing: .1em; margin-top: 60px; line-height: 2.4;
-}
-
-/* Entry archivio: trasparente con contorno bianco */
-.arch-entry {
-  background: transparent;
-  border: 1px solid var(--brd);
-  border-radius: var(--r);
-  padding: 14px 16px; margin-bottom: 10px;
-  position: relative; overflow: hidden;
-  transition: border-color .2s;
-}
-/* Linea colorata in cima alla card */
-.arch-entry::before {
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0;
-  height: 2px; background: var(--ic, var(--brd));
-}
-.arch-entry:active { border-color: var(--text); }
-
-.arch-entry-top {
-  display: flex; align-items: flex-start;
-  justify-content: space-between; gap: 12px;
-}
-.arch-entry-title { font-size: .92rem; font-weight: 700; line-height: 1.2; }
-.arch-entry-date {
-  font-size: .58rem; font-weight: 300;
-  color: var(--mid); white-space: nowrap;
-  margin-top: 2px; text-align: right;
-}
-.arch-entry-cat {
-  display: inline-block;
-  font-size: .52rem; font-weight: 700;
-  letter-spacing: .12em; text-transform: uppercase;
-  padding: 3px 9px;
-  border: 1px solid var(--ic, var(--brd));
-  border-radius: 20px; margin-top: 8px;
-  background: transparent;
-}
-.arch-entry-note {
-  font-size: .76rem; font-weight: 300;
-  color: var(--mid); line-height: 1.6; margin-top: 8px;
-}
-.arch-entry-del {
-  font-family: var(--mono); font-size: .54rem; font-weight: 400;
-  letter-spacing: .08em; text-transform: uppercase;
-  background: transparent;
-  border: 1px solid var(--brd2);
-  border-radius: 6px; color: var(--dim);
-  padding: 5px 10px; cursor: pointer; margin-top: 10px;
-  transition: all .15s;
-}
-.arch-entry-del:active { border-color: #ff3b30; color: #ff3b30; }
-
-.arch-add-bar {
-  padding: 12px 16px 22px;
-  border-top: 1px solid var(--brd2);
-  display: flex; gap: 8px; flex-shrink: 0;
-}
-.arch-add-inp {
-  flex: 1; background: transparent;
-  border: 1px solid var(--brd); border-radius: 10px;
-  padding: 12px 14px; color: var(--text);
-  font-family: var(--mono); font-size: .82rem; font-weight: 300;
-  outline: none; transition: border-color .15s;
-}
-.arch-add-inp:focus { border-color: var(--text); }
-.arch-add-inp::placeholder { color: var(--dim); font-size: .78rem; }
-.arch-add-btn {
-  background: var(--text); color: var(--bg);
-  border: none; border-radius: 10px; padding: 0 20px;
-  font-family: var(--mono); font-size: .82rem;
-  font-weight: 700; cursor: pointer;
-}
-
-/* Dialog archivio */
-#arch-dialog {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,.88);
-  z-index: 80; display: none; align-items: flex-end;
-  backdrop-filter: blur(6px);
-}
-#arch-dialog.open { display: flex; }
-.adlg-box {
-  width: 100%; background: var(--bg);
-  border-top: 1px solid var(--brd);
-  border-radius: 18px 18px 0 0;
-  padding: 14px 18px 36px;
-}
-.adlg-handle {
-  width: 38px; height: 3px;
-  background: var(--brd); border-radius: 2px;
-  margin: 0 auto 18px;
-}
-.adlg-title {
-  font-size: .72rem; font-weight: 700;
-  letter-spacing: .14em; text-transform: uppercase;
-  margin-bottom: 16px;
-}
-.adlg-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
-.adlg-lbl {
-  font-size: .56rem; font-weight: 400;
-  color: var(--mid); letter-spacing: .12em; text-transform: uppercase;
-}
-.adlg-inp {
-  background: transparent; border: 1px solid var(--brd);
-  border-radius: 8px; padding: 11px 13px; color: var(--text);
-  font-family: var(--mono); font-size: .82rem; font-weight: 300;
-  outline: none; width: 100%; transition: border-color .15s;
-}
-.adlg-inp:focus { border-color: var(--text); }
-.adlg-textarea {
-  background: transparent; border: 1px solid var(--brd);
-  border-radius: 8px; padding: 11px 13px; color: var(--text);
-  font-family: var(--mono); font-size: .82rem; font-weight: 300;
-  outline: none; width: 100%; resize: none; height: 80px;
-  line-height: 1.5; transition: border-color .15s;
-}
-.adlg-textarea:focus { border-color: var(--text); }
-.adlg-sel {
-  background: transparent; border: 1px solid var(--brd);
-  border-radius: 8px; padding: 11px 13px; color: var(--text);
-  font-family: var(--mono); font-size: .82rem; font-weight: 300;
-  outline: none; width: 100%; appearance: none;
-}
-.adlg-row { display: flex; gap: 10px; margin-top: 8px; }
-.adlg-btn {
-  flex: 1; padding: 13px; border-radius: 10px;
-  font-family: var(--mono); font-size: .72rem;
-  font-weight: 700; letter-spacing: .1em;
-  text-transform: uppercase; cursor: pointer; border: none;
-}
-.adlg-btn.cancel  { background: transparent; border: 1px solid var(--brd); color: var(--mid); }
-.adlg-btn.confirm { background: var(--text); color: var(--bg); }
-
-/* Toast */
-.toast {
-  position: fixed; bottom: 70px; left: 50%;
-  transform: translateX(-50%) translateY(8px);
-  background: var(--text); color: var(--bg);
-  padding: 9px 20px; border-radius: 20px;
-  font-family: var(--mono); font-size: .65rem;
-  font-weight: 700; letter-spacing: .06em;
-  opacity: 0; transition: all .2s; z-index: 300;
-  white-space: nowrap;
-}
-.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-/* ══════════════════════════════════════════════════════
-   LANDSCAPE — telefono ruotato
-
-   LAYOUT:
-     [data]       ← sopra l'orologio (posizione assoluta)
-     [HH:MM:SS]   ← centrato verticalmente (flow normale)
-     [mic]        ← sotto l'orologio (posizione assoluta)
-
-   PER MODIFICARE L'OROLOGIO: cambia il vh (es. 28vh → 32vh)
-   PER SPOSTARE LA DATA: modifica top in .clock-date landscape
-   PER SPOSTARE IL MIC: modifica top in .mic-area landscape
-══════════════════════════════════════════════════════ */
-@media (orientation: landscape) {
-
-  /* Il corpo centra solo l'orologio — data e mic
-     si posizionano in assoluto attorno a esso */
-  .clock-body {
-    position: relative;
-    justify-content: center;
-  }
-
-  /* Orologio centrato con vh */
-  .clock-hms { font-size: clamp(2.7rem, 25.2vh, 8.1rem); }
-  .clock-sep { font-size: clamp(1.98rem, 18.9vh, 6.12rem); }
-
-  /* DATA — sopra l'orologio in posizione assoluta
-     top: 50% = centro; poi saliamo di circa 30vh (metà cifre) + gap */
-  .clock-date {
-    position: absolute;
-    top: calc(50% - 12.6vh - 1rem - 14px);
-    left: 0; right: 0;
-    text-align: center;
-    margin-top: 0;
-    margin-bottom: 0;
-    font-size: 1.2rem;
-    z-index: 2;
-  }
-
-  /* MIC — sotto l'orologio in posizione assoluta */
-  .mic-area {
-    position: absolute;
-    top: calc(50% + 18vh);
-    left: 0; right: 0;
-    align-items: center;
-    margin-top: 0;
-    gap: 4px;
-    z-index: 2;
-  }
-
-  .mic-ring-wrap { width: 63px; height: 63px; }
-  .mic-lbl       { font-size: .72rem; }
-  .mic-hint      { font-size: .63rem; }
-
-  /* Barra e navbar compatte */
-  .weather-bar { height: 54px; }
-  .w-item      { font-size: .74rem; gap: 8px; margin-right: 40px; }
-  .navbar      { height: 54px; }
-  .nb-icon     { width: 20px; height: 20px; }
-  .nb-lbl      { display: none; }
-  .nb-btn      { color: var(--text); }
-  .nb-btn:active{ color: var(--dim); }
-
-  .panel-hdr    { padding: 10px 16px; }
-  .cp-row       { padding: 8px 12px 14px; }
-  .arch-toolbar { padding: 8px 12px 0; }
-  .arch-add-bar { padding: 8px 12px 14px; }
-}
-
-/* Landscape schermi bassi < 450px (telefoni standard ruotati) */
-@media (orientation: landscape) and (max-height: 450px) {
-
-  .clock-hms { font-size: clamp(2.52rem, 27.0vh, 7.2rem); }
-  .clock-sep { font-size: clamp(1.8rem, 19.8vh, 5.4rem); }
-
-  /* Ricalcola posizioni per cifre più piccole */
-  .clock-date { top: calc(50% - 13.5vh - 0.85rem - 14px); font-size: 1.08rem; margin-bottom: 0; }
-  .mic-area   { top: calc(50% + 17vh); }
-
-  .mic-ring-wrap { width: 54px; height: 54px; }
-  .mic-hint      { display: none; }
-
-  .weather-bar { height: 44px; }
-  .navbar      { height: 44px; }
-  .nb-lbl      { display: none; }
-  .nb-icon     { width: 18px; height: 18px; }
-  .nb-btn      { color: var(--text); }
-  .nb-btn:active{ color: var(--dim); }
-  .due-badge   { font-size: .5rem; padding: 3px 9px; top: 6px; right: 10px; }
-}
-
-/* ── Pannello impostazioni ── */
-.imp-group {
-  font-family: var(--mono);
-  font-size: .58rem;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: var(--mid);
-  padding: 16px 20px 8px;
-  border-bottom: 1px solid var(--brd2);
-}
-.imp-row {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding: 14px 20px;
-  border-bottom: 1px solid rgba(255,255,255,.05);
-}
-.imp-row:active { background: rgba(255,255,255,.04); }
-.imp-title {
-  font-family: var(--mono);
-  font-size: .82rem;
-  font-weight: 500;
-  color: var(--text);
-}
-.imp-sub {
-  font-family: var(--mono);
-  font-size: .68rem;
-  color: var(--mid);
-  font-weight: 300;
-}
-
-@media (orientation: landscape){
-  .imp-group { padding: 6px 16px 4px; font-size: .52rem; }
-  .imp-row   { min-height: 44px; padding: 6px 16px; gap: 2px; justify-content: center; }
-  .imp-title { font-size: .75rem; }
-  .imp-sub   { font-size: .62rem; }
-}
-
-/* ══════════════════════════════════════════════
-   WIDGET HOME — layout a due pannelli
-   Ispirato alla grafica Amsterdam weather widget
-══════════════════════════════════════════════ */
-
+/* ══ HOME ════════════════════════════════════════ */
 #home {
   display: flex;
   flex-direction: column;
   height: 100dvh;
-  overflow: hidden;
+  padding: 16px 16px 0;
+  gap: 0;
 }
 
-/* Riga widget: occupa tutto lo spazio tra top e navbar */
+/* ── Widget row ── */
 .widget-row {
   flex: 1;
   display: flex;
-  gap: 12px;
-  padding: 14px 14px 10px;
+  gap: 14px;
+  padding-bottom: 14px;
   min-height: 0;
 }
 
-/* ── Pannello sinistro: sfondo giallo, angoli arrotondati ── */
+/* ── Pannello sinistro (2/3) ── */
 .widget-left {
-  flex: 1.1;
-  background: #FFD60A;
-  border-radius: 20px;
+  flex: 2;
+  background: var(--yel);
+  border-radius: var(--r);
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: 18px 20px 16px;
-  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 18px;
   position: relative;
+  min-width: 0;
+  gap: 8px;
 }
 
 .wl-time {
   display: flex;
   align-items: baseline;
-  gap: 1px;
-  line-height: 1;
+  justify-content: center;
+  gap: 0;
 }
 
 .wl-hms {
   font-family: var(--clock);
-  font-size: clamp(2.8rem, 14vw, 5.5rem);
+  font-size: clamp(3rem, 16vw, 7rem);
   font-weight: 400;
   color: #000;
-  letter-spacing: -.04em;
+  letter-spacing: -.05em;
+  line-height: 1;
 }
 
 .wl-sep {
   font-family: var(--sep);
-  font-size: clamp(2.1rem, 10.5vw, 4.1rem);
-  color: rgba(0,0,0,.5);
-  margin: 0 1px;
+  font-size: clamp(2.2rem, 12vw, 5.2rem);
+  color: rgba(0,0,0,.4);
+  margin: 0 2px;
+  line-height: 1;
   align-self: baseline;
 }
 
 .wl-date {
   font-family: var(--mono);
-  font-size: clamp(.62rem, 2.8vw, .85rem);
-  font-weight: 500;
-  color: rgba(0,0,0,.7);
+  font-size: clamp(.75rem, 3.5vw, 1.1rem);
+  font-weight: 700;
+  color: rgba(0,0,0,.65);
   letter-spacing: .01em;
-  margin-top: 6px;
+  text-align: center;
 }
 
-/* Mic sul pannello sinistro */
+/* Mic sul pannello giallo */
 .widget-left .mic-area {
-  margin-top: 0;
-  width: 100%;
+  margin-top: 4px;
+}
+
+.mic-area {
   display: flex;
+  align-items: center;
   justify-content: center;
 }
 
-.widget-left .mic-ring-wrap {
-  width: 48px; height: 48px;
+.mic-ring-wrap {
+  position: relative;
+  width: 52px; height: 52px;
 }
 
-.widget-left .mic-btn {
-  border-color: rgba(0,0,0,.25);
+.mic-ring {
+  position: absolute; inset: -6px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  pointer-events: none;
+}
+
+.mic-btn {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(0,0,0,.3);
+  background: transparent;
   color: #000;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .2s;
+}
+.mic-btn:active { background: rgba(0,0,0,.1); }
+
+/* Stati microfono */
+.state-wake-active  .mic-btn { border-color: rgba(0,0,0,.6); }
+.state-listening    .mic-btn { border-color: #000; border-width: 2.5px; }
+.state-thinking     .mic-btn { border-color: rgba(0,0,0,.4); }
+.state-speaking     .mic-btn { border-color: rgba(0,0,0,.4); }
+.state-idle-manual  .mic-btn { border-color: var(--red); color: var(--red); }
+
+.state-wake-active  .mic-ring { border-color: rgba(0,0,0,.2); animation: ringrot 2s linear infinite; }
+.state-listening    .mic-ring { border-color: rgba(0,0,0,.4); animation: ringrot 1s linear infinite; }
+.state-thinking     .mic-ring { border-color: rgba(0,0,0,.15); animation: ringrot 1.5s linear infinite; }
+.state-speaking     .mic-ring { border-color: rgba(0,0,0,.15); animation: ringrot 1.2s linear infinite; }
+
+@keyframes ringrot {
+  from { transform: rotate(0deg) scale(1.15); }
+  to   { transform: rotate(360deg) scale(1.15); }
 }
 
-.widget-left .mic-ring {
-  border-color: rgba(0,0,0,.15);
-}
-
-/* Stati microfono sul pannello giallo */
-.widget-left .state-wake-active  .mic-btn { border-color: rgba(0,0,0,.5); }
-.widget-left .state-listening    .mic-btn { border-color: #000; }
-.widget-left .state-thinking     .mic-btn { border-color: rgba(0,0,0,.4); }
-.widget-left .state-speaking     .mic-btn { border-color: rgba(0,0,0,.4); }
-.widget-left .state-idle-manual  .mic-btn { border-color: #c0392b; color: #c0392b; }
-
-/* ── Pannello destro: sfondo scuro con bordo ── */
+/* ── Pannello destro (1/3) ── */
 .widget-right {
   flex: 1;
-  background: rgba(255,255,255,.04);
   border: 1px solid var(--brd);
-  border-radius: 20px;
+  border-radius: var(--r);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 18px 18px 16px;
+  padding: 18px 16px;
   min-width: 0;
   overflow: hidden;
+  transition: background .3s, border-color .3s;
 }
 
-/* Meteo nel pannello destro */
-#wr-weather {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  justify-content: space-between;
+.widget-right.alert {
+  background: var(--red);
+  border-color: var(--red);
 }
 
-.wr-top {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+/* Meteo */
+#wr-weather { display: flex; flex-direction: column; height: 100%; justify-content: space-between; }
 
-.wr-icon {
-  font-size: 1.4rem;
-  line-height: 1;
-}
+.wr-top { display: flex; align-items: center; gap: 6px; }
+
+.wr-icon { font-size: 1.6rem; line-height: 1; }
 
 .wr-desc {
-  font-family: var(--mono);
-  font-size: clamp(.62rem, 2.6vw, .82rem);
+  font-size: clamp(.6rem, 2.5vw, .8rem);
+  font-weight: 500;
   color: var(--mid);
-  font-weight: 300;
 }
 
 .wr-temp {
@@ -835,65 +250,370 @@ html, body {
 }
 
 .wr-loc {
-  font-family: var(--mono);
-  font-size: clamp(.65rem, 2.8vw, .85rem);
+  font-size: clamp(.62rem, 2.6vw, .82rem);
+  font-weight: 700;
   color: var(--mid);
-  font-weight: 300;
 }
 
 .wr-extra {
-  font-family: var(--mono);
-  font-size: clamp(.58rem, 2.2vw, .72rem);
+  font-size: clamp(.55rem, 2vw, .7rem);
+  font-weight: 500;
   color: var(--dim);
   line-height: 1.5;
-  margin-top: 4px;
 }
 
-/* Attività in scadenza nel pannello destro */
-#wr-scadenze { height: 100%; display: flex; flex-direction: column; gap: 6px; }
+/* Scadenze */
+#wr-scadenze { height: 100%; display: flex; flex-direction: column; gap: 8px; }
 
 .wr-scad-title {
-  font-family: var(--mono);
-  font-size: .6rem;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: #ff3b30;
-  margin-bottom: 4px;
+  font-size: clamp(1.4rem, 7vw, 2.2rem);
+  font-weight: 900;
+  color: #000;
+  line-height: 1;
+  letter-spacing: -.02em;
 }
 
 .wr-scad-item {
-  font-family: var(--mono);
-  font-size: clamp(.65rem, 2.8vw, .8rem);
-  color: var(--text);
-  border-left: 2px solid #ff3b30;
+  font-size: clamp(.65rem, 2.8vw, .82rem);
+  font-weight: 700;
+  color: #000;
+  border-left: 3px solid rgba(0,0,0,.3);
   padding-left: 8px;
   line-height: 1.3;
 }
 
-.wr-scad-item .wr-scad-sub {
-  font-size: .6rem;
-  color: var(--mid);
+.wr-scad-sub {
+  font-size: .58rem;
+  font-weight: 500;
+  color: rgba(0,0,0,.6);
   margin-top: 1px;
 }
 
-/* ── Landscape: pannelli side-by-side più stretti ── */
+/* Badge scadenze (nascosto — usiamo il pannello rosso) */
+#due-corner { display: none; }
+
+/* ══ NAVBAR BIANCA ════════════════════════════════ */
+.navbar {
+  flex-shrink: 0;
+  height: var(--nb-h);
+  min-height: 54px;
+  max-height: 72px;
+  background: #fff;
+  border-radius: var(--r) var(--r) 0 0;
+  display: flex;
+  align-items: stretch;
+  padding: 0 4px;
+}
+
+.nb-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  color: rgba(0,0,0,.35);
+  transition: color .15s;
+  border-radius: 14px;
+}
+
+.nb-btn:active { color: #000; background: rgba(0,0,0,.06); }
+.nb-icon { width: 22px; height: 22px; color: inherit; }
+.nb-lbl  { font-size: .5rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: inherit; }
+
+/* ══ PANNELLI (chat, archivio, ecc.) ══════════════ */
+.panel {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  z-index: 50;
+  display: flex; flex-direction: column;
+  transform: translateY(100%);
+  transition: transform .3s cubic-bezier(.4,0,.2,1);
+}
+.panel.open { transform: translateY(0); }
+
+.panel-hdr {
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--brd2);
+}
+
+.panel-title {
+  font-size: .8rem; font-weight: 900;
+  letter-spacing: .1em; text-transform: uppercase;
+}
+
+.panel-close {
+  font-family: var(--mono); font-size: .62rem; font-weight: 700;
+  color: var(--mid); background: transparent;
+  border: 1px solid var(--brd); border-radius: 8px;
+  padding: 6px 12px; cursor: pointer; letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.panel-close:active { background: var(--text); color: var(--bg); }
+
+/* ── Chat ── */
+.chat-area {
+  flex: 1; overflow-y: auto;
+  padding: 16px; display: flex; flex-direction: column; gap: 10px;
+}
+
+.msg {
+  font-size: .78rem; font-weight: 500;
+  line-height: 1.55; padding: 10px 14px;
+  border-radius: 12px; max-width: 88%;
+}
+
+.msg.user {
+  background: var(--yel); color: #000;
+  align-self: flex-end; font-weight: 700;
+  border-radius: 12px 12px 2px 12px;
+}
+
+.msg.ai {
+  background: rgba(255,255,255,.06);
+  border: 1px solid var(--brd);
+  align-self: flex-start;
+  border-radius: 12px 12px 12px 2px;
+}
+
+.typing { display:none; gap:5px; padding: 10px 14px; }
+.typing.on { display:flex; }
+.dot { width:6px; height:6px; border-radius:50%; background:var(--mid); animation:blink 1.2s infinite; }
+.dot:nth-child(2){ animation-delay:.2s; }
+.dot:nth-child(3){ animation-delay:.4s; }
+@keyframes blink { 0%,80%,100%{opacity:.2} 40%{opacity:1} }
+
+.chat-input-row {
+  flex-shrink: 0;
+  display: flex; gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--brd2);
+}
+
+.chat-inp {
+  flex: 1; background: rgba(255,255,255,.06);
+  border: 1px solid var(--brd); border-radius: 10px;
+  color: var(--text); font-family: var(--mono);
+  font-size: .78rem; font-weight: 500;
+  padding: 10px 14px; outline: none; resize: none;
+  min-height: 42px; max-height: 120px;
+}
+.chat-inp:focus { border-color: var(--yel); }
+
+.chat-send {
+  background: var(--yel); border: none; border-radius: 10px;
+  color: #000; font-family: var(--mono);
+  font-size: .72rem; font-weight: 900;
+  padding: 0 18px; cursor: pointer; letter-spacing: .04em;
+}
+
+/* ── Archivio ── */
+.arch-toolbar {
+  flex-shrink: 0;
+  display: flex; gap: 6px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--brd2);
+  overflow-x: auto;
+}
+
+.arch-filter {
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid var(--brd);
+  border-radius: 20px;
+  color: var(--mid);
+  font-family: var(--mono);
+  font-size: .58rem; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  padding: 5px 12px; cursor: pointer;
+}
+.arch-filter.active { background: var(--yel); border-color: var(--yel); color: #000; }
+
+.arch-list { flex: 1; overflow-y: auto; padding: 12px 16px; }
+
+.arch-entry {
+  background: transparent;
+  border: 1px solid var(--brd);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  position: relative;
+  overflow: hidden;
+}
+.arch-entry::before {
+  content:''; position:absolute; top:0; left:0; right:0;
+  height:2px; background: var(--ic, var(--brd));
+}
+.arch-entry:active { border-color: var(--text); }
+
+.arch-entry-top {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 12px;
+}
+
+.arch-entry-title { font-size: .9rem; font-weight: 900; line-height: 1.2; }
+.arch-entry-date  { font-size: .62rem; font-weight: 500; color: var(--mid); white-space: nowrap; }
+.arch-entry-cat   { display: inline-block; font-size: .54rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; border-radius: 4px; padding: 2px 7px; margin: 6px 0 4px; }
+.arch-entry-note  { font-size: .72rem; font-weight: 400; color: var(--mid); margin-top: 4px; line-height: 1.5; }
+
+.arch-entry-del {
+  background: transparent;
+  border: 1px solid var(--brd);
+  border-radius: 6px;
+  color: var(--mid);
+  font-family: var(--mono);
+  font-size: .58rem; font-weight: 700;
+  padding: 4px 10px; cursor: pointer; letter-spacing: .06em;
+}
+.arch-entry-del:active { background: var(--text); color: var(--bg); }
+
+.arch-search-wrap {
+  flex-shrink:0; padding: 10px 16px 0;
+}
+.arch-search {
+  width:100%; background: rgba(255,255,255,.05);
+  border: 1px solid var(--brd); border-radius: 10px;
+  color: var(--text); font-family: var(--mono);
+  font-size: .75rem; font-weight: 500;
+  padding: 9px 14px; outline: none;
+}
+.arch-search:focus { border-color: var(--yel); }
+
+/* ── Dialog archivio ── */
+.arch-dialog {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.85);
+  z-index: 100;
+  display: flex; align-items: flex-end;
+}
+.arch-dialog-box {
+  width: 100%; background: #111;
+  border-radius: var(--r) var(--r) 0 0;
+  padding: 24px 20px 32px;
+  display: flex; flex-direction: column; gap: 12px;
+  max-height: 90vh; overflow-y: auto;
+}
+.arch-dialog-title { font-size: .88rem; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 4px; }
+
+.a-lbl { font-size: .56rem; font-weight: 700; color: var(--mid); letter-spacing: .14em; text-transform: uppercase; display: block; margin-bottom: 5px; }
+.a-inp {
+  width:100%; background: rgba(255,255,255,.06);
+  border: 1px solid var(--brd); border-radius: 8px;
+  color: var(--text); font-family: var(--mono);
+  font-size: .78rem; font-weight: 500;
+  padding: 9px 12px; outline: none;
+}
+.a-inp:focus { border-color: var(--yel); }
+
+.a-sel {
+  width:100%; background: rgba(255,255,255,.06);
+  border: 1px solid var(--brd); border-radius: 8px;
+  color: var(--text); font-family: var(--mono);
+  font-size: .78rem; font-weight: 500;
+  padding: 9px 12px; outline: none;
+  -webkit-appearance: none;
+}
+
+.a-row { display:flex; gap:10px; }
+.a-row > div { flex:1; }
+
+.a-btn {
+  width:100%; background: var(--yel);
+  border: none; border-radius: 10px;
+  color: #000; font-family: var(--mono);
+  font-size: .78rem; font-weight: 900;
+  letter-spacing: .06em; text-transform: uppercase;
+  padding: 13px; cursor: pointer; margin-top: 4px;
+}
+
+.a-btn-sec {
+  width:100%; background: transparent;
+  border: 1px solid var(--brd); border-radius: 10px;
+  color: var(--mid); font-family: var(--mono);
+  font-size: .72rem; font-weight: 700;
+  padding: 11px; cursor: pointer;
+}
+
+/* ── Pannello dettaglio ── */
+#detail-panel {
+  position: fixed; inset: 0;
+  background: var(--bg); z-index: 200;
+  overflow-y: auto; padding: 0 0 100px;
+}
+
+/* ── Toast ── */
+#toast {
+  position: fixed; bottom: calc(var(--nb-h) + 12px); left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--yel); color: #000;
+  font-family: var(--mono); font-size: .72rem; font-weight: 900;
+  border-radius: 20px; padding: 9px 18px;
+  opacity: 0; transition: all .25s; z-index: 300;
+  white-space: nowrap;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── Impostazioni ── */
+.imp-group {
+  font-family: var(--mono); font-size: .58rem; font-weight: 700;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--mid); padding: 16px 20px 8px;
+  border-bottom: 1px solid var(--brd2);
+}
+.imp-row {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.imp-row:active { background: rgba(255,255,255,.04); }
+.imp-title { font-family: var(--mono); font-size: .82rem; font-weight: 700; color: var(--text); }
+.imp-sub   { font-family: var(--mono); font-size: .68rem; font-weight: 400; color: var(--mid); }
+
+/* ── Log ── */
+#log-list { font-family: var(--mono); font-size: .68rem; font-weight: 400; line-height: 1.8; }
+
+/* ══ LANDSCAPE ════════════════════════════════════ */
 @media (orientation: landscape) {
-  .widget-row    { padding: 8px 10px 6px; gap: 8px; }
-  .widget-left   { border-radius: 16px; padding: 12px 16px 12px; flex: 1.2; }
-  .widget-right  { border-radius: 16px; padding: 12px 14px 12px; }
-  .wl-hms        { font-size: clamp(1.8rem, 18vh, 4.5rem); }
-  .wl-sep        { font-size: clamp(1.35rem, 13.5vh, 3.4rem); }
-  .wl-date       { font-size: clamp(.55rem, 1.6vh, .75rem); }
-  .wr-temp       { font-size: clamp(1.8rem, 18vh, 4.5rem); }
-  .widget-left .mic-ring-wrap { width: 36px; height: 36px; }
+  #home { padding: 10px 10px 0; }
+  .widget-row { gap: 10px; padding-bottom: 10px; }
+  .widget-left { border-radius: 16px; padding: 14px; gap: 4px; }
+  .widget-right { border-radius: 16px; padding: 12px 14px; }
+  .wl-hms  { font-size: clamp(1.8rem, 20vh, 5rem); }
+  .wl-sep  { font-size: clamp(1.35rem, 15vh, 3.7rem); }
+  .wl-date { font-size: clamp(.6rem, 1.8vh, .88rem); }
+  .wr-temp { font-size: clamp(1.8rem, 20vh, 5rem); }
+  .mic-ring-wrap { width: 42px; height: 42px; }
+  .navbar  { border-radius: 12px 12px 0 0; }
+  .nb-lbl  { display: none; }
+  .nb-btn:active { color: #000; }
 }
 
 @media (orientation: landscape) and (max-height: 450px) {
-  .widget-row    { padding: 5px 8px 4px; gap: 6px; }
-  .wl-hms        { font-size: clamp(1.5rem, 16vh, 3.5rem); }
-  .wl-sep        { font-size: clamp(1.1rem, 12vh, 2.6rem); }
-  .wr-temp       { font-size: clamp(1.5rem, 16vh, 3.5rem); }
+  #home { padding: 6px 8px 0; }
+  .wl-hms  { font-size: clamp(1.5rem, 17vh, 4rem); }
+  .wl-sep  { font-size: clamp(1.1rem, 12.5vh, 3rem); }
+  .wr-temp { font-size: clamp(1.5rem, 17vh, 4rem); }
+  .mic-ring-wrap { width: 34px; height: 34px; }
 }
+
+/* Impostazioni landscape */
+@media (orientation: landscape) {
+  .imp-group { padding: 6px 16px 4px; font-size: .52rem; }
+  .imp-row   { min-height: 44px; padding: 6px 16px; gap: 2px; justify-content: center; }
+  .imp-title { font-size: .75rem; }
+  .imp-sub   { font-size: .62rem; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: var(--brd); border-radius: 2px; }
+
+/* Weather bar nascosta ma mantenuta per JS */
+.weather-bar { display: none; }
 
 </style>
 </head>
@@ -921,31 +641,37 @@ html, body {
   <a href="https://elevenlabs.io" target="_blank">elevenlabs.io</a></p>
 </div>
 
+
 <!-- HOME -->
 <div id="home">
 
-  <!-- WIDGET PRINCIPALE: due pannelli -->
   <div class="widget-row">
 
-    <!-- PANNELLO SINISTRO: data e ora -->
+    <!-- PANNELLO SINISTRO (2/3): ora e data -->
     <div class="widget-left">
       <div class="wl-time">
-        <span class="wl-hms" id="clk-h">00</span><span class="wl-sep">:</span><span class="wl-hms" id="clk-m">00</span><span class="wl-sep">:</span><span class="wl-hms" id="clk-s">00</span>
+        <span class="wl-hms" id="clk-h">00</span>
+        <span class="wl-sep">:</span>
+        <span class="wl-hms" id="clk-m">00</span>
       </div>
       <div class="wl-date" id="clk-date">—</div>
-      <!-- mic centrato in basso -->
       <div class="mic-area">
         <div class="mic-ring-wrap" id="mic-wrap">
-          <div class="mic-ring"></div>
-          <button class="mic-btn" id="mic-btn" onclick="toggleWake()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></button>
+          <div class="mic-ring" id="mic-ring"></div>
+          <button class="mic-btn" id="mic-btn" onclick="toggleWake()">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" y1="19" x2="12" y2="23"/>
+              <line x1="8" y1="23" x2="16" y2="23"/>
+            </svg>
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- PANNELLO DESTRO: meteo o attività in scadenza -->
+    <!-- PANNELLO DESTRO (1/3): meteo o scadenze -->
     <div class="widget-right" id="widget-right">
-
-      <!-- Vista meteo (default) -->
       <div id="wr-weather">
         <div class="wr-top">
           <span class="wr-icon" id="wr-icon">—</span>
@@ -955,30 +681,52 @@ html, body {
         <div class="wr-loc">Cervare, MC</div>
         <div class="wr-extra" id="wr-extra"></div>
       </div>
-
-      <!-- Vista attività in scadenza (se presenti) -->
       <div id="wr-scadenze" style="display:none">
-        <div class="wr-scad-title">⚠ In scadenza</div>
+        <div class="wr-scad-title">⚠</div>
         <div id="wr-scad-list"></div>
       </div>
+    </div>
 
+  </div>
+
+  <!-- Elementi nascosti per retrocompatibilità JS -->
+  <div style="display:none" aria-hidden="true">
+    <div class="weather-bar">
+      <span id="w-icon">—</span><span id="w-temp">—</span>
+      <span id="w-desc">—</span><span id="w-extra-txt"></span>
+      <span id="w-icon2">—</span><span id="w-temp2">—</span>
+      <span id="w-desc2">—</span><span id="w-extra-txt2"></span>
     </div>
   </div>
+  <div id="due-corner" style="display:none"></div>
 
-  <!-- badge scadenze (manteniamo per compatibilità) -->
-  <div id="due-corner"></div>
-
-  <!-- Barra meteo scrolling (nascosta — dati usati dal widget) -->
-  <div style="display:none" aria-hidden="true">
-    <span id="w-icon">—</span><span id="w-temp">—</span>
-    <span id="w-desc">—</span><span id="w-extra-txt"></span>
-    <span id="w-icon2">—</span><span id="w-temp2">—</span>
-    <span id="w-desc2">—</span><span id="w-extra-txt2"></span>
+  <!-- NAVBAR BIANCA -->
+  <div class="navbar">
+    <button class="nb-btn" onclick="openPanel('chat-panel')">
+      <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span class="nb-lbl">Chat</span>
+    </button>
+    <button class="nb-btn" onclick="openPanel('att-panel');setFilter('all')">
+      <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+      <span class="nb-lbl">Archivio</span>
+    </button>
+    <button class="nb-btn" onclick="loadWeather()">
+      <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+      <span class="nb-lbl">Meteo</span>
+    </button>
+    <button class="nb-btn" onclick="toggleFullscreen()">
+      <svg class="nb-icon" id="fs-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+      <span class="nb-lbl">Schermo</span>
+    </button>
+    <button class="nb-btn" onclick="openPanel('panel-impostazioni')">
+      <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span class="nb-lbl">Impostazioni</span>
+    </button>
   </div>
 
-  <!-- NAVBAR 
-
 </div>
+
+<div id="toast"></div>
 
 <!-- CHAT PANEL -->
 <div class="panel" id="chat-panel">
@@ -1201,15 +949,11 @@ function tick(){
 
   const elH = document.getElementById('clk-h');
   const elM = document.getElementById('clk-m');
-  const elS = document.getElementById('clk-s');
   const elD = document.getElementById('clk-date');
 
   if(elH) elH.textContent = hh;
   if(elM) elM.textContent = mm;
-  if(elS) elS.textContent = ss;
   if(elD) elD.textContent = GIORNI[n.getDay()] + ' ' + n.getDate() + ' ' + MESI[n.getMonth()] + ' ' + n.getFullYear();
-
-  // Nessun glow sul pannello giallo — il colore è fisso
 }
 
 
@@ -1406,20 +1150,21 @@ function aggiornaWidgetDestro(){
   const wrScadenze = document.getElementById('wr-scadenze');
   const wrScadList = document.getElementById('wr-scad-list');
 
+  const wr = document.getElementById('widget-right');
   if(scadImminenti.length > 0){
-    // Mostra le attività in scadenza
+    if(wr) wr.classList.add('alert');
     if(wrWeather)  wrWeather.style.display  = 'none';
     if(wrScadenze) wrScadenze.style.display = 'flex';
     if(wrScadList){
       wrScadList.innerHTML = scadImminenti.slice(0,4).map(e => {
         const scad = new Date(e.scad+'T00:00:00');
         const diff = Math.ceil((scad - oggi) / (1000*60*60*24));
-        const sub  = diff <= 0 ? 'Scaduta' : diff === 1 ? 'Domani' : 'Tra ' + diff + ' giorni';
+        const sub  = diff <= 0 ? 'Scaduta!' : diff === 1 ? 'Domani' : 'Tra ' + diff + ' giorni';
         return '<div class="wr-scad-item">' + e.titolo + '<div class="wr-scad-sub">' + sub + '</div></div>';
       }).join('');
     }
   } else {
-    // Nessuna scadenza imminente → mostra meteo
+    if(wr) wr.classList.remove('alert');
     if(wrWeather)  wrWeather.style.display  = 'flex';
     if(wrScadenze) wrScadenze.style.display = 'none';
   }
@@ -2797,3 +2542,154 @@ document.addEventListener('fullscreenchange',()=>{
       <div id="detail-loading" style="display:none;font-family:var(--mono);font-size:.75rem;opacity:.4;margin-top:12px;animation:pulse 1.5s infinite">Claude sta elaborando...</div>
     </div>
   </div>
+</div>
+
+<!-- PANNELLO IMPOSTAZIONI -->
+<div class="panel" id="panel-impostazioni">
+  <div class="panel-hdr">
+    <div class="panel-title">Impostazioni</div>
+    <button class="panel-close" onclick="closePanel('panel-impostazioni')">✕ Chiudi</button>
+  </div>
+  <div style="padding:16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto">
+
+    <!-- Sezione Notifiche -->
+    <div style="font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mid);padding:4px 0 8px;border-bottom:1px solid var(--brd2)">Notifiche</div>
+
+    <div class="arch-entry" style="cursor:pointer" onclick="testNotifica()">
+      <div class="arch-entry-title">Test notifica</div>
+      <div class="arch-entry-note">Invia una notifica di prova immediata</div>
+    </div>
+
+    <div class="arch-entry" style="cursor:pointer" onclick="forceCheck()">
+      <div class="arch-entry-title">Controlla attività ora</div>
+      <div class="arch-entry-note">Forza il controllo scadenze e meteo adesso</div>
+    </div>
+
+    <div class="arch-entry">
+      <div class="arch-entry-title">Stato permesso</div>
+      <div class="arch-entry-note" id="imp-notif-txt">—</div>
+    </div>
+
+    <!-- Sezione Account -->
+    <div style="font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mid);padding:16px 0 8px;border-bottom:1px solid var(--brd2)">Diagnostica</div>
+
+    <div class="arch-entry" style="cursor:pointer" onclick="closePanel('panel-impostazioni');openPanel('panel-log')">
+      <div class="arch-entry-title">Log di sistema</div>
+      <div class="arch-entry-note">Visualizza gli eventi e gli errori dell'app</div>
+    </div>
+
+    <div style="font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mid);padding:16px 0 8px;border-bottom:1px solid var(--brd2)">Account</div>
+
+    <div class="arch-entry" style="cursor:pointer" onclick="resetApp()">
+      <div class="arch-entry-title" style="color:#ff3b30">Reset API Keys</div>
+      <div class="arch-entry-note">Rimuove le chiavi da questo dispositivo</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- PANNELLO LOG -->
+<div class="panel" id="panel-log">
+  <div class="panel-hdr">
+    <div class="panel-title">Log di sistema</div>
+    <button class="panel-close" onclick="closePanel('panel-log')">✕ Chiudi</button>
+  </div>
+  <div style="display:flex;gap:8px;padding:10px 16px;border-bottom:1px solid var(--brd2);flex-shrink:0">
+    <button onclick="clearLog()" style="font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;background:transparent;border:1px solid rgba(255,255,255,.15);color:var(--mid);padding:6px 12px;cursor:pointer;border-radius:4px">Cancella</button>
+    <button onclick="copyLog()" style="font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;background:transparent;border:1px solid rgba(255,255,255,.15);color:var(--mid);padding:6px 12px;cursor:pointer;border-radius:4px">Copia</button>
+  </div>
+  <div id="log-list" style="flex:1;overflow-y:auto;padding:12px 16px;font-family:var(--mono);font-size:.7rem;line-height:1.8;color:rgba(255,255,255,.6)">
+    <div style="opacity:.3;text-align:center;margin-top:40px">Nessun log ancora</div>
+  </div>
+</div>
+
+
+
+<script>
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║                    CASA — ASSISTENTE DOMESTICO               ║
+// ║                                                              ║
+// ║  STRUTTURA DEL CODICE:                                       ║
+// ║  1. STORAGE      — salvataggio dati nel browser              ║
+// ║  2. GLOBALS      — variabili condivise tra le funzioni        ║
+// ║  3. SETUP        — avvio e configurazione iniziale           ║
+// ║  4. PANELS       — apertura/chiusura pannelli slide-up       ║
+// ║  5. CLOCK        — orologio aggiornato ogni secondo          ║
+// ║  6. WEATHER      — meteo da open-meteo.com                   ║
+// ║  7. ARCHIVIO     — gestione interventi di manutenzione       ║
+// ║  8. AI           — comunicazione con Claude API              ║
+// ║  9. WAKE WORD    — rilevamento "Claude" nel parlato          ║
+// ║  10. TTS         — sintesi vocale (ElevenLabs o browser)     ║
+// ║  11. UTILITIES   — fullscreen, toast, ecc.                   ║
+// ╚══════════════════════════════════════════════════════════════╝
+
+
+// ══════════════════════════════════════════════
+// 1. STORAGE — Persistenza dati nel localStorage
+//
+// localStorage è un database chiave-valore nel browser.
+// I dati rimangono anche dopo la chiusura dell'app.
+// Vengono persi solo se si svuota la cache del browser.
+//
+// CHIAVI USATE:
+//   'casa_key'       → API key di Claude
+//   'el_key'         → API key di ElevenLabs
+//   'el_voice'       → Voice ID di ElevenLabs
+//   'casa_archivio_v1' → array JSON degli interventi
+// ══════════════════════════════════════════════
+
+const AKEY = 'casa_archivio_v1'; // chiave per l'archivio interventi
+
+// Carica l'archivio dal localStorage. Se non esiste o è corrotto, restituisce array vuoto.
+function loadArch(){
+  try{ return JSON.parse(localStorage.getItem(AKEY)||'[]'); }
+  catch{ return []; }
+}
+
+// Salva l'archivio nel localStorage e sincronizza con Supabase se disponibile
+function saveArch(l){
+  localStorage.setItem(AKEY, JSON.stringify(l));
+  if(sbKey) syncToCloud(l); // fire-and-forget
+  syncSW(); // aggiorna il service worker
+}
+
+// Variabile globale con tutti gli interventi caricati all'avvio
+let archivio = loadArch();
+
+
+// ══════════════════════════════════════════════
+// 2. GLOBALS — Variabili condivise tra le funzioni
+//
+// Queste variabili sono accessibili da tutte le funzioni.
+// Modificarle qui cambia il comportamento globale dell'app.
+// ══════════════════════════════════════════════
+
+// Coordinate GPS di Contrada Cervare, Macerata (usate per il meteo)
+// Per cambiare città: trova lat/lon su maps.google.com e aggiorna qui
+const LAT  = 43.2832;
+const LON  = 13.4534;
+const CITY = 'Contrada Cervare, Macerata';
+
+// Chiavi API — vengono caricate dal localStorage in window.onload
+let apiKey  = '';  // Claude API key
+let elKey   = '';  // ElevenLabs API key
+let elVoice = '';  // ElevenLabs Voice ID
+
+// Supabase — cloud sync archivio
+// URL tabella fisso (il nome tabella è 'Archivio' con A maiuscola come creata)
+const SB_URL    = 'https://thmoyxfkgtkteajzande.supabase.co/rest/v1/Archivio';
+// SB_CONFIG rimosso — le chiavi non vengono mai salvate sul cloud
+let sbKey = ''; // anon key — inserita nel setup
+
+// Stato della conversazione con Claude
+// È un array di oggetti {role: 'user'|'assistant', content: '...'}
+// Viene inviato ad ogni chiamata per mantenere il contesto
+let chatHistory = [];
+
+// Ultimo dato meteo ricevuto dall'API (oggetto JSON di open-meteo)
+let weatherData = null;
+
+// Stato del microfono/TTS
+let isSpeaking = false;         // true se sta parlando via TTS
+let wakeEnabl

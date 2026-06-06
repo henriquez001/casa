@@ -482,14 +482,14 @@ body.menu-skip-transition .menu-toggle line {
   position: fixed;
   left: var(--home-pad-left);
   right: var(--home-pad-right);
-  bottom: 0;
+  bottom: var(--home-bottom-gap);
   height: var(--panel-h);
   background: var(--blue);
   color: #000;
   z-index: 50;
   display: flex;
   flex-direction: column;
-  border-radius: var(--r) var(--r) 0 0;
+  border-radius: var(--r);
   overflow: hidden;
   transform: translateY(calc(100% + var(--panel-gap)));
   transition: transform .34s linear;

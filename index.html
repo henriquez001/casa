@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>CASA</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;700;900&family=Major+Mono+Display&family=Share+Tech+Mono&family=Hubot+Sans:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
@@ -24,10 +24,11 @@
   --num:   'Hubot Sans', monospace;
   --nb-h:  10vh; /* navbar height */
   --home-pad-top: 16px;
-  --home-pad-x: 16px;
+  --home-pad-left: 16px;
+  --home-pad-right: 16px;
   --home-gap: 14px;
   --home-bottom-gap: 14px;
-  --menu-w: 30vw;
+  --menu-w: calc((100vw - var(--home-pad-left) - var(--home-pad-right) - var(--home-gap)) / 3);
 }
 
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -102,7 +103,7 @@ html, body {
   display: flex;
   flex-direction: column;
   height: 100dvh;
-  padding: var(--home-pad-top) var(--home-pad-x) 0;
+  padding: var(--home-pad-top) var(--home-pad-right) 0 var(--home-pad-left);
   gap: 0;
   position: relative;
   overflow: hidden;
@@ -391,7 +392,7 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
 .menu-panel {
   position: absolute;
   top: var(--home-pad-top);
-  left: var(--home-pad-x);
+  left: var(--home-pad-left);
   bottom: var(--home-bottom-gap);
   width: var(--menu-w);
   background: var(--orange);
@@ -718,7 +719,7 @@ body.menu-open .widget-left {
 
 /* ══ LANDSCAPE ════════════════════════════════════ */
 @media (orientation: landscape) {
-  :root { --home-pad-top: 10px; --home-pad-x: 0px; --home-gap: 10px; --home-bottom-gap: 10px; }
+  :root { --home-pad-top: 10px; --home-pad-left: 0px; --home-pad-right: 10px; --home-gap: 10px; --home-bottom-gap: 10px; }
   .widget-left { border-radius: 32px; padding: 14px; gap: 4px; }
   .widget-right { border-radius: 32px; padding: 12px 14px; }
   .wl-hms  { font-size: clamp(3.01rem, 33.4vh, 8.35rem); }
@@ -736,7 +737,7 @@ body.menu-open .widget-left {
 }
 
 @media (orientation: landscape) and (max-height: 450px) {
-  :root { --home-pad-top: 6px; --home-pad-x: 0px; }
+  :root { --home-pad-top: 6px; --home-pad-left: 0px; --home-pad-right: 10px; }
   .wl-hms  { font-size: clamp(2.5rem, 28.39vh, 6.68rem); }
   .wl-sep  { font-size: clamp(1.84rem, 20.88vh, 5.01rem); }
   .wr-temp { font-size: clamp(2.5rem, 28.39vh, 6.68rem); }

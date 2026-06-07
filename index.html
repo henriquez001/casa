@@ -36,13 +36,13 @@
   --home-bottom-gap: 14px;
   --menu-w: calc((100vw - var(--home-pad-left) - var(--home-pad-right) - var(--home-gap)) / 3);
   --tab-title-x: var(--edge-gap);
-  --tab-title-size: clamp(1.25rem, 5.84vw, 1.84rem);
+  --tab-title-size: clamp(1.88rem, 8.76vw, 2.76rem);
   --tab-title-top: calc(var(--edge-gap) - (var(--tab-title-size) / 2));
   --tab-title-color: rgba(0,0,0,.65);
-  --section-title-size: clamp(0.78rem, 2.45vw, 1.02rem);
+  --section-title-size: clamp(1.17rem, 3.68vw, 1.53rem);
   --section-title-top: calc(var(--edge-gap) - (var(--section-title-size) / 2));
-  --menu-item-title-size: clamp(1.18rem, 4.25vw, 1.55rem);
-  --menu-item-sub-size: clamp(0.9rem, 2.8vw, 1.08rem);
+  --menu-item-title-size: clamp(1.77rem, 6.38vw, 2.33rem);
+  --menu-item-sub-size: clamp(1.35rem, 4.2vw, 1.62rem);
   --panel-h: calc(100dvh - var(--home-pad-top) - var(--home-bottom-gap));
   --panel-gap: 14px;
   --panel-hide-extra: 24px;
@@ -75,7 +75,7 @@ html, body {
   letter-spacing: -.03em;
 }
 .s-logo small {
-  display: block; font-size: 0.969rem; font-weight: 400;
+  display: block; font-size: 1.45rem; font-weight: 400;
   color: rgba(255,255,255,.85); letter-spacing: .2em;
   text-transform: uppercase; margin-top: 6px;
 }
@@ -86,7 +86,7 @@ html, body {
   padding: 24px 22px;
 }
 .s-lbl {
-  font-size: 0.969rem; font-weight: 700;
+  font-size: 1.45rem; font-weight: 700;
   color: rgba(255,255,255,.85); letter-spacing: .16em;
   text-transform: uppercase;
   display: block; margin-bottom: 7px;
@@ -96,7 +96,7 @@ html, body {
   border: 1px solid var(--brd);
   border-radius: 16px;
   color: var(--text); font-family: var(--mono);
-  font-size: 1.336rem; font-weight: 500;
+  font-size: 2rem; font-weight: 500;
   padding: 10px 12px; margin-bottom: 14px;
   outline: none;
 }
@@ -105,12 +105,12 @@ html, body {
   width: 100%; background: var(--yel);
   border: none; border-radius: 30px;
   color: #000; font-family: var(--mono);
-  font-size: 1.303rem; font-weight: 900;
+  font-size: 1.95rem; font-weight: 900;
   letter-spacing: .06em; text-transform: uppercase;
   padding: 13px; cursor: pointer;
 }
 .s-note {
-  font-size: 0.969rem; color: var(--dim);
+  font-size: 1.45rem; color: var(--dim);
   text-align: center; line-height: 1.6;
 }
 .s-note a { color: rgba(255,255,255,.85); }
@@ -366,7 +366,7 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
 #wr-scadenze { height: 100%; display: flex; flex-direction: column; gap: 8px; }
 
 .wr-scad-title {
-  font-size: clamp(2.34rem, 11.69vw, 3.67rem);
+  font-size: clamp(3.51rem, 17.54vw, 5.5rem);
   font-weight: 900;
   color: #000;
   line-height: 1;
@@ -374,7 +374,7 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
 }
 
 .wr-scad-item {
-  font-size: clamp(1.09rem, 4.68vw, 1.37rem);
+  font-size: clamp(1.64rem, 7.02vw, 2.06rem);
   font-weight: 700;
   color: #000;
   border-left: 3px solid rgba(0,0,0,.3);
@@ -383,7 +383,7 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
 }
 
 .wr-scad-sub {
-  font-size: 0.969rem;
+  font-size: 1.45rem;
   font-weight: 500;
   color: rgba(0,0,0,.6);
   margin-top: 1px;
@@ -424,7 +424,7 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
 
 .nb-btn:active { color: #000; background: rgba(0,0,0,.06); }
 .nb-icon { width: 22px; height: 22px; color: inherit; }
-.nb-lbl  { font-size: 0.835rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: inherit; }
+.nb-lbl  { font-size: 1.25rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: inherit; }
 
 .menu-panel {
   position: absolute;
@@ -453,6 +453,7 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
   line-height: 1;
   text-transform: uppercase;
   color: rgba(0,0,0,.58);
+  overflow-wrap: anywhere;
 }
 
 .menu-list {
@@ -474,6 +475,7 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
   align-items: center;
   cursor: pointer;
   text-align: left;
+  min-width: 0;
 }
 .menu-item:active { opacity: .65; }
 .menu-icon { width: 26px; height: 26px; color: inherit; }
@@ -485,6 +487,7 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
   letter-spacing: 0;
   text-transform: none;
   line-height: 1.1;
+  overflow-wrap: anywhere;
 }
 .menu-item-sub {
   display: block;
@@ -493,6 +496,7 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
   font-weight: 500;
   color: rgba(0,0,0,.62);
   line-height: 1.28;
+  overflow-wrap: anywhere;
 }
 
 body.menu-open .menu-panel { transform: translateX(0); }
@@ -547,6 +551,8 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
   line-height: 1;
   color: rgba(0,0,0,.58);
   text-transform: uppercase;
+  max-width: calc(100% - var(--control-size) - 12px);
+  overflow-wrap: anywhere;
 }
 
 .panel-close {
@@ -558,7 +564,7 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--mono); font-size: 1.202rem; font-weight: 700;
+  font-family: var(--mono); font-size: 1.8rem; font-weight: 700;
   color: rgba(0,0,0,.62); background: transparent;
   border: none;
   padding: 0; cursor: pointer; letter-spacing: 0;
@@ -580,6 +586,7 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
   line-height: 1.45; padding: 8px 0;
   border-radius: 0; max-width: 88%;
   color: #000;
+  overflow-wrap: anywhere;
 }
 
 .msg.user {
@@ -613,16 +620,16 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
   flex: 1; background: rgba(255,255,255,.1);
   border: 1px solid var(--brd); border-radius: 30px;
   color: var(--text); font-family: var(--mono);
-  font-size: 1.303rem; font-weight: 500;
+  font-size: 1.95rem; font-weight: 500;
   padding: 10px 14px; outline: none; resize: none;
-  min-height: 42px; max-height: 120px;
+  min-height: 58px; max-height: 160px;
 }
 .chat-inp:focus { border-color: var(--yel); }
 
 .chat-send {
   background: var(--yel); border: none; border-radius: 30px;
   color: #000; font-family: var(--mono);
-  font-size: 1.202rem; font-weight: 900;
+  font-size: 1.8rem; font-weight: 900;
   padding: 0 18px; cursor: pointer; letter-spacing: .04em;
 }
 
@@ -646,8 +653,8 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
   padding: 9px 0;
   outline: none;
   resize: none;
-  min-height: 40px;
-  max-height: 110px;
+  min-height: 58px;
+  max-height: 160px;
 }
 .cp-inp::placeholder { color: rgba(0,0,0,.45); }
 .cp-send {
@@ -655,7 +662,7 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
   border: none;
   background: transparent;
   color: #000;
-  font-size: 1.8rem;
+  font-size: 2.7rem;
   cursor: pointer;
 }
 
@@ -678,6 +685,7 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
   font-size: var(--section-title-size); font-weight: 600;
   letter-spacing: .12em; text-transform: uppercase;
   padding: 5px 0; cursor: pointer;
+  white-space: nowrap;
 }
 .arch-filter.active { background: transparent; border-color: transparent; color: #000; }
 
@@ -698,12 +706,13 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
 .arch-entry-top {
   display: flex; align-items: flex-start;
   justify-content: space-between; gap: 12px;
+  flex-wrap: wrap;
 }
 
-.arch-entry-title { font-family: var(--sep); font-size: var(--menu-item-title-size); font-weight: 400; line-height: 1.2; color: #000; }
-.arch-entry-date  { font-family: var(--mono); font-size: 0.902rem; font-weight: 500; color: rgba(0,0,0,.62); white-space: nowrap; }
+.arch-entry-title { font-family: var(--sep); font-size: var(--menu-item-title-size); font-weight: 400; line-height: 1.2; color: #000; overflow-wrap: anywhere; min-width: 0; }
+.arch-entry-date  { font-family: var(--mono); font-size: 1.35rem; font-weight: 500; color: rgba(0,0,0,.62); white-space: normal; overflow-wrap: anywhere; }
 .arch-entry-cat   { display: inline-block; font-family: var(--mono); font-size: var(--section-title-size); font-weight: 600; letter-spacing: .12em; text-transform: uppercase; border-radius: 0; padding: 0; margin: 6px 0 4px; color: rgba(0,0,0,.58); }
-.arch-entry-note  { font-family: var(--sep); font-size: var(--menu-item-sub-size); font-weight: 500; color: rgba(0,0,0,.66); margin-top: 5px; line-height: 1.45; }
+.arch-entry-note  { font-family: var(--sep); font-size: var(--menu-item-sub-size); font-weight: 500; color: rgba(0,0,0,.66); margin-top: 5px; line-height: 1.45; overflow-wrap: anywhere; }
 
 .arch-entry-del {
   background: transparent;
@@ -711,7 +720,7 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
   border-radius: 0;
   color: rgba(0,0,0,.62);
   font-family: var(--mono);
-  font-size: 0.835rem; font-weight: 700;
+  font-size: 1.25rem; font-weight: 700;
   padding: 8px 12px 8px 0; cursor: pointer; letter-spacing: .06em;
 }
 .arch-entry-del:active { color: #000; }
@@ -774,12 +783,12 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
 }
 .arch-dialog-title { font-size: 1.47rem; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 4px; }
 
-.a-lbl { font-size: 0.935rem; font-weight: 700; color: rgba(255,255,255,.85); letter-spacing: .14em; text-transform: uppercase; display: block; margin-bottom: 5px; }
+.a-lbl { font-size: 1.4rem; font-weight: 700; color: rgba(255,255,255,.85); letter-spacing: .14em; text-transform: uppercase; display: block; margin-bottom: 5px; }
 .a-inp {
   width:100%; background: rgba(255,255,255,.1);
   border: 1px solid var(--brd); border-radius: 16px;
   color: var(--text); font-family: var(--mono);
-  font-size: 1.303rem; font-weight: 500;
+  font-size: 1.95rem; font-weight: 500;
   padding: 9px 12px; outline: none;
 }
 .a-inp:focus { border-color: var(--yel); }
@@ -788,7 +797,7 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
   width:100%; background: rgba(255,255,255,.1);
   border: 1px solid var(--brd); border-radius: 16px;
   color: var(--text); font-family: var(--mono);
-  font-size: 1.303rem; font-weight: 500;
+  font-size: 1.95rem; font-weight: 500;
   padding: 9px 12px; outline: none;
   -webkit-appearance: none;
 }
@@ -800,7 +809,7 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
   width:100%; background: var(--yel);
   border: none; border-radius: 30px;
   color: #000; font-family: var(--mono);
-  font-size: 1.303rem; font-weight: 900;
+  font-size: 1.95rem; font-weight: 900;
   letter-spacing: .06em; text-transform: uppercase;
   padding: 13px; cursor: pointer; margin-top: 4px;
 }
@@ -809,7 +818,7 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
   width:100%; background: transparent;
   border: 1px solid var(--brd); border-radius: 30px;
   color: rgba(255,255,255,.85); font-family: var(--mono);
-  font-size: 1.202rem; font-weight: 700;
+  font-size: 1.8rem; font-weight: 700;
   padding: 11px; cursor: pointer;
 }
 
@@ -825,7 +834,7 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
   position: fixed; bottom: calc(var(--nb-h) + 12px); left: 50%;
   transform: translateX(-50%) translateY(20px);
   background: var(--yel); color: #000;
-  font-family: var(--mono); font-size: 1.202rem; font-weight: 900;
+  font-family: var(--mono); font-size: 1.8rem; font-weight: 900;
   border-radius: var(--r); padding: 9px 18px;
   opacity: 0; transition: all .25s; z-index: 300;
   white-space: nowrap;
@@ -853,11 +862,11 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
 .imp-sub   { font-family: var(--sep); font-size: var(--menu-item-sub-size); font-weight: 500; color: rgba(0,0,0,.66); }
 
 /* ── Log ── */
-#log-list { font-family: var(--mono); font-size: 1.002rem; font-weight: 400; line-height: 1.8; color: rgba(0,0,0,.68); }
+#log-list { font-family: var(--mono); font-size: 1.5rem; font-weight: 400; line-height: 1.8; color: rgba(0,0,0,.68); overflow-wrap: anywhere; }
 
 /* ══ LANDSCAPE ════════════════════════════════════ */
 @media (orientation: landscape) {
-  :root { --control-size: 38px; --mic-size: 60px; --clock-size: clamp(3.01rem, 33.4vh, 8.35rem); --home-pad-top: 10px; --home-pad-left: 10px; --home-pad-right: 10px; --home-gap: 10px; --home-bottom-gap: 10px; --tab-title-size: clamp(1.0rem, 3.01vh, 1.47rem); --section-title-size: clamp(0.72rem, 2.2vh, 0.95rem); --menu-item-title-size: clamp(1.0rem, 3.5vh, 1.3rem); --menu-item-sub-size: clamp(0.8rem, 2.45vh, 0.98rem); --panel-h: calc(100dvh - var(--home-pad-top) - var(--home-bottom-gap)); --panel-gap: 10px; }
+  :root { --control-size: 38px; --mic-size: 60px; --clock-size: clamp(3.01rem, 33.4vh, 8.35rem); --home-pad-top: 10px; --home-pad-left: 10px; --home-pad-right: 10px; --home-gap: 10px; --home-bottom-gap: 10px; --tab-title-size: clamp(1.5rem, 4.52vh, 2.2rem); --section-title-size: clamp(1.08rem, 3.3vh, 1.42rem); --menu-item-title-size: clamp(1.5rem, 5.25vh, 1.95rem); --menu-item-sub-size: clamp(1.2rem, 3.68vh, 1.47rem); --panel-h: calc(100dvh - var(--home-pad-top) - var(--home-bottom-gap)); --panel-gap: 10px; }
   .widget-left { border-radius: 32px; padding: 14px; gap: 4px; }
   .widget-right { border-radius: 32px; padding: var(--edge-gap); }
   .wl-hms  { font-size: var(--clock-size); }
@@ -868,8 +877,8 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
   .nb-lbl  { display: none; }
   .nb-btn:active { color: #000; }
   .menu-toggle { width: var(--control-size); height: var(--control-size); }
-  .menu-panel { border-radius: 32px; padding: var(--section-title-top) var(--tab-title-x) 18px; gap: 14px; }
-  .menu-item { padding: 12px 0; border-radius: 0; }
+  .menu-panel { border-radius: 32px; padding: var(--section-title-top) var(--tab-title-x) 18px; gap: 10px; }
+  .menu-item { padding: 10px 0; border-radius: 0; }
   .menu-item-sub { display: block; }
 }
 
@@ -913,19 +922,19 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
 .panel-action:active { color: #000; }
 
 @media (orientation: landscape) and (max-height: 450px) {
-  :root { --mic-size: 60px; --clock-size: clamp(2.5rem, 28.39vh, 6.68rem); --home-pad-top: 6px; --home-pad-left: 10px; --home-pad-right: 10px; --panel-h: calc(100dvh - var(--home-pad-top) - var(--home-bottom-gap)); }
+  :root { --mic-size: 60px; --clock-size: clamp(2.5rem, 28.39vh, 6.68rem); --section-title-size: clamp(0.95rem, 2.9vh, 1.2rem); --menu-item-title-size: clamp(1.22rem, 4.2vh, 1.55rem); --menu-item-sub-size: clamp(0.98rem, 3.0vh, 1.18rem); --home-pad-top: 6px; --home-pad-left: 10px; --home-pad-right: 10px; --panel-h: calc(100dvh - var(--home-pad-top) - var(--home-bottom-gap)); }
   .wl-hms  { font-size: var(--clock-size); }
   .wl-sep  { font-size: clamp(1.84rem, 20.88vh, 5.01rem); }
   .wr-temp { font-size: clamp(2.5rem, 28.39vh, 6.68rem); }
   .menu-title { font-size: var(--section-title-size); }
-  .menu-panel { gap: 8px; padding: var(--section-title-top) var(--tab-title-x) 12px; }
+  .menu-panel { gap: 6px; padding: var(--section-title-top) var(--tab-title-x) 12px; }
   .menu-item-title { font-size: var(--menu-item-title-size); }
   .menu-item-sub { font-size: var(--menu-item-sub-size); }
 }
 
 /* Impostazioni landscape */
 @media (orientation: landscape) {
-  .imp-group { padding: 6px 16px 4px; font-size: 0.868rem; }
+  .imp-group { padding: 6px 16px 4px; font-size: var(--section-title-size); }
   .imp-row   { min-height: 44px; padding: 6px 16px; gap: 2px; justify-content: center; }
   .imp-title { font-size: var(--menu-item-title-size); }
   .imp-sub   { font-size: var(--menu-item-sub-size); }
@@ -2964,21 +2973,21 @@ setupClockFullscreenTap();
 <!-- DETTAGLIO INTERVENTO -->
 <div id="detail-panel" style="display:none;position:fixed;inset:0;background:#000;z-index:200;overflow-y:auto;padding:0 0 100px 0">
   <div style="display:flex;align-items:center;gap:12px;padding:18px 16px 12px;border-bottom:1px solid rgba(255,255,255,.1)">
-    <button onclick="closeDetail()" style="background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;padding:4px 8px;font-family:var(--mono)">←</button>
-    <span id="detail-cat" style="font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;opacity:.5;font-family:var(--mono)"></span>
+    <button onclick="closeDetail()" style="background:none;border:none;color:#fff;font-size:2.1rem;cursor:pointer;padding:4px 8px;font-family:var(--mono)">←</button>
+    <span id="detail-cat" style="font-size:.9rem;letter-spacing:.15em;text-transform:uppercase;opacity:.5;font-family:var(--mono);overflow-wrap:anywhere"></span>
   </div>
   <div style="padding:20px 18px">
-    <h1 id="detail-title" style="font-family:var(--mono);font-size:1.3rem;font-weight:700;margin:0 0 24px;line-height:1.3;color:#fff"></h1>
+    <h1 id="detail-title" style="font-family:var(--sep);font-size:1.95rem;font-weight:400;margin:0 0 24px;line-height:1.3;color:#fff;overflow-wrap:anywhere"></h1>
 
     <div style="margin-bottom:20px">
-      <div style="font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;opacity:.4;font-family:var(--mono);margin-bottom:8px">Quando</div>
-      <div id="detail-quando" style="font-family:var(--mono);font-size:.85rem;color:rgba(255,255,255,.85);line-height:1.6;white-space:pre-wrap"></div>
+      <div style="font-size:.9rem;letter-spacing:.15em;text-transform:uppercase;opacity:.4;font-family:var(--mono);margin-bottom:8px">Quando</div>
+      <div id="detail-quando" style="font-family:var(--sep);font-size:1.28rem;color:rgba(255,255,255,.85);line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere"></div>
     </div>
 
     <div>
-      <div style="font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;opacity:.4;font-family:var(--mono);margin-bottom:8px">Come</div>
-      <div id="detail-come" style="font-family:var(--mono);font-size:.85rem;color:rgba(255,255,255,.85);line-height:1.7;white-space:pre-wrap"></div>
-      <div id="detail-loading" style="display:none;font-family:var(--mono);font-size:.75rem;opacity:.4;margin-top:12px;animation:pulse 1.5s infinite">Claude sta elaborando...</div>
+      <div style="font-size:.9rem;letter-spacing:.15em;text-transform:uppercase;opacity:.4;font-family:var(--mono);margin-bottom:8px">Come</div>
+      <div id="detail-come" style="font-family:var(--sep);font-size:1.28rem;color:rgba(255,255,255,.85);line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere"></div>
+      <div id="detail-loading" style="display:none;font-family:var(--mono);font-size:1.12rem;opacity:.4;margin-top:12px;animation:pulse 1.5s infinite">Claude sta elaborando...</div>
     </div>
   </div>
 </div>

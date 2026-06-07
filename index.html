@@ -1424,11 +1424,24 @@ function closeMenu(){
 function openPanelFromMenu(id, afterOpen){
   if(typeof afterOpen === 'function') afterOpen();
   openPanel(id);
-  document.body.classList.add('menu-skip-transition');
-  setMenuOpen(false);
-  requestAnimationFrame(() => {
-    document.body.classList.remove('menu-skip-transition');
-  });
+  const home = document.getElementById('home');
+  let resetDone = false;
+  const resetMenuAfterHomeMoves = () => {
+    if(resetDone) return;
+    resetDone = true;
+    document.body.classList.add('menu-skip-transition');
+    setMenuOpen(false);
+    requestAnimationFrame(() => {
+      document.body.classList.remove('menu-skip-transition');
+    });
+  };
+  const onHomeTransitionEnd = e => {
+    if(e.propertyName !== 'transform') return;
+    home.removeEventListener('transitionend', onHomeTransitionEnd);
+    resetMenuAfterHomeMoves();
+  };
+  if(home) home.addEventListener('transitionend', onHomeTransitionEnd);
+  setTimeout(resetMenuAfterHomeMoves, 430);
 }
 
 document.addEventListener('keydown', e => {

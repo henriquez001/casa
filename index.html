@@ -39,6 +39,10 @@
   --tab-title-size: clamp(1.25rem, 5.84vw, 1.84rem);
   --tab-title-top: calc(var(--edge-gap) - (var(--tab-title-size) / 2));
   --tab-title-color: rgba(0,0,0,.65);
+  --section-title-size: clamp(0.78rem, 2.45vw, 1.02rem);
+  --section-title-top: calc(var(--edge-gap) - (var(--section-title-size) / 2));
+  --menu-item-title-size: clamp(1.18rem, 4.25vw, 1.55rem);
+  --menu-item-sub-size: clamp(0.9rem, 2.8vw, 1.08rem);
   --panel-h: calc(100dvh - var(--home-pad-top) - var(--home-bottom-gap));
   --panel-gap: 14px;
   --panel-hide-extra: 24px;
@@ -432,7 +436,7 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
   border-radius: var(--r);
   color: #000;
   z-index: 4;
-  padding: var(--tab-title-top) var(--tab-title-x) 20px;
+  padding: var(--section-title-top) var(--tab-title-x) 20px;
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -443,18 +447,18 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
 
 .menu-title {
   font-family: var(--mono);
-  font-size: var(--tab-title-size);
-  font-weight: 700;
-  letter-spacing: .01em;
+  font-size: var(--section-title-size);
+  font-weight: 600;
+  letter-spacing: .14em;
   line-height: 1;
-  text-transform: none;
-  color: var(--tab-title-color);
+  text-transform: uppercase;
+  color: rgba(0,0,0,.58);
 }
 
 .menu-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 2px;
 }
 
 .menu-item {
@@ -463,32 +467,32 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
   background: transparent;
   color: #000;
   border-radius: 0;
-  padding: 14px 0;
+  padding: 16px 0;
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr);
-  column-gap: 8px;
+  grid-template-columns: 26px minmax(0, 1fr);
+  column-gap: 12px;
   align-items: center;
   cursor: pointer;
   text-align: left;
 }
 .menu-item:active { opacity: .65; }
-.menu-icon { width: 24px; height: 24px; color: inherit; }
+.menu-icon { width: 26px; height: 26px; color: inherit; }
 .menu-item-title {
   display: block;
-  font-size: clamp(0.68rem, 2.6vw, 1.136rem);
+  font-size: var(--menu-item-title-size);
   font-family: var(--sep);
   font-weight: 400;
-  letter-spacing: .03em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
   line-height: 1.1;
 }
 .menu-item-sub {
   display: block;
-  margin-top: 3px;
-  font-size: clamp(0.58rem, 2vw, 0.835rem);
-  font-weight: 700;
+  margin-top: 5px;
+  font-size: var(--menu-item-sub-size);
+  font-weight: 500;
   color: rgba(0,0,0,.62);
-  line-height: 1.25;
+  line-height: 1.28;
 }
 
 body.menu-open .menu-panel { transform: translateX(0); }
@@ -530,19 +534,19 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
 .panel-hdr {
   flex-shrink: 0;
   display: flex; align-items: center; justify-content: space-between;
-  padding: var(--tab-title-top) var(--tab-title-x) 12px;
+  padding: var(--section-title-top) var(--tab-title-x) 12px;
   border-bottom: none;
   position: relative;
 }
 
 .panel-title {
   font-family: var(--mono);
-  font-size: var(--tab-title-size);
-  font-weight: 700;
-  letter-spacing: .01em;
+  font-size: var(--section-title-size);
+  font-weight: 600;
+  letter-spacing: .14em;
   line-height: 1;
-  color: var(--tab-title-color);
-  text-transform: none;
+  color: rgba(0,0,0,.58);
+  text-transform: uppercase;
 }
 
 .panel-close {
@@ -852,7 +856,7 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
 
 /* ══ LANDSCAPE ════════════════════════════════════ */
 @media (orientation: landscape) {
-  :root { --control-size: 38px; --mic-size: 60px; --clock-size: clamp(3.01rem, 33.4vh, 8.35rem); --home-pad-top: 10px; --home-pad-left: 10px; --home-pad-right: 10px; --home-gap: 10px; --home-bottom-gap: 10px; --tab-title-size: clamp(1.0rem, 3.01vh, 1.47rem); --panel-h: calc(100dvh - var(--home-pad-top) - var(--home-bottom-gap)); --panel-gap: 10px; }
+  :root { --control-size: 38px; --mic-size: 60px; --clock-size: clamp(3.01rem, 33.4vh, 8.35rem); --home-pad-top: 10px; --home-pad-left: 10px; --home-pad-right: 10px; --home-gap: 10px; --home-bottom-gap: 10px; --tab-title-size: clamp(1.0rem, 3.01vh, 1.47rem); --section-title-size: clamp(0.72rem, 2.2vh, 0.95rem); --menu-item-title-size: clamp(1.0rem, 3.5vh, 1.3rem); --menu-item-sub-size: clamp(0.8rem, 2.45vh, 0.98rem); --panel-h: calc(100dvh - var(--home-pad-top) - var(--home-bottom-gap)); --panel-gap: 10px; }
   .widget-left { border-radius: 32px; padding: 14px; gap: 4px; }
   .widget-right { border-radius: 32px; padding: var(--edge-gap); }
   .wl-hms  { font-size: var(--clock-size); }
@@ -863,9 +867,9 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
   .nb-lbl  { display: none; }
   .nb-btn:active { color: #000; }
   .menu-toggle { width: var(--control-size); height: var(--control-size); }
-  .menu-panel { border-radius: 32px; padding: var(--tab-title-top) var(--tab-title-x) 18px; gap: 14px; }
-  .menu-item { padding: 11px 12px; border-radius: 14px; }
-  .menu-item-sub { display: none; }
+  .menu-panel { border-radius: 32px; padding: var(--section-title-top) var(--tab-title-x) 18px; gap: 14px; }
+  .menu-item { padding: 12px 0; border-radius: 0; }
+  .menu-item-sub { display: block; }
 }
 
 .panel-body {
@@ -909,9 +913,10 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
   .wl-hms  { font-size: var(--clock-size); }
   .wl-sep  { font-size: clamp(1.84rem, 20.88vh, 5.01rem); }
   .wr-temp { font-size: clamp(2.5rem, 28.39vh, 6.68rem); }
-  .menu-title { font-size: var(--tab-title-size); }
-  .menu-panel { gap: 8px; padding: var(--tab-title-top) var(--tab-title-x) 12px; }
-  .menu-item-title { font-size: 0.969rem; }
+  .menu-title { font-size: var(--section-title-size); }
+  .menu-panel { gap: 8px; padding: var(--section-title-top) var(--tab-title-x) 12px; }
+  .menu-item-title { font-size: var(--menu-item-title-size); }
+  .menu-item-sub { font-size: var(--menu-item-sub-size); }
 }
 
 /* Impostazioni landscape */
@@ -1024,27 +1029,27 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
 
   <!-- MENU BURGER -->
   <div class="menu-panel" id="burger-menu" aria-hidden="true">
-    <div class="menu-title">Menu</div>
+    <div class="menu-title">Navigazione</div>
     <div class="menu-list">
       <button class="menu-item" onclick="openPanelFromMenu('chat-panel')">
         <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         <span>
           <span class="menu-item-title">Chat</span>
-          <span class="menu-item-sub">Conversazioni</span>
+          <span class="menu-item-sub">Domande e risposte</span>
         </span>
       </button>
       <button class="menu-item" onclick="openPanelFromMenu('att-panel',()=>setFilter('all'))">
         <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
         <span>
           <span class="menu-item-title">Archivio</span>
-          <span class="menu-item-sub">Interventi</span>
+          <span class="menu-item-sub">Casa e manutenzione</span>
         </span>
       </button>
       <button class="menu-item" onclick="openPanelFromMenu('panel-impostazioni')">
         <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         <span>
           <span class="menu-item-title">Impostazioni</span>
-          <span class="menu-item-sub">Preferenze</span>
+          <span class="menu-item-sub">App e notifiche</span>
         </span>
       </button>
     </div>
@@ -1074,7 +1079,7 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
 <!-- CHAT PANEL -->
 <div class="panel" id="chat-panel">
   <div class="panel-hdr">
-    <div class="panel-title">Casa · Chat</div>
+    <div class="panel-title">Chat</div>
     <button class="panel-close" aria-label="Chiudi" onclick="closePanel('chat-panel')">✕</button>
   </div>
   <div class="chat-area" id="chat-area">
@@ -1092,7 +1097,7 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
 <!-- ARCHIVIO PANEL -->
 <div class="panel" id="att-panel">
   <div class="panel-hdr">
-    <div class="panel-title">Casa · Archivio</div>
+    <div class="panel-title">Archivio</div>
     <button class="panel-close" aria-label="Chiudi" onclick="closePanel('att-panel')">✕</button>
   </div>
   <div class="arch-toolbar">

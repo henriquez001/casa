@@ -297,13 +297,16 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
 
 .wr-top {
   position: absolute;
-  top: var(--edge-gap);
+  top: var(--tab-title-top);
   left: var(--edge-gap);
   display: flex;
   align-items: flex-start;
   gap: 5px;
-  font-size: clamp(0.85rem, 3.5vw, 1.1rem);
-  line-height: 1.2;
+  font-family: var(--mono);
+  font-size: var(--tab-title-size);
+  font-weight: 700;
+  letter-spacing: .01em;
+  line-height: 1;
 }
 
 .wr-icon {
@@ -322,7 +325,7 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
 .wr-desc {
   display: block;
   font-size: inherit;
-  font-weight: 700;
+  font-weight: inherit;
   color: rgba(255,255,255,.85);
   line-height: inherit;
 }

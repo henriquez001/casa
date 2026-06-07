@@ -26,6 +26,7 @@
   --nb-h:  10vh; /* navbar height */
   --edge-gap: 30px; /* distanza minima elementi interni dal bordo tab */
   --control-size: 46px;
+  --control-offset: calc(var(--edge-gap) - (var(--control-size) / 2));
   --home-pad-top: 16px;
   --home-pad-left: 16px;
   --home-pad-right: 16px;
@@ -185,10 +186,10 @@ html, body {
 
 .menu-toggle {
   position: absolute;
-  top: var(--edge-gap);
-  left: var(--edge-gap);
-  width: 46px;
-  height: 46px;
+  top: var(--control-offset);
+  left: var(--control-offset);
+  width: var(--control-size);
+  height: var(--control-size);
   border: none;
   border-radius: 0;
   background: transparent;
@@ -525,8 +526,8 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
 
 .panel-close {
   position: absolute;
-  top: calc(var(--edge-gap) - (var(--control-size) / 2));
-  right: calc(var(--edge-gap) - (var(--control-size) / 2));
+  top: var(--control-offset);
+  right: var(--control-offset);
   width: var(--control-size);
   height: var(--control-size);
   display: flex;
@@ -841,7 +842,7 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
   .navbar  { border-radius: 12px 12px 0 0; }
   .nb-lbl  { display: none; }
   .nb-btn:active { color: #000; }
-  .menu-toggle { top: var(--edge-gap); left: var(--edge-gap); width: var(--control-size); height: var(--control-size); }
+  .menu-toggle { width: var(--control-size); height: var(--control-size); }
   .menu-panel { border-radius: 32px; padding: var(--tab-title-top) var(--tab-title-x) 18px; gap: 14px; }
   .menu-item { padding: 11px 12px; border-radius: 14px; }
   .menu-item-sub { display: none; }

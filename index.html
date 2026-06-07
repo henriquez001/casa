@@ -1225,6 +1225,7 @@ let weatherData = null;
 
 // Stato del microfono/TTS
 let isSpeaking = false;         // true se sta parlando via TTS
+let currentAudio = null;        // audio ElevenLabs eventualmente in riproduzione
 let wakeEnabled = false;        // true se il wake word è attivo
 let wakeRecognition = null;     // istanza corrente di SpeechRecognition
 let currentState = 'idle';      // stato UI microfono: idle | wake-active | listening | thinking | speaking
@@ -2031,42 +2032,6 @@ function setState(s){
   }
 }
 
-// Toggle manuale: toccare il bottone microfono
-// - Se sta parlando: interrompe e riprende ascolto
-// - Se wake è attivo: disattiva
-// - Se idle: attiva
-function toggleWake(){
-  if(currentState === 'speaking'){
-    window.speechSynthesis.cancel();
-    isSpeaking = false;
-    startWakeWord();
-    return;
-  }
-  if(wakeEnabled){ stopWakeWord(); return; }
-  startWakeWord();
-}
-
-// Avvia il sistema wake word: controlla supporto, imposta stato, lancia il loop
-function startWakeWord(){
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  console.log('startWakeWord — SR supportato:', !!SR, '— userAgent:', navigator.userAgent.slice(0,80));
-  if(!SR){ showToast('Microfono non supportato'); console.error('SpeechRecognition non disponibile'); return; }
-  wakeEnabled = true;
-  wakeActive  = true;
-  setState('wake-active');
-  console.log('startWakeWord — avvio openRecognition');
-  openRecognition();
-  startAmbientMonitor();
-}
-
-// Ferma completamente il wake word: disabilita flag, ferma recognition, torna idle
-function stopWakeWord(){
-  wakeEnabled = false;
-  if(wakeRecognition){ try{ wakeRecognition.stop(); }catch(e){} wakeRecognition = null; }
-  setState('idle');
-  stopAmbientMonitor();
-}
-
 // ══════════════════════════════════════════════
 // WAKE WORD ENGINE — una sola istanza continua
 //
@@ -2094,26 +2059,46 @@ let listenState = 'waitingWake'; // stato interno del loop
 // ══════════════════════════════════════════════
 
 let wakeActive = false; // true = sistema attivo
+let manualMicOff = false;
+let speechCancelToken = 0;
+
+function setStoppedMicState(){
+  setState(manualMicOff ? 'idle-manual' : 'idle');
+}
 
 function startWakeWord(){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if(!SR){ showToast('Microfono non supportato'); return; }
+  manualMicOff = false;
+  listenState = 'waitingWake';
   wakeEnabled  = true;
   wakeActive   = true;
   setState('wake-active');
   openRecognition();
 }
 
-function stopWakeWord(){
+function stopWakeWord({manual = true} = {}){
+  manualMicOff = manual;
+  speechCancelToken++;
   wakeEnabled = false;
   wakeActive  = false;
+  listenState = 'waitingWake';
+  isSpeaking = false;
+  window.speechSynthesis && window.speechSynthesis.cancel();
+  if(currentAudio){
+    const audio = currentAudio;
+    currentAudio = null;
+    audio.onended = null;
+    audio.onerror = null;
+    try{ audio.pause(); }catch(e){}
+  }
   if(wakeRecognition){
     wakeRecognition.onend   = null;
     wakeRecognition.onerror = null;
     try{ wakeRecognition.abort(); }catch(e){}
     wakeRecognition = null;
   }
-  setState('idle-manual'); // rosso — spento manualmente dall'utente
+  setStoppedMicState();
 }
 
 // Apre UNA istanza SpeechRecognition con continuous:true
@@ -2165,7 +2150,10 @@ function openRecognition(){
     if(!wakeActive) return;
     if(e.error === 'no-speech'){ console.log('onerror — no-speech, ignoro'); return; }
     if(e.error === 'not-allowed' || e.error === 'service-not-allowed'){
-      wakeActive = false; setState('idle');
+      wakeActive = false;
+      wakeEnabled = false;
+      manualMicOff = false;
+      setStoppedMicState();
       showToast('Permesso microfono negato');
       console.error('onerror — permesso negato:', e.error);
       return;
@@ -2219,28 +2207,15 @@ async function handleVoiceCommand(cmd){
     addMsg(`[ ${msg} ]`, 'ai');
     listenState = 'idle';
     if(wakeActive){ setState('wake-active'); setTimeout(openRecognition, 400); }
-    else setState('idle');
+    else setStoppedMicState();
   }
 }
 
 // Bottone mic:
-//   - Se Claude sta parlando → lo interrompe e riprende l'ascolto
-//   - Se in ascolto → spegne tutto
+//   - Se voce/microfono sono attivi → spegne tutto
 //   - Se spento → accende
 function toggleWake(){
-  if(isSpeaking){
-    // Interrompi Claude e riprendi ad ascoltare
-    window.speechSynthesis && window.speechSynthesis.cancel();
-    // Ferma ElevenLabs se attivo
-    if(currentAudio){ try{ currentAudio.pause(); currentAudio=null; }catch(e){} }
-    isSpeaking = false;
-    if(wakeActive){
-      setState('wake-active');
-      setTimeout(openRecognition, 300);
-    }
-    return;
-  }
-  if(wakeActive){ stopWakeWord(); }
+  if(wakeActive || isSpeaking || currentAudio){ stopWakeWord({manual:true}); }
   else           { startWakeWord(); }
 }
 
@@ -2302,6 +2277,9 @@ function chime(){
 // TTS — ElevenLabs o browser TTS
 // ══════════════════════════════════════════════
 async function speakText(text, onEnd=null){
+  const speechToken = speechCancelToken;
+  const speechWasCancelled = () => speechToken !== speechCancelToken;
+
   // Ferma il microfono mentre Claude parla —
   // altrimenti il recognition capta la voce di Claude e la interpreta come comando
   if(wakeRecognition){
@@ -2317,12 +2295,17 @@ async function speakText(text, onEnd=null){
     if(endCalled) return;
     endCalled = true;
     isSpeaking = false;
+    if(speechWasCancelled()){
+      if(!wakeActive) setStoppedMicState();
+      if(onEnd) onEnd();
+      return;
+    }
     // Riavvia il microfono dopo che Claude ha finito di parlare
     if(wakeActive){
       setState('wake-active');
       setTimeout(openRecognition, 600);
     } else {
-      setState('idle');
+      setStoppedMicState();
     }
     if(onEnd) onEnd();
   };
@@ -2343,6 +2326,7 @@ async function speakText(text, onEnd=null){
     .replace(/<[^>]+>/g,'');
 
   await chime();
+  if(speechWasCancelled()){ finish(); return; }
 
   // ── ElevenLabs ──
   if(elKey && elVoice){
@@ -2368,11 +2352,18 @@ async function speakText(text, onEnd=null){
       }
 
       const blob = await res.blob();
+      if(speechWasCancelled()){ finish(); return; }
       if(!blob || blob.size === 0) throw new Error('audio vuoto');
 
       const url   = URL.createObjectURL(blob);
       currentAudio = new Audio(url); // globale — così toggleWake può fermarlo
       const audio  = currentAudio;
+      if(speechWasCancelled()){
+        currentAudio = null;
+        URL.revokeObjectURL(url);
+        finish();
+        return;
+      }
 
       audio.onended = () => { currentAudio=null; URL.revokeObjectURL(url); finish(); };
       audio.onerror = () => { currentAudio=null; URL.revokeObjectURL(url); finish(); };
@@ -2393,6 +2384,7 @@ async function speakText(text, onEnd=null){
   }
 
   // ── Browser TTS (fallback) ──
+  if(speechWasCancelled()){ finish(); return; }
   if(!window.speechSynthesis){ finish(); return; }
   window.speechSynthesis.cancel();
   const utt    = new SpeechSynthesisUtterance(clean);

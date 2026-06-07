@@ -268,11 +268,13 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
 .state-wake-active  .mic-ring { border-color: rgba(0,0,0,.2); animation: ringrot 2s linear infinite; }
 .state-listening    .mic-ring { border-color: rgba(0,0,0,.4); animation: ringrot 1s linear infinite; }
 .state-thinking     .mic-ring {
-  border-color: rgba(0,0,0,.08);
-  border-top-color: rgba(0,0,0,.72);
-  border-right-color: rgba(0,0,0,.32);
-  box-shadow: 0 0 0 0 rgba(0,0,0,.16);
-  animation: thinkring 1.35s cubic-bezier(.45,0,.2,1) infinite;
+  inset: -7px;
+  border-width: 2px;
+  border-color: rgba(0,0,0,.1);
+  border-top-color: rgba(0,0,0,.9);
+  border-right-color: rgba(0,0,0,.42);
+  box-shadow: 0 0 0 0 rgba(0,0,0,.2);
+  animation: thinkring 1.2s cubic-bezier(.45,0,.2,1) infinite;
 }
 .state-speaking     .mic-ring { border-color: rgba(0,0,0,.15); animation: ringrot 1.2s linear infinite; }
 
@@ -282,9 +284,9 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
 }
 
 @keyframes thinkring {
-  0%   { transform: rotate(0deg) scale(1.08); box-shadow: 0 0 0 0 rgba(0,0,0,.18); }
-  50%  { transform: rotate(180deg) scale(1.2); box-shadow: 0 0 0 5px rgba(0,0,0,0); }
-  100% { transform: rotate(360deg) scale(1.08); box-shadow: 0 0 0 0 rgba(0,0,0,.18); }
+  0%   { transform: rotate(0deg) scale(1.05); box-shadow: 0 0 0 0 rgba(0,0,0,.22); }
+  50%  { transform: rotate(180deg) scale(1.23); box-shadow: 0 0 0 7px rgba(0,0,0,0); }
+  100% { transform: rotate(360deg) scale(1.05); box-shadow: 0 0 0 0 rgba(0,0,0,.22); }
 }
 
 /* ── Pannello destro (1/3) ── */
@@ -1894,6 +1896,7 @@ ISTRUZIONI IMPORTANTI:
 - Quando Leo chiede "come si fa" qualcosa, controlla prima se c'è una nota nell'archivio
 - Suggerisci attività in base al meteo e alla stagione
 - Tono diretto, amichevole, pratico${breve ? '\n- Rispondi in MASSIMO 2 frasi brevi (risposta vocale)' : ''}
+${breve ? '- Per la risposta vocale scrivi le unità in parole: "gradi centigradi", "per cento", "chilometri orari". Evita sigle come °C, %, km/h.' : ''}
 
 GESTIONE ARCHIVIO VOCALE: Se Leo dice di aver fatto un intervento o vuole aggiungere qualcosa all'archivio, crea la voce e rispondi con ARCHIVIO_ADD:{"titolo":"...","cat":"manutenzione|pulizia|impianto|riparazione|acquisto|altro","data":"YYYY-MM-DD o null","note":"...","scad":"YYYY-MM-DD o null"} su una riga separata, poi una conferma breve. Per eliminare: ARCHIVIO_DEL:{"titolo":"..."}. Se Leo menziona un intervento senza chiedere di salvarlo, proponilo tu.`;
 }
@@ -2286,6 +2289,19 @@ function chime(){
   });
 }
 
+function normalizeSpeechText(text){
+  return text
+    .replace(/\b(-?\d+(?:[,.]\d+)?)\s*°\s*C\b/gi, '$1 gradi centigradi')
+    .replace(/\b(-?\d+(?:[,.]\d+)?)\s*°\b/g, '$1 gradi')
+    .replace(/\b(-?\d+(?:[,.]\d+)?)\s*%\b/g, '$1 per cento')
+    .replace(/\b(-?\d+(?:[,.]\d+)?)\s*km\s*\/\s*h\b/gi, '$1 chilometri orari')
+    .replace(/\b(-?\d+(?:[,.]\d+)?)\s*m\s*\/\s*s\b/gi, '$1 metri al secondo')
+    .replace(/\b(-?\d+(?:[,.]\d+)?)\s*hPa\b/gi, '$1 ettopascal')
+    .replace(/\b(-?\d+(?:[,.]\d+)?)\s*mm\b/gi, '$1 millimetri')
+    .replace(/\b(-?\d+(?:[,.]\d+)?)\s*kWh\b/gi, '$1 chilowattora')
+    .replace(/\b(-?\d+(?:[,.]\d+)?)\s*W\b/g, '$1 watt');
+}
+
 // ══════════════════════════════════════════════
 // TTS — ElevenLabs o browser TTS
 // ══════════════════════════════════════════════
@@ -2300,7 +2316,6 @@ async function speakText(text, onEnd=null){
     try{ wakeRecognition.abort(); }catch(e){}
     wakeRecognition = null;
   }
-  setState('speaking');
 
   // Callback garantita: chiamata UNA sola volta in qualsiasi scenario
   let endCalled = false;
@@ -2332,18 +2347,17 @@ async function speakText(text, onEnd=null){
   const finish = () => { clearTimeout(safetyTimer); done(); };
 
   // Pulisce markdown e HTML
-  const clean = text
+  const clean = normalizeSpeechText(text
     .replace(/\*\*(.*?)\*\*/g,'$1')
     .replace(/\*(.*?)\*/g,'$1')
     .replace(/#+\s/g,'')
-    .replace(/<[^>]+>/g,'');
+    .replace(/<[^>]+>/g,''));
 
   await chime();
   if(speechWasCancelled()){ finish(); return; }
 
   // ── ElevenLabs ──
   if(elKey && elVoice){
-    setState('speaking'); isSpeaking = true;
     try{
       const res = await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+elVoice, {
         method: 'POST',
@@ -2380,6 +2394,7 @@ async function speakText(text, onEnd=null){
 
       audio.onended = () => { currentAudio=null; URL.revokeObjectURL(url); finish(); };
       audio.onerror = () => { currentAudio=null; URL.revokeObjectURL(url); finish(); };
+      audio.onplay  = () => { if(!speechWasCancelled()){ isSpeaking = true; setState('speaking'); } };
 
       const playPromise = audio.play();
       if(playPromise && typeof playPromise.then === 'function'){

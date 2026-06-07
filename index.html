@@ -28,6 +28,7 @@
   --control-size: 46px;
   --control-offset: calc(var(--edge-gap) - (var(--control-size) / 2));
   --mic-size: 60px;
+  --clock-size: clamp(5.01rem, 26.72vw, 11.69rem);
   --home-pad-top: 16px;
   --home-pad-left: 16px;
   --home-pad-right: 16px;
@@ -139,7 +140,7 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 20px 18px 90px;
+  padding: 20px 18px;
   position: relative;
   min-width: 0;
   z-index: 5;
@@ -157,7 +158,7 @@ html, body {
 
 .wl-hms {
   font-family: var(--num);
-  font-size: clamp(5.01rem, 26.72vw, 11.69rem);
+  font-size: var(--clock-size);
   font-weight: 400;
   color: #000;
   letter-spacing: -.05em;
@@ -221,7 +222,7 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
 .widget-left .mic-area {
   position: absolute;
   left: 50%;
-  top: 75%;
+  top: calc(75% + (var(--clock-size) / 4));
   transform: translate(-50%, -50%);
 }
 
@@ -836,10 +837,10 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
 
 /* ══ LANDSCAPE ════════════════════════════════════ */
 @media (orientation: landscape) {
-  :root { --control-size: 38px; --mic-size: 60px; --home-pad-top: 10px; --home-pad-left: 10px; --home-pad-right: 10px; --home-gap: 10px; --home-bottom-gap: 10px; --tab-title-size: clamp(1.0rem, 3.01vh, 1.47rem); --panel-h: calc(100dvh - var(--home-pad-top) - var(--home-bottom-gap)); --panel-gap: 10px; }
+  :root { --control-size: 38px; --mic-size: 60px; --clock-size: clamp(3.01rem, 33.4vh, 8.35rem); --home-pad-top: 10px; --home-pad-left: 10px; --home-pad-right: 10px; --home-gap: 10px; --home-bottom-gap: 10px; --tab-title-size: clamp(1.0rem, 3.01vh, 1.47rem); --panel-h: calc(100dvh - var(--home-pad-top) - var(--home-bottom-gap)); --panel-gap: 10px; }
   .widget-left { border-radius: 32px; padding: 14px; gap: 4px; }
   .widget-right { border-radius: 32px; padding: var(--edge-gap); }
-  .wl-hms  { font-size: clamp(3.01rem, 33.4vh, 8.35rem); }
+  .wl-hms  { font-size: var(--clock-size); }
   .wl-sep  { font-size: clamp(2.25rem, 25.05vh, 6.18rem); }
   .wl-date { font-size: var(--tab-title-size); }
   .wr-temp { font-size: clamp(3.01rem, 33.4vh, 8.35rem); }
@@ -889,8 +890,8 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
 .panel-action:active { color: #000; }
 
 @media (orientation: landscape) and (max-height: 450px) {
-  :root { --mic-size: 60px; --home-pad-top: 6px; --home-pad-left: 10px; --home-pad-right: 10px; --panel-h: calc(100dvh - var(--home-pad-top) - var(--home-bottom-gap)); }
-  .wl-hms  { font-size: clamp(2.5rem, 28.39vh, 6.68rem); }
+  :root { --mic-size: 60px; --clock-size: clamp(2.5rem, 28.39vh, 6.68rem); --home-pad-top: 6px; --home-pad-left: 10px; --home-pad-right: 10px; --panel-h: calc(100dvh - var(--home-pad-top) - var(--home-bottom-gap)); }
+  .wl-hms  { font-size: var(--clock-size); }
   .wl-sep  { font-size: clamp(1.84rem, 20.88vh, 5.01rem); }
   .wr-temp { font-size: clamp(2.5rem, 28.39vh, 6.68rem); }
   .menu-title { font-size: var(--tab-title-size); }

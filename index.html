@@ -27,7 +27,7 @@
   --edge-gap: 40px; /* distanza minima elementi interni dal bordo tab */
   --control-size: 46px;
   --control-offset: calc(var(--edge-gap) - (var(--control-size) / 2));
-  --mic-size: 140px;
+  --mic-size: 60px;
   --home-pad-top: 16px;
   --home-pad-left: 16px;
   --home-pad-right: 16px;
@@ -238,7 +238,7 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
 }
 
 .mic-ring {
-  position: absolute; inset: -6px;
+  position: absolute; inset: -4px;
   border-radius: 50%;
   border: 1px solid transparent;
   pointer-events: none;
@@ -247,7 +247,7 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
 .mic-btn {
   position: absolute; inset: 0;
   border-radius: 50%;
-  border: 3px solid rgba(0,0,0,.3);
+  border: 2px solid rgba(0,0,0,.3);
   background: transparent;
   color: #000;
   cursor: pointer;
@@ -836,7 +836,7 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
 
 /* ══ LANDSCAPE ════════════════════════════════════ */
 @media (orientation: landscape) {
-  :root { --control-size: 38px; --mic-size: 140px; --home-pad-top: 10px; --home-pad-left: 10px; --home-pad-right: 10px; --home-gap: 10px; --home-bottom-gap: 10px; --tab-title-size: clamp(1.0rem, 3.01vh, 1.47rem); --panel-h: calc(100dvh - var(--home-pad-top) - var(--home-bottom-gap)); --panel-gap: 10px; }
+  :root { --control-size: 38px; --mic-size: 60px; --home-pad-top: 10px; --home-pad-left: 10px; --home-pad-right: 10px; --home-gap: 10px; --home-bottom-gap: 10px; --tab-title-size: clamp(1.0rem, 3.01vh, 1.47rem); --panel-h: calc(100dvh - var(--home-pad-top) - var(--home-bottom-gap)); --panel-gap: 10px; }
   .widget-left { border-radius: 32px; padding: 14px; gap: 4px; }
   .widget-right { border-radius: 32px; padding: var(--edge-gap); }
   .wl-hms  { font-size: clamp(3.01rem, 33.4vh, 8.35rem); }
@@ -889,7 +889,7 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
 .panel-action:active { color: #000; }
 
 @media (orientation: landscape) and (max-height: 450px) {
-  :root { --mic-size: 112px; --home-pad-top: 6px; --home-pad-left: 10px; --home-pad-right: 10px; --panel-h: calc(100dvh - var(--home-pad-top) - var(--home-bottom-gap)); }
+  :root { --mic-size: 60px; --home-pad-top: 6px; --home-pad-left: 10px; --home-pad-right: 10px; --panel-h: calc(100dvh - var(--home-pad-top) - var(--home-bottom-gap)); }
   .wl-hms  { font-size: clamp(2.5rem, 28.39vh, 6.68rem); }
   .wl-sep  { font-size: clamp(1.84rem, 20.88vh, 5.01rem); }
   .wr-temp { font-size: clamp(2.5rem, 28.39vh, 6.68rem); }
@@ -964,7 +964,7 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
         <div class="mic-ring-wrap" id="mic-wrap">
           <div class="mic-ring" id="mic-ring"></div>
           <button class="mic-btn" id="mic-btn" onclick="toggleWake()">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
               <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
               <line x1="12" y1="19" x2="12" y2="23"/>

@@ -24,14 +24,15 @@
   --sep:   'Hubot Sans', 'Share Tech Mono', monospace;
   --num:   'Hubot Sans', monospace;
   --nb-h:  10vh; /* navbar height */
+  --edge-gap: 30px; /* distanza minima elementi interni dal bordo tab */
   --home-pad-top: 16px;
   --home-pad-left: 16px;
   --home-pad-right: 16px;
   --home-gap: 14px;
   --home-bottom-gap: 14px;
   --menu-w: calc((100vw - var(--home-pad-left) - var(--home-pad-right) - var(--home-gap)) / 3);
-  --tab-title-top: 30px;
-  --tab-title-x: 24px;
+  --tab-title-top: var(--edge-gap);
+  --tab-title-x: var(--edge-gap);
   --tab-title-size: clamp(1.25rem, 5.84vw, 1.84rem);
   --tab-title-color: rgba(0,0,0,.65);
   --panel-h: calc(100dvh - var(--home-pad-top) - var(--home-bottom-gap));
@@ -183,8 +184,8 @@ html, body {
 
 .menu-toggle {
   position: absolute;
-  top: 30px;
-  left: 30px;
+  top: var(--edge-gap);
+  left: var(--edge-gap);
   width: 46px;
   height: 46px;
   border: none;
@@ -276,7 +277,7 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
-  padding: 20px 20px;
+  padding: var(--edge-gap);
   min-width: 0;
   overflow: hidden;
   transition: background .3s, border-color .3s;
@@ -293,8 +294,8 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
 
 .wr-top {
   position: absolute;
-  top: 30px;
-  left: 30px;
+  top: var(--edge-gap);
+  left: var(--edge-gap);
   display: flex;
   align-items: flex-start;
   gap: 5px;
@@ -819,9 +820,9 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
 
 /* ══ LANDSCAPE ════════════════════════════════════ */
 @media (orientation: landscape) {
-  :root { --home-pad-top: 10px; --home-pad-left: 10px; --home-pad-right: 10px; --home-gap: 10px; --home-bottom-gap: 10px; --tab-title-x: 16px; --tab-title-size: clamp(1.0rem, 3.01vh, 1.47rem); --panel-h: calc(100dvh - var(--home-pad-top) - var(--home-bottom-gap)); --panel-gap: 10px; }
+  :root { --edge-gap: 18px; --home-pad-top: 10px; --home-pad-left: 10px; --home-pad-right: 10px; --home-gap: 10px; --home-bottom-gap: 10px; --tab-title-top: var(--edge-gap); --tab-title-x: var(--edge-gap); --tab-title-size: clamp(1.0rem, 3.01vh, 1.47rem); --panel-h: calc(100dvh - var(--home-pad-top) - var(--home-bottom-gap)); --panel-gap: 10px; }
   .widget-left { border-radius: 32px; padding: 14px; gap: 4px; }
-  .widget-right { border-radius: 32px; padding: 12px 14px; }
+  .widget-right { border-radius: 32px; padding: var(--edge-gap); }
   .wl-hms  { font-size: clamp(3.01rem, 33.4vh, 8.35rem); }
   .wl-sep  { font-size: clamp(2.25rem, 25.05vh, 6.18rem); }
   .wl-date { font-size: var(--tab-title-size); }
@@ -830,7 +831,7 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
   .navbar  { border-radius: 12px 12px 0 0; }
   .nb-lbl  { display: none; }
   .nb-btn:active { color: #000; }
-  .menu-toggle { top: 18px; left: 18px; width: 38px; height: 38px; }
+  .menu-toggle { top: var(--edge-gap); left: var(--edge-gap); width: 38px; height: 38px; }
   .menu-panel { border-radius: 32px; padding: var(--tab-title-top) var(--tab-title-x) 18px; gap: 14px; }
   .menu-item { padding: 11px 12px; border-radius: 14px; }
   .menu-item-sub { display: none; }
@@ -873,7 +874,7 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
 .panel-action:active { color: #000; }
 
 @media (orientation: landscape) and (max-height: 450px) {
-  :root { --home-pad-top: 6px; --home-pad-left: 10px; --home-pad-right: 10px; --tab-title-x: 12px; --panel-h: calc(100dvh - var(--home-pad-top) - var(--home-bottom-gap)); }
+  :root { --edge-gap: 18px; --home-pad-top: 6px; --home-pad-left: 10px; --home-pad-right: 10px; --tab-title-top: var(--edge-gap); --tab-title-x: var(--edge-gap); --panel-h: calc(100dvh - var(--home-pad-top) - var(--home-bottom-gap)); }
   .wl-hms  { font-size: clamp(2.5rem, 28.39vh, 6.68rem); }
   .wl-sep  { font-size: clamp(1.84rem, 20.88vh, 5.01rem); }
   .wr-temp { font-size: clamp(2.5rem, 28.39vh, 6.68rem); }

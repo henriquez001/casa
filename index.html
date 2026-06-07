@@ -25,6 +25,7 @@
   --num:   'Hubot Sans', monospace;
   --nb-h:  10vh; /* navbar height */
   --edge-gap: 30px; /* distanza minima elementi interni dal bordo tab */
+  --control-size: 46px;
   --home-pad-top: 16px;
   --home-pad-left: 16px;
   --home-pad-right: 16px;
@@ -510,6 +511,7 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
   display: flex; align-items: center; justify-content: space-between;
   padding: var(--tab-title-top) var(--tab-title-x) 12px;
   border-bottom: none;
+  position: relative;
 }
 
 .panel-title {
@@ -522,10 +524,18 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
 }
 
 .panel-close {
-  font-family: var(--mono); font-size: 0.902rem; font-weight: 700;
+  position: absolute;
+  top: calc(var(--edge-gap) - (var(--control-size) / 2));
+  right: calc(var(--edge-gap) - (var(--control-size) / 2));
+  width: var(--control-size);
+  height: var(--control-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono); font-size: 1.202rem; font-weight: 700;
   color: rgba(0,0,0,.62); background: transparent;
   border: none;
-  padding: 6px 0 6px 12px; cursor: pointer; letter-spacing: .08em;
+  padding: 0; cursor: pointer; letter-spacing: 0;
   text-transform: uppercase;
 }
 .panel-close:active { color: #000; }
@@ -820,7 +830,7 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
 
 /* ══ LANDSCAPE ════════════════════════════════════ */
 @media (orientation: landscape) {
-  :root { --home-pad-top: 10px; --home-pad-left: 10px; --home-pad-right: 10px; --home-gap: 10px; --home-bottom-gap: 10px; --tab-title-size: clamp(1.0rem, 3.01vh, 1.47rem); --panel-h: calc(100dvh - var(--home-pad-top) - var(--home-bottom-gap)); --panel-gap: 10px; }
+  :root { --control-size: 38px; --home-pad-top: 10px; --home-pad-left: 10px; --home-pad-right: 10px; --home-gap: 10px; --home-bottom-gap: 10px; --tab-title-size: clamp(1.0rem, 3.01vh, 1.47rem); --panel-h: calc(100dvh - var(--home-pad-top) - var(--home-bottom-gap)); --panel-gap: 10px; }
   .widget-left { border-radius: 32px; padding: 14px; gap: 4px; }
   .widget-right { border-radius: 32px; padding: var(--edge-gap); }
   .wl-hms  { font-size: clamp(3.01rem, 33.4vh, 8.35rem); }
@@ -831,7 +841,7 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
   .navbar  { border-radius: 12px 12px 0 0; }
   .nb-lbl  { display: none; }
   .nb-btn:active { color: #000; }
-  .menu-toggle { top: var(--edge-gap); left: var(--edge-gap); width: 38px; height: 38px; }
+  .menu-toggle { top: var(--edge-gap); left: var(--edge-gap); width: var(--control-size); height: var(--control-size); }
   .menu-panel { border-radius: 32px; padding: var(--tab-title-top) var(--tab-title-x) 18px; gap: 14px; }
   .menu-item { padding: 11px 12px; border-radius: 14px; }
   .menu-item-sub { display: none; }

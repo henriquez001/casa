@@ -243,6 +243,7 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
   border-radius: 50%;
   border: 1px solid transparent;
   pointer-events: none;
+  transition: border-color .2s, box-shadow .2s;
 }
 
 .mic-btn {
@@ -266,12 +267,24 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
 
 .state-wake-active  .mic-ring { border-color: rgba(0,0,0,.2); animation: ringrot 2s linear infinite; }
 .state-listening    .mic-ring { border-color: rgba(0,0,0,.4); animation: ringrot 1s linear infinite; }
-.state-thinking     .mic-ring { border-color: rgba(0,0,0,.15); animation: ringrot 1.5s linear infinite; }
+.state-thinking     .mic-ring {
+  border-color: rgba(0,0,0,.08);
+  border-top-color: rgba(0,0,0,.72);
+  border-right-color: rgba(0,0,0,.32);
+  box-shadow: 0 0 0 0 rgba(0,0,0,.16);
+  animation: thinkring 1.35s cubic-bezier(.45,0,.2,1) infinite;
+}
 .state-speaking     .mic-ring { border-color: rgba(0,0,0,.15); animation: ringrot 1.2s linear infinite; }
 
 @keyframes ringrot {
   from { transform: rotate(0deg) scale(1.15); }
   to   { transform: rotate(360deg) scale(1.15); }
+}
+
+@keyframes thinkring {
+  0%   { transform: rotate(0deg) scale(1.08); box-shadow: 0 0 0 0 rgba(0,0,0,.18); }
+  50%  { transform: rotate(180deg) scale(1.2); box-shadow: 0 0 0 5px rgba(0,0,0,0); }
+  100% { transform: rotate(360deg) scale(1.08); box-shadow: 0 0 0 0 rgba(0,0,0,.18); }
 }
 
 /* ── Pannello destro (1/3) ── */

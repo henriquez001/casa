@@ -36,6 +36,7 @@
   --tab-title-color: rgba(0,0,0,.65);
   --panel-h: calc(100dvh - var(--home-pad-top) - var(--home-bottom-gap));
   --panel-gap: 14px;
+  --panel-hide-extra: 24px;
 }
 
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -491,10 +492,15 @@ body.menu-skip-transition .menu-toggle line {
   flex-direction: column;
   border-radius: var(--r);
   overflow: hidden;
-  transform: translateY(calc(100% + var(--panel-gap)));
-  transition: transform .34s linear;
+  transform: translateY(calc(100% + var(--panel-gap) + var(--panel-hide-extra)));
+  visibility: hidden;
+  transition: transform .34s linear, visibility 0s .34s;
 }
-.panel.open { transform: translateY(0); }
+.panel.open {
+  transform: translateY(0);
+  visibility: visible;
+  transition: transform .34s linear, visibility 0s;
+}
 body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel-gap)) * -1)); }
 #home { transition: transform .34s linear; }
 

@@ -178,6 +178,12 @@ body.smart-open .smart-view {
   display: block;
   width: 100%;
   height: 100%;
+  cursor: grab;
+  touch-action: none;
+}
+
+.smart-scene canvas:active {
+  cursor: grabbing;
 }
 
 .smart-topbar {
@@ -1743,6 +1749,7 @@ function setSmartOpen(open){
 
 function canStartHomeSwipe(target){
   if(document.body.classList.contains('panel-open') || document.body.classList.contains('menu-open')) return false;
+  if(document.body.classList.contains('smart-open') && target.closest?.('#smart-scene')) return false;
   return !target.closest?.('input, textarea, select');
 }
 
@@ -3430,6 +3437,7 @@ setupSmartActions();
 
 <script type="module">
 import * as THREE from 'https://unpkg.com/three@0.165.0/build/three.module.js';
+import { OrbitControls } from 'https://unpkg.com/three@0.165.0/examples/jsm/controls/OrbitControls.js';
 
 const smartSceneRoot = document.getElementById('smart-scene');
 
@@ -3438,13 +3446,27 @@ if(smartSceneRoot){
   scene.background = new THREE.Color(0xc7f3ff);
 
   const camera = new THREE.OrthographicCamera(-4, 4, 3, -3, 0.1, 100);
-  camera.position.set(4.8, 5.4, 5.2);
+  camera.position.set(5.4, 6.1, 5.8);
   camera.lookAt(0, 0, 0);
 
   const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:false });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.shadowMap.enabled = true;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
   smartSceneRoot.appendChild(renderer.domElement);
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = .08;
+  controls.minZoom = .72;
+  controls.maxZoom = 2.55;
+  controls.minPolarAngle = .36;
+  controls.maxPolarAngle = 1.22;
+  controls.rotateSpeed = .58;
+  controls.zoomSpeed = .72;
+  controls.panSpeed = .55;
+  controls.target.set(0, .18, -.18);
+  controls.update();
 
   const ambient = new THREE.HemisphereLight(0xffffff, 0x7aa8b8, 2.2);
   scene.add(ambient);
@@ -3458,22 +3480,74 @@ if(smartSceneRoot){
   house.rotation.y = -0.36;
   scene.add(house);
 
-  const matFloor = new THREE.MeshStandardMaterial({ color:0xf6f2df, roughness:.72, metalness:.02 });
-  const matWall = new THREE.MeshStandardMaterial({ color:0x111314, roughness:.65, metalness:.02 });
-  const matOff = new THREE.MeshStandardMaterial({ color:0x4f5a5f, roughness:.82 });
+  const mats = {
+    floor:new THREE.MeshStandardMaterial({ color:0xf6f2df, roughness:.72, metalness:.02 }),
+    selected:new THREE.MeshStandardMaterial({ color:0xffffff, roughness:.6, metalness:.02 }),
+    wall:new THREE.MeshStandardMaterial({ color:0x111314, roughness:.65, metalness:.02 }),
+    trim:new THREE.MeshStandardMaterial({ color:0xf3f1e9, roughness:.55 }),
+    glass:new THREE.MeshStandardMaterial({ color:0x94e7ff, transparent:true, opacity:.45, roughness:.15, metalness:.05 }),
+    wood:new THREE.MeshStandardMaterial({ color:0x9b714a, roughness:.58 }),
+    dark:new THREE.MeshStandardMaterial({ color:0x1b1f21, roughness:.7 }),
+    fabric:new THREE.MeshStandardMaterial({ color:0x315f72, roughness:.82 }),
+    bed:new THREE.MeshStandardMaterial({ color:0xf1c9b7, roughness:.76 }),
+    counter:new THREE.MeshStandardMaterial({ color:0xd8dde0, roughness:.42 }),
+    metal:new THREE.MeshStandardMaterial({ color:0xb8c3c8, roughness:.32, metalness:.28 }),
+    rug:new THREE.MeshStandardMaterial({ color:0x2f9bff, roughness:.9 }),
+    lamp:new THREE.MeshStandardMaterial({ color:0xffd60a, emissive:0xffc400, emissiveIntensity:.55, roughness:.4 }),
+    off:new THREE.MeshStandardMaterial({ color:0x4f5a5f, roughness:.82 })
+  };
 
   const roomData = [
-    { name:'Sala', note:'2 luci', x:0, z:.55, w:3.15, d:2.25, active:true, color:0xffd60a },
-    { name:'Cucina', note:'1 luce', x:-2.02, z:-1.05, w:1.85, d:1.7, active:true, color:0x30d158 },
-    { name:'Camera', note:'clima spento', x:1.8, z:-1.05, w:2, d:1.7, active:false, color:0x7c8b92 },
-    { name:'Ingresso', note:'presa attiva', x:-.1, z:-1.72, w:1.52, d:.82, active:true, color:0x64d2ff }
+    { name:'Sala', note:'2 luci', x:0, z:.55, w:3.15, d:2.25, active:true, color:0xffd60a, floor:0xf6f2df },
+    { name:'Cucina', note:'1 luce', x:-2.02, z:-1.05, w:1.85, d:1.7, active:true, color:0x30d158, floor:0xe8f6ee },
+    { name:'Camera', note:'clima spento', x:1.8, z:-1.05, w:2, d:1.7, active:false, color:0x7c8b92, floor:0xf7ece5 },
+    { name:'Ingresso', note:'presa attiva', x:-.1, z:-1.72, w:1.52, d:.82, active:true, color:0x64d2ff, floor:0xeef5f7 }
   ];
 
   const roomMeshes = [];
+  const roomObjects = new Map();
   const markerGeo = new THREE.CylinderGeometry(.16, .16, .16, 36);
 
+  function addBox(group, x, y, z, w, h, d, material, cast=true, receive=true){
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
+    mesh.position.set(x, y, z);
+    mesh.castShadow = cast;
+    mesh.receiveShadow = receive;
+    group.add(mesh);
+    return mesh;
+  }
+
+  function addCylinder(group, x, y, z, radius, height, material, segments=36){
+    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, height, segments), material);
+    mesh.position.set(x, y, z);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    group.add(mesh);
+    return mesh;
+  }
+
+  function addRoomLabel(room){
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'rgba(0,0,0,.72)';
+    ctx.font = '700 28px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(room.name, 128, 32);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map:texture, transparent:true }));
+    sprite.position.set(room.x, .08, room.z - room.d * .33);
+    sprite.scale.set(1.15, .29, 1);
+    house.add(sprite);
+  }
+
   roomData.forEach(room => {
-    const floor = new THREE.Mesh(new THREE.BoxGeometry(room.w, .12, room.d), matFloor);
+    const floorMat = mats.floor.clone();
+    floorMat.color.setHex(room.floor);
+    const floor = new THREE.Mesh(new THREE.BoxGeometry(room.w, .12, room.d), floorMat);
     floor.position.set(room.x, 0, room.z);
     floor.receiveShadow = true;
     floor.userData.room = room;
@@ -3482,13 +3556,15 @@ if(smartSceneRoot){
 
     const markerMat = room.active
       ? new THREE.MeshStandardMaterial({ color:room.color, emissive:room.color, emissiveIntensity:.65, roughness:.4 })
-      : matOff;
+      : mats.off;
     const marker = new THREE.Mesh(markerGeo, markerMat);
     marker.position.set(room.x, .24, room.z);
     marker.userData.room = room;
     marker.castShadow = true;
     house.add(marker);
     roomMeshes.push(marker);
+    roomObjects.set(room.name, { floor, marker, floorMat });
+    addRoomLabel(room);
   });
 
   const wallSpecs = [
@@ -3502,10 +3578,7 @@ if(smartSceneRoot){
   ];
 
   wallSpecs.forEach(wall => {
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(wall.w, .58, wall.d), matWall);
-    mesh.position.set(wall.x, .29, wall.z);
-    mesh.castShadow = true;
-    house.add(mesh);
+    addBox(house, wall.x, .29, wall.z, wall.w, .58, wall.d, mats.wall);
   });
 
   const base = new THREE.Mesh(
@@ -3516,13 +3589,61 @@ if(smartSceneRoot){
   base.receiveShadow = true;
   house.add(base);
 
+  [
+    { x:-1.85, z:1.79, w:.92, d:.06 },
+    { x:.95, z:1.79, w:1.16, d:.06 },
+    { x:3.04, z:-.92, w:.06, d:.92 },
+    { x:-3.04, z:-1.12, w:.06, d:.86 }
+  ].forEach(win => addBox(house, win.x, .48, win.z, win.w, .32, win.d, mats.glass, false, false));
+
+  [
+    { x:-.62, z:-.18, w:.72, d:.055 },
+    { x:.92, z:-2.14, w:.82, d:.055 },
+    { x:-2.05, z:-2.14, w:.72, d:.055 }
+  ].forEach(door => addBox(house, door.x, .22, door.z, door.w, .34, door.d, mats.wood));
+
+  const furniture = new THREE.Group();
+  house.add(furniture);
+
+  addBox(furniture, -.35, .13, 1.04, 1.35, .26, .42, mats.fabric);
+  addBox(furniture, -.35, .45, 1.24, 1.35, .44, .16, mats.fabric);
+  addBox(furniture, -.95, .29, .72, .22, .32, .38, mats.fabric);
+  addBox(furniture, .25, .29, .72, .22, .32, .38, mats.fabric);
+  addBox(furniture, .82, .18, .46, .82, .09, .48, mats.wood);
+  addBox(furniture, 1.45, .28, 1.67, .92, .32, .08, mats.dark);
+  addBox(furniture, .12, .065, .35, 1.72, .03, .92, mats.rug, false, true);
+
+  addBox(furniture, -2.46, .22, -1.44, .32, .44, 1.12, mats.counter);
+  addBox(furniture, -1.62, .22, -1.78, .88, .44, .32, mats.counter);
+  addBox(furniture, -2.08, .32, -.66, .62, .18, .42, mats.metal);
+  addCylinder(furniture, -1.54, .33, -.68, .22, .08, mats.wood);
+
+  addBox(furniture, 1.86, .22, -1.15, 1.12, .32, .86, mats.bed);
+  addBox(furniture, 1.34, .48, -1.15, .16, .28, .86, mats.trim);
+  addBox(furniture, 2.55, .36, -.38, .34, .72, 1.02, mats.wood);
+  addBox(furniture, 1.55, .18, -1.94, .58, .34, .22, mats.wood);
+
+  addBox(furniture, -.1, .17, -1.7, .88, .34, .26, mats.dark);
+  addCylinder(furniture, -.9, .34, -1.7, .11, .44, mats.lamp);
+  addCylinder(furniture, 1.26, .34, .66, .1, .52, mats.lamp);
+  addCylinder(furniture, -2.42, .34, -.4, .1, .48, mats.lamp);
+
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
   const label = document.getElementById('smart-room-label');
+  let selectedRoom = roomData[0];
+  let pointerDownPoint = null;
 
   function selectRoom(room){
     if(!room) return;
+    selectedRoom = room;
     if(label) label.textContent = `${room.name} - ${room.note}`;
+    roomObjects.forEach((obj, name) => {
+      const active = name === room.name;
+      obj.floor.material = active ? mats.selected : obj.floorMat;
+      obj.marker.scale.setScalar(active ? 1.38 : 1);
+    });
+    controls.target.set(room.x, .18, room.z);
   }
 
   function resizeSmartScene(){
@@ -3540,6 +3661,11 @@ if(smartSceneRoot){
   }
 
   function pickRoom(e){
+    if(pointerDownPoint){
+      const moved = Math.hypot(e.clientX - pointerDownPoint.x, e.clientY - pointerDownPoint.y);
+      pointerDownPoint = null;
+      if(moved > 8) return;
+    }
     const rect = renderer.domElement.getBoundingClientRect();
     pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     pointer.y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
@@ -3548,13 +3674,17 @@ if(smartSceneRoot){
     if(hit) selectRoom(hit.object.userData.room);
   }
 
+  renderer.domElement.addEventListener('pointerdown', e => {
+    pointerDownPoint = { x:e.clientX, y:e.clientY };
+  });
   renderer.domElement.addEventListener('pointerup', pickRoom);
   window.addEventListener('resize', resizeSmartScene);
   window.addEventListener('orientationchange', () => setTimeout(resizeSmartScene, 120));
 
   function animateSmartScene(t){
-    house.rotation.y = -0.36 + Math.sin(t * .00045) * .035;
-    house.position.y = Math.sin(t * .0011) * .035;
+    controls.update();
+    const current = roomObjects.get(selectedRoom.name);
+    if(current) current.marker.position.y = .24 + Math.sin(t * .004) * .035;
     renderer.render(scene, camera);
     requestAnimationFrame(animateSmartScene);
   }

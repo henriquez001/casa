@@ -3437,7 +3437,6 @@ setupSmartActions();
 
 <script type="module">
 import * as THREE from 'https://unpkg.com/three@0.165.0/build/three.module.js';
-import { OrbitControls } from 'https://unpkg.com/three@0.165.0/examples/jsm/controls/OrbitControls.js';
 
 const smartSceneRoot = document.getElementById('smart-scene');
 
@@ -3455,18 +3454,33 @@ if(smartSceneRoot){
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   smartSceneRoot.appendChild(renderer.domElement);
 
-  const controls = new OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true;
-  controls.dampingFactor = .08;
-  controls.minZoom = .72;
-  controls.maxZoom = 2.55;
-  controls.minPolarAngle = .36;
-  controls.maxPolarAngle = 1.22;
-  controls.rotateSpeed = .58;
-  controls.zoomSpeed = .72;
-  controls.panSpeed = .55;
-  controls.target.set(0, .18, -.18);
-  controls.update();
+  const sceneTarget = new THREE.Vector3(0, .18, -.18);
+  const orbit = {
+    yaw:.74,
+    pitch:.72,
+    radius:8.2,
+    zoom:1,
+    minZoom:.72,
+    maxZoom:2.55,
+    dragStart:null,
+    lastPinch:0
+  };
+
+  function clamp(v, min, max){
+    return Math.max(min, Math.min(max, v));
+  }
+
+  function updateCameraOrbit(){
+    const cp = Math.cos(orbit.pitch);
+    camera.position.set(
+      sceneTarget.x + Math.sin(orbit.yaw) * cp * orbit.radius,
+      sceneTarget.y + Math.sin(orbit.pitch) * orbit.radius,
+      sceneTarget.z + Math.cos(orbit.yaw) * cp * orbit.radius
+    );
+    camera.lookAt(sceneTarget);
+    camera.zoom = orbit.zoom;
+    camera.updateProjectionMatrix();
+  }
 
   const ambient = new THREE.HemisphereLight(0xffffff, 0x7aa8b8, 2.2);
   scene.add(ambient);
@@ -3633,6 +3647,7 @@ if(smartSceneRoot){
   const label = document.getElementById('smart-room-label');
   let selectedRoom = roomData[0];
   let pointerDownPoint = null;
+  const activePointers = new Map();
 
   function selectRoom(room){
     if(!room) return;
@@ -3643,7 +3658,8 @@ if(smartSceneRoot){
       obj.floor.material = active ? mats.selected : obj.floorMat;
       obj.marker.scale.setScalar(active ? 1.38 : 1);
     });
-    controls.target.set(room.x, .18, room.z);
+    sceneTarget.set(room.x, .18, room.z);
+    updateCameraOrbit();
   }
 
   function resizeSmartScene(){
@@ -3656,8 +3672,71 @@ if(smartSceneRoot){
     camera.right = zoom * aspect;
     camera.top = zoom;
     camera.bottom = -zoom;
-    camera.updateProjectionMatrix();
     renderer.setSize(width, height, false);
+    updateCameraOrbit();
+  }
+
+  function getPointerDistance(){
+    const pts = [...activePointers.values()];
+    if(pts.length < 2) return 0;
+    return Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+  }
+
+  function handleScenePointerDown(e){
+    renderer.domElement.setPointerCapture?.(e.pointerId);
+    pointerDownPoint = { x:e.clientX, y:e.clientY };
+    activePointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+
+    if(activePointers.size === 1){
+      orbit.dragStart = { x:e.clientX, y:e.clientY, yaw:orbit.yaw, pitch:orbit.pitch };
+      return;
+    }
+
+    if(activePointers.size === 2){
+      orbit.lastPinch = getPointerDistance();
+      orbit.dragStart = null;
+    }
+  }
+
+  function handleScenePointerMove(e){
+    if(!activePointers.has(e.pointerId)) return;
+    activePointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+
+    if(activePointers.size >= 2){
+      const dist = getPointerDistance();
+      if(orbit.lastPinch > 0 && dist > 0){
+        orbit.zoom = clamp(orbit.zoom * (dist / orbit.lastPinch), orbit.minZoom, orbit.maxZoom);
+        updateCameraOrbit();
+      }
+      orbit.lastPinch = dist;
+      return;
+    }
+
+    if(!orbit.dragStart) return;
+    const dx = e.clientX - orbit.dragStart.x;
+    const dy = e.clientY - orbit.dragStart.y;
+    orbit.yaw = orbit.dragStart.yaw - dx * .006;
+    orbit.pitch = clamp(orbit.dragStart.pitch + dy * .004, .36, 1.22);
+    updateCameraOrbit();
+  }
+
+  function handleScenePointerEnd(e){
+    const wasPinching = activePointers.size > 1;
+    activePointers.delete(e.pointerId);
+    if(activePointers.size < 2) orbit.lastPinch = 0;
+    if(activePointers.size === 0) orbit.dragStart = null;
+    if(wasPinching){
+      pointerDownPoint = null;
+      return;
+    }
+    pickRoom(e);
+  }
+
+  function handleSceneWheel(e){
+    e.preventDefault();
+    const direction = e.deltaY > 0 ? .9 : 1.1;
+    orbit.zoom = clamp(orbit.zoom * direction, orbit.minZoom, orbit.maxZoom);
+    updateCameraOrbit();
   }
 
   function pickRoom(e){
@@ -3674,15 +3753,15 @@ if(smartSceneRoot){
     if(hit) selectRoom(hit.object.userData.room);
   }
 
-  renderer.domElement.addEventListener('pointerdown', e => {
-    pointerDownPoint = { x:e.clientX, y:e.clientY };
-  });
-  renderer.domElement.addEventListener('pointerup', pickRoom);
+  renderer.domElement.addEventListener('pointerdown', handleScenePointerDown);
+  renderer.domElement.addEventListener('pointermove', handleScenePointerMove);
+  renderer.domElement.addEventListener('pointerup', handleScenePointerEnd);
+  renderer.domElement.addEventListener('pointercancel', handleScenePointerEnd);
+  renderer.domElement.addEventListener('wheel', handleSceneWheel, { passive:false });
   window.addEventListener('resize', resizeSmartScene);
   window.addEventListener('orientationchange', () => setTimeout(resizeSmartScene, 120));
 
   function animateSmartScene(t){
-    controls.update();
     const current = roomObjects.get(selectedRoom.name);
     if(current) current.marker.position.y = .24 + Math.sin(t * .004) * .035;
     renderer.render(scene, camera);

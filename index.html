@@ -305,46 +305,6 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
   touch-action: manipulation;
 }
 
-body.mic-debug .mic-hit-layer {
-  background: rgba(255,45,85,.22);
-  outline: 2px solid rgba(255,45,85,.8);
-}
-
-body.mic-debug .mic-ring-wrap {
-  outline: 2px solid rgba(10,132,255,.8);
-}
-
-.mic-debug-dot {
-  position: fixed;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #ff2d55;
-  border: 2px solid #fff;
-  z-index: 1000;
-  pointer-events: none;
-  transform: translate(-50%, -50%);
-  display: none;
-}
-
-.mic-debug-banner {
-  position: fixed;
-  top: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  background: #ff2d55;
-  color: #fff;
-  border: 2px solid #fff;
-  border-radius: 8px;
-  padding: 5px 9px;
-  font-family: var(--mono);
-  font-size: 0.9rem;
-  font-weight: 900;
-  letter-spacing: .06em;
-  pointer-events: none;
-}
-
 /* Stati microfono */
 .state-wake-active  .mic-btn::before { border-color: rgba(0,0,0,.6); }
 .state-listening    .mic-btn::before { border-color: #000; border-width: 2.5px; }
@@ -3150,31 +3110,6 @@ function handleMicHit(e){
   toggleWake();
 }
 
-function updateMicDebugPoint(e){
-  if(!document.body.classList.contains('mic-debug')) return;
-  const p = eventPoint(e);
-  if(p.clientX == null || p.clientY == null) return;
-  let dot = document.getElementById('mic-debug-dot');
-  if(!dot){
-    dot = document.createElement('div');
-    dot.id = 'mic-debug-dot';
-    dot.className = 'mic-debug-dot';
-    document.body.appendChild(dot);
-  }
-  dot.style.left = `${p.clientX}px`;
-  dot.style.top = `${p.clientY}px`;
-  dot.style.display = 'block';
-
-  const underFinger = document.elementFromPoint(p.clientX, p.clientY);
-  console.log('mic debug touch', {
-    x: Math.round(p.clientX),
-    y: Math.round(p.clientY),
-    inMic: pointInMicHitLayer(e),
-    target: e.target && (e.target.id || e.target.className || e.target.tagName),
-    underFinger: underFinger && (underFinger.id || underFinger.className || underFinger.tagName)
-  });
-}
-
 function setupMicHitArea(){
   const layer = document.getElementById('mic-hit-layer');
   if(layer){
@@ -3187,24 +3122,8 @@ function setupMicHitArea(){
   document.addEventListener('touchend', handleMicHit, { capture: true, passive: false });
 }
 
-function setupMicDebug(){
-  document.body.classList.add('mic-debug');
-  if(!document.getElementById('mic-debug-banner')){
-    const banner = document.createElement('div');
-    banner.id = 'mic-debug-banner';
-    banner.className = 'mic-debug-banner';
-    banner.textContent = 'MIC DEBUG';
-    document.body.appendChild(banner);
-  }
-  document.addEventListener('pointerdown', updateMicDebugPoint, true);
-  document.addEventListener('pointerup', updateMicDebugPoint, true);
-  document.addEventListener('touchend', updateMicDebugPoint, { capture: true, passive: true });
-  setTimeout(() => showToast('Debug microfono attivo'), 500);
-}
-
 setupClockFullscreenTap();
 setupMicHitArea();
-setupMicDebug();
 
 </script>
 

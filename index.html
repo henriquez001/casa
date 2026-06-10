@@ -150,9 +150,9 @@ body.smart-open .widget-row {
   left: calc(100% + var(--home-gap));
   width: calc(100% - var(--home-pad-left) - var(--home-pad-right));
   bottom: var(--home-bottom-gap);
-  color: #000;
-  background: var(--blue);
-  border-radius: var(--r);
+  color: #f5f6f7;
+  background: #15181d;
+  border-radius: 18px;
   overflow: hidden;
   transform: translateX(0);
   transition: transform .34s cubic-bezier(.4,0,.2,1);
@@ -170,8 +170,11 @@ body.smart-open .smart-view {
 
 .smart-scene {
   position: absolute;
-  inset: 0;
-  background: #c7f3ff;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: min(30vw, 220px);
+  background: #15181d;
 }
 
 .smart-scene canvas {
@@ -188,9 +191,9 @@ body.smart-open .smart-view {
 
 .smart-topbar {
   position: absolute;
-  top: var(--section-title-top);
-  left: var(--tab-title-x);
-  right: var(--tab-title-x);
+  top: 24px;
+  left: calc(min(30vw, 220px) + 20px);
+  right: 24px;
   z-index: 3;
   display: flex;
   align-items: center;
@@ -201,69 +204,170 @@ body.smart-open .smart-view {
 
 .smart-title {
   font-family: var(--mono);
-  font-size: var(--section-title-size);
+  font-size: 1.02rem;
   font-weight: 700;
-  letter-spacing: .14em;
+  letter-spacing: .18em;
   line-height: 1;
   text-transform: uppercase;
-  color: rgba(0,0,0,.62);
+  color: rgba(255,255,255,.42);
 }
 
 .smart-room-label {
-  font-family: var(--sep);
-  font-size: var(--menu-item-sub-size);
-  font-weight: 500;
-  color: rgba(0,0,0,.68);
+  font-family: var(--mono);
+  font-size: .92rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: rgba(0,0,0,.72);
+  background: rgba(255,255,255,.9);
+  border-radius: 999px;
+  padding: 9px 13px;
   text-align: right;
-  line-height: 1.1;
+  line-height: 1;
 }
 
-.smart-bottom {
+.smart-sidebar {
   position: absolute;
-  left: var(--tab-title-x);
-  right: var(--tab-title-x);
-  bottom: 22px;
-  z-index: 3;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  inset: 0 auto 0 0;
+  width: min(30vw, 220px);
+  z-index: 4;
+  padding: 28px 18px 22px;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(90deg, rgba(9,11,15,.96), rgba(16,19,24,.88));
+  border-right: 1px solid rgba(255,255,255,.08);
+}
+
+.smart-clock {
+  font-family: var(--num);
+  font-size: clamp(2.2rem, 6vw, 3.8rem);
+  font-weight: 300;
+  line-height: .92;
+  color: rgba(255,255,255,.78);
+  letter-spacing: 0;
+}
+
+.smart-date {
+  margin-top: 10px;
+  font-family: var(--sep);
+  font-size: .88rem;
+  color: rgba(255,255,255,.38);
+}
+
+.smart-menu {
+  margin-top: 34px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .smart-action {
+  width: 100%;
   min-width: 0;
   border: none;
-  border-radius: 0;
+  border-radius: 0 999px 999px 0;
   background: transparent;
-  color: #000;
+  color: rgba(255,255,255,.48);
   text-align: left;
-  padding: 8px 0;
+  padding: 11px 9px;
   font-family: var(--mono);
   cursor: pointer;
+  display: grid;
+  grid-template-columns: 1fr 26px;
+  gap: 10px;
+  align-items: center;
+}
+
+.smart-action.active {
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.86);
 }
 
 .smart-action-main {
   display: block;
-  font-size: var(--section-title-size);
-  font-weight: 800;
-  letter-spacing: .06em;
+  font-size: .92rem;
+  font-weight: 700;
+  letter-spacing: 0;
   line-height: 1;
-  text-transform: uppercase;
   overflow-wrap: anywhere;
 }
 
 .smart-action-sub {
-  display: block;
-  margin-top: 5px;
-  font-family: var(--sep);
-  font-size: 1.05rem;
-  font-weight: 500;
-  line-height: 1.12;
-  color: rgba(0,0,0,.58);
-  overflow-wrap: anywhere;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.08);
+  font-family: var(--mono);
+  font-size: .72rem;
+  font-weight: 800;
+  color: rgba(255,255,255,.72);
+}
+
+.smart-people {
+  margin-top: auto;
+}
+
+.smart-side-label {
+  font-family: var(--mono);
+  font-size: .8rem;
+  font-weight: 700;
+  color: rgba(255,255,255,.34);
+}
+
+.smart-avatar-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.smart-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  border: 2px solid rgba(255,255,255,.8);
+  color: #fff;
+  background: rgba(255,255,255,.12);
+  font-family: var(--mono);
+  font-size: .82rem;
+  font-weight: 800;
+}
+
+.smart-energy {
+  margin-top: 18px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: var(--mono);
+  font-size: .85rem;
+  color: rgba(255,255,255,.44);
+}
+
+.smart-energy-line {
+  margin-top: 8px;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ff6a00, #ffd60a, #30d158);
+  opacity: .82;
 }
 
 .smart-action:active {
   opacity: .62;
+}
+
+@media (max-width: 760px) {
+  .smart-sidebar { width: 142px; padding: 20px 12px 18px; }
+  .smart-scene { left: 142px; }
+  .smart-topbar { left: 154px; top: 18px; right: 14px; }
+  .smart-clock { font-size: 2rem; }
+  .smart-date { font-size: .74rem; }
+  .smart-action { grid-template-columns: 1fr 22px; padding: 9px 6px; }
+  .smart-action-main { font-size: .78rem; }
+  .smart-action-sub { width: 22px; height: 22px; font-size: .62rem; }
 }
 
 /* ── Pannello sinistro (2/3) ── */
@@ -1474,28 +1578,50 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
   </div>
 
   <section class="smart-view" id="smart-view" aria-label="Smart home" aria-hidden="true">
+    <aside class="smart-sidebar" aria-label="Controlli smart home">
+      <div>
+        <div class="smart-clock" id="smart-clock">00:00</div>
+        <div class="smart-date" id="smart-date">Casa smart</div>
+      </div>
+      <div class="smart-menu">
+        <button class="smart-action" type="button" data-smart-action="rooms">
+          <span class="smart-action-main">Control rooms</span>
+          <span class="smart-action-sub">⌂</span>
+        </button>
+        <button class="smart-action active" type="button" data-smart-action="lights">
+          <span class="smart-action-main">Control lights</span>
+          <span class="smart-action-sub">◐</span>
+        </button>
+        <button class="smart-action" type="button" data-smart-action="clean">
+          <span class="smart-action-main">Clean up</span>
+          <span class="smart-action-sub">◎</span>
+        </button>
+        <button class="smart-action" type="button" data-smart-action="all">
+          <span class="smart-action-main">All devices</span>
+          <span class="smart-action-sub">⌁</span>
+        </button>
+        <button class="smart-action" type="button" data-smart-action="media">
+          <span class="smart-action-main">Media</span>
+          <span class="smart-action-sub">▷</span>
+        </button>
+      </div>
+      <div class="smart-people">
+        <div class="smart-side-label">People at home</div>
+        <div class="smart-avatar-row">
+          <div class="smart-avatar">L</div>
+          <div class="smart-avatar">H</div>
+        </div>
+        <div class="smart-energy">
+          <span>17.89</span>
+          <span>kWh</span>
+        </div>
+        <div class="smart-energy-line"></div>
+      </div>
+    </aside>
     <div class="smart-scene" id="smart-scene"></div>
     <div class="smart-topbar">
       <div class="smart-title">Casa smart</div>
       <div class="smart-room-label" id="smart-room-label">Sala - 2 luci</div>
-    </div>
-    <div class="smart-bottom">
-      <button class="smart-action" type="button" data-smart-action="lights">
-        <span class="smart-action-main">Luci</span>
-        <span class="smart-action-sub">3 accese</span>
-      </button>
-      <button class="smart-action" type="button" data-smart-action="plugs">
-        <span class="smart-action-main">Prese</span>
-        <span class="smart-action-sub">2 attive</span>
-      </button>
-      <button class="smart-action" type="button" data-smart-action="night">
-        <span class="smart-action-main">Notte</span>
-        <span class="smart-action-sub">Scena</span>
-      </button>
-      <button class="smart-action" type="button" data-smart-action="off">
-        <span class="smart-action-main">Off</span>
-        <span class="smart-action-sub">Tutto</span>
-      </button>
     </div>
   </section>
 
@@ -1781,10 +1907,14 @@ function tick(){
   const elH = document.getElementById('clk-h');
   const elM = document.getElementById('clk-m');
   const elD = document.getElementById('clk-date');
+  const smartClock = document.getElementById('smart-clock');
+  const smartDate = document.getElementById('smart-date');
 
   if(elH) elH.textContent = hh;
   if(elM) elM.textContent = mm;
   if(elD) elD.textContent = GIORNI[n.getDay()] + ' ' + n.getDate() + ' ' + MESI[n.getMonth()] + ' ' + n.getFullYear();
+  if(smartClock) smartClock.textContent = hh + ':' + mm;
+  if(smartDate) smartDate.textContent = GIORNI[n.getDay()] + ' ' + n.getDate() + ' ' + MESI[n.getMonth()];
 }
 
 
@@ -2372,8 +2502,9 @@ function setupHomeSwipe(){
 function setupSmartActions(){
   document.querySelectorAll('.smart-action').forEach(btn => {
     btn.addEventListener('click', () => {
+      document.querySelectorAll('.smart-action').forEach(item => item.classList.toggle('active', item === btn));
       const action = btn.dataset.smartAction || 'smart';
-      const labels = { lights:'Luci', plugs:'Prese', night:'Scena notte', off:'Spegnimento' };
+      const labels = { rooms:'Stanze', lights:'Luci', clean:'Pulizia', all:'Dispositivi', media:'Media', plugs:'Prese', night:'Scena notte', off:'Spegnimento' };
       showToast(`${labels[action] || action}: pronto per collegamento smart home`);
     });
   });
@@ -4122,10 +4253,10 @@ const smartSceneRoot = document.getElementById('smart-scene');
 
 if(smartSceneRoot){
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xc7f3ff);
+  scene.background = new THREE.Color(0x15181d);
 
   const camera = new THREE.OrthographicCamera(-4, 4, 3, -3, 0.1, 100);
-  camera.position.set(5.4, 6.1, 5.8);
+  camera.position.set(4.6, 8.2, 4.8);
   camera.lookAt(0, 0, 0);
 
   const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:false });
@@ -4136,12 +4267,12 @@ if(smartSceneRoot){
 
   const sceneTarget = new THREE.Vector3(0, .18, -.18);
   const orbit = {
-    yaw:.74,
-    pitch:.72,
-    radius:8.2,
-    zoom:1,
-    minZoom:.72,
-    maxZoom:2.55,
+    yaw:.18,
+    pitch:1.08,
+    radius:8.9,
+    zoom:.98,
+    minZoom:.65,
+    maxZoom:2.9,
     dragStart:null,
     lastPinch:0
   };
@@ -4162,40 +4293,41 @@ if(smartSceneRoot){
     camera.updateProjectionMatrix();
   }
 
-  const ambient = new THREE.HemisphereLight(0xffffff, 0x7aa8b8, 2.2);
+  const ambient = new THREE.HemisphereLight(0xffffff, 0x20242b, 1.45);
   scene.add(ambient);
 
-  const sun = new THREE.DirectionalLight(0xffffff, 2.4);
-  sun.position.set(3, 6, 4);
+  const sun = new THREE.DirectionalLight(0xffffff, 3.2);
+  sun.position.set(2.5, 7.5, 3);
   sun.castShadow = true;
   scene.add(sun);
 
   const house = new THREE.Group();
-  house.rotation.y = -0.36;
+  house.rotation.y = 0;
   scene.add(house);
 
   const mats = {
-    floor:new THREE.MeshStandardMaterial({ color:0xf6f2df, roughness:.72, metalness:.02 }),
-    selected:new THREE.MeshStandardMaterial({ color:0xffffff, roughness:.6, metalness:.02 }),
-    wall:new THREE.MeshStandardMaterial({ color:0x111314, roughness:.65, metalness:.02 }),
-    trim:new THREE.MeshStandardMaterial({ color:0xf3f1e9, roughness:.55 }),
-    glass:new THREE.MeshStandardMaterial({ color:0x94e7ff, transparent:true, opacity:.45, roughness:.15, metalness:.05 }),
-    wood:new THREE.MeshStandardMaterial({ color:0x9b714a, roughness:.58 }),
-    dark:new THREE.MeshStandardMaterial({ color:0x1b1f21, roughness:.7 }),
-    fabric:new THREE.MeshStandardMaterial({ color:0x315f72, roughness:.82 }),
-    bed:new THREE.MeshStandardMaterial({ color:0xf1c9b7, roughness:.76 }),
-    counter:new THREE.MeshStandardMaterial({ color:0xd8dde0, roughness:.42 }),
+    floor:new THREE.MeshStandardMaterial({ color:0x795838, roughness:.76, metalness:.02 }),
+    selected:new THREE.MeshStandardMaterial({ color:0x9b7a4f, roughness:.62, metalness:.02 }),
+    wall:new THREE.MeshStandardMaterial({ color:0xbdb8aa, roughness:.7, metalness:.02 }),
+    trim:new THREE.MeshStandardMaterial({ color:0xe8e0d1, roughness:.55 }),
+    glass:new THREE.MeshStandardMaterial({ color:0xcfefff, transparent:true, opacity:.42, roughness:.18, metalness:.05 }),
+    wood:new THREE.MeshStandardMaterial({ color:0x5b3b24, roughness:.62 }),
+    dark:new THREE.MeshStandardMaterial({ color:0x171a1f, roughness:.72 }),
+    fabric:new THREE.MeshStandardMaterial({ color:0x202a32, roughness:.84 }),
+    bed:new THREE.MeshStandardMaterial({ color:0x8f806f, roughness:.78 }),
+    counter:new THREE.MeshStandardMaterial({ color:0xd6d2c8, roughness:.46 }),
     metal:new THREE.MeshStandardMaterial({ color:0xb8c3c8, roughness:.32, metalness:.28 }),
-    rug:new THREE.MeshStandardMaterial({ color:0x2f9bff, roughness:.9 }),
+    rug:new THREE.MeshStandardMaterial({ color:0x4a3627, roughness:.92 }),
     lamp:new THREE.MeshStandardMaterial({ color:0xffd60a, emissive:0xffc400, emissiveIntensity:.55, roughness:.4 }),
-    off:new THREE.MeshStandardMaterial({ color:0x4f5a5f, roughness:.82 })
+    off:new THREE.MeshStandardMaterial({ color:0x4f5a5f, roughness:.82 }),
+    marker:new THREE.MeshStandardMaterial({ color:0xffffff, roughness:.38, metalness:.05 }),
+    markerDot:new THREE.MeshStandardMaterial({ color:0x171a1f, roughness:.5 })
   };
 
   let roomData = [];
   let roomMeshes = [];
   let roomObjects = new Map();
   let selectedRoom = null;
-  const markerGeo = new THREE.CylinderGeometry(.16, .16, .16, 36);
 
   function addBox(group, x, y, z, w, h, d, material, cast=true, receive=true){
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
@@ -4213,6 +4345,18 @@ if(smartSceneRoot){
     mesh.receiveShadow = true;
     group.add(mesh);
     return mesh;
+  }
+
+  function addControlMarker(group, x, z, room, radius=.18, y=.42){
+    const disk = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, .08, 36), mats.marker);
+    disk.position.set(x, y, z);
+    disk.castShadow = true;
+    disk.userData.room = room;
+    const dot = new THREE.Mesh(new THREE.CylinderGeometry(radius*.22, radius*.22, .026, 24), mats.markerDot);
+    dot.position.y = .055;
+    disk.add(dot);
+    group.add(disk);
+    return disk;
   }
 
   function addRoomLabel(room){
@@ -4258,7 +4402,7 @@ if(smartSceneRoot){
   }
 
   function roomColor(i){
-    return [0xf6f2df, 0xe8f6ee, 0xf7ece5, 0xeef5f7, 0xf4efff][i % 5];
+    return [0x795838, 0x704d31, 0x5f4938, 0x80613d, 0x6b5845][i % 5];
   }
 
   function deviceColor(kind){
@@ -4351,14 +4495,7 @@ if(smartSceneRoot){
       house.add(floor);
       roomMeshes.push(floor);
 
-      const markerMat = room.active
-        ? new THREE.MeshStandardMaterial({ color:room.color, emissive:room.color, emissiveIntensity:.65, roughness:.4 })
-        : mats.off;
-      const marker = new THREE.Mesh(markerGeo, markerMat);
-      marker.position.set(room.x, .24, room.z);
-      marker.userData.room = room;
-      marker.castShadow = true;
-      house.add(marker);
+      const marker = addControlMarker(house, room.x, room.z, room, room.active ? .18 : .13, .42);
       roomMeshes.push(marker);
       roomObjects.set(room.name, { floor, marker, floorMat });
       addRoomLabel(room);
@@ -4368,10 +4505,8 @@ if(smartSceneRoot){
     (data.walls || []).forEach(wall => addWallFromLine(wall, bounds));
 
     (data.devices || []).forEach(dev => {
-      const color = deviceColor(dev.kind);
-      const mat = new THREE.MeshStandardMaterial({ color, emissive:color, emissiveIntensity:.5, roughness:.4 });
-      const marker = addCylinder(house, (Number(dev.x)||0) - bounds.cx, .38, (Number(dev.y)||0) - bounds.cy, .09, .28, mat, 24);
-      marker.userData.room = roomData.find(r => r.name === dev.room) || roomData[0];
+      const room = roomData.find(r => r.name === dev.room) || roomData[0];
+      const marker = addControlMarker(house, (Number(dev.x)||0) - bounds.cx, (Number(dev.y)||0) - bounds.cy, room, .16, .52);
       roomMeshes.push(marker);
     });
 

@@ -188,61 +188,50 @@ body.smart-open .smart-view {
     linear-gradient(90deg, rgba(21,24,29,.26), transparent 18%, transparent 82%, rgba(21,24,29,.32));
 }
 
-.smart-render {
+.smart-render-photo {
   display: block;
   width: 100%;
   height: 100%;
-  filter: saturate(.96) contrast(1.03);
+  object-fit: contain;
+  object-position: center;
+  filter: saturate(.98) contrast(1.04) brightness(.92);
 }
 
-.render-shell {
-  fill: rgba(8,10,13,.72);
+.smart-marker-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
 
-.render-room {
-  stroke: rgba(255,255,255,.42);
-  stroke-width: 10;
-  filter: url(#render-shadow);
+.smart-static-marker {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  transform: translate(-50%, -50%);
+  background: rgba(255,255,255,.94);
+  color: #15181d;
+  box-shadow: 0 9px 22px rgba(0,0,0,.34), inset 0 0 0 1px rgba(0,0,0,.12);
   cursor: pointer;
-}
-
-.render-room.selected {
-  stroke: rgba(255,255,255,.9);
-  filter: url(#render-selected);
-}
-
-.render-wall {
-  stroke: #d9d4ca;
-  stroke-width: 14;
-  stroke-linecap: square;
-  filter: url(#render-wall-shadow);
-}
-
-.render-furniture {
-  filter: url(#render-soft-shadow);
-}
-
-.render-label {
   font-family: var(--mono);
-  font-size: 15px;
-  font-weight: 800;
-  fill: rgba(255,255,255,.7);
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  pointer-events: none;
+  font-size: .72rem;
+  font-weight: 900;
+  pointer-events: auto;
 }
 
-.render-device {
-  fill: #fff;
-  stroke: rgba(0,0,0,.16);
-  stroke-width: 2;
-  filter: url(#render-device-shadow);
-  cursor: pointer;
+.smart-static-marker.room {
+  width: 28px;
+  height: 28px;
+  background: rgba(255,255,255,.88);
+  font-size: .62rem;
 }
 
-.render-device-dot {
-  fill: #15181d;
-  pointer-events: none;
+.smart-static-marker.active {
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(255,255,255,.2), 0 12px 28px rgba(0,0,0,.42);
 }
 
 .smart-topbar {
@@ -424,6 +413,8 @@ body.smart-open .smart-view {
   .smart-action { grid-template-columns: 1fr 22px; padding: 9px 6px; }
   .smart-action-main { font-size: .78rem; }
   .smart-action-sub { width: 22px; height: 22px; font-size: .62rem; }
+  .smart-static-marker { width: 28px; height: 28px; font-size: .62rem; }
+  .smart-static-marker.room { width: 24px; height: 24px; font-size: .56rem; }
 }
 
 /* ── Pannello sinistro (2/3) ── */
@@ -2514,7 +2505,6 @@ function setSmartOpen(open){
 
 function canStartHomeSwipe(target){
   if(document.body.classList.contains('panel-open') || document.body.classList.contains('menu-open')) return false;
-  if(document.body.classList.contains('smart-open') && target.closest?.('#smart-scene')) return false;
   return !target.closest?.('input, textarea, select');
 }
 
@@ -4311,7 +4301,7 @@ setupSmartActions();
 <script>
 const smartSceneRoot = document.getElementById('smart-scene');
 
-if(smartSceneRoot){
+if(false && smartSceneRoot){
   let selectedSmartRoomName = '';
 
   function readSmartPreviewData(){
@@ -4458,6 +4448,143 @@ if(smartSceneRoot){
   renderStaticSmartPreview();
   window.addEventListener('casa-smart-backend-updated', renderStaticSmartPreview);
 }
+</script>
+
+<script>
+(function(){
+  const sceneRoot = document.getElementById('smart-scene');
+  if(!sceneRoot) return;
+
+  let selectedRoomName = '';
+  const renderImage = 'assets/smart-home-render.png';
+  const renderAspect = 1536 / 1024;
+  const planInset = { x:21, y:8, w:58, h:84 };
+
+  function readData(){
+    try{
+      return JSON.parse(localStorage.getItem('casa_smart_backend_v1')) || defaultSmartBackend();
+    }catch(e){
+      return defaultSmartBackend();
+    }
+  }
+
+  function esc(value){
+    return String(value ?? '').replace(/[&<>"']/g, ch => ({
+      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+    }[ch]));
+  }
+
+  function bounds(data){
+    const xs = [], ys = [];
+    (data.rooms || []).forEach(room => {
+      const x = Number(room.x) || 0;
+      const y = Number(room.y) || 0;
+      xs.push(x, x + (Number(room.w) || 2));
+      ys.push(y, y + (Number(room.d) || 2));
+    });
+    (data.walls || []).forEach(wall => {
+      xs.push(Number(wall.x1) || 0, Number(wall.x2) || 0);
+      ys.push(Number(wall.y1) || 0, Number(wall.y2) || 0);
+    });
+    return xs.length
+      ? { minX:Math.min(...xs), minY:Math.min(...ys), maxX:Math.max(...xs), maxY:Math.max(...ys) }
+      : { minX:0, minY:0, maxX:8, maxY:5.5 };
+  }
+
+  function frame(){
+    const rect = sceneRoot.getBoundingClientRect();
+    const rootW = rect.width || 1000;
+    const rootH = rect.height || 640;
+    let w = rootW;
+    let h = w / renderAspect;
+    if(h > rootH){
+      h = rootH;
+      w = h * renderAspect;
+    }
+    return { rootW, rootH, x:(rootW - w) / 2, y:(rootH - h) / 2, w, h };
+  }
+
+  function markerPosition(x, y, b){
+    const f = frame();
+    const bw = Math.max(.1, b.maxX - b.minX);
+    const bh = Math.max(.1, b.maxY - b.minY);
+    const nx = Math.max(0, Math.min(1, ((Number(x) || 0) - b.minX) / bw));
+    const ny = Math.max(0, Math.min(1, ((Number(y) || 0) - b.minY) / bh));
+    const px = f.x + f.w * ((planInset.x + nx * planInset.w) / 100);
+    const py = f.y + f.h * ((planInset.y + ny * planInset.h) / 100);
+    return {
+      left: Math.max(5, Math.min(95, px / f.rootW * 100)),
+      top: Math.max(7, Math.min(93, py / f.rootH * 100))
+    };
+  }
+
+  function glyph(kind){
+    return { light:'L', plug:'P', climate:'C', sensor:'S' }[kind] || 'D';
+  }
+
+  function render(){
+    const data = readData();
+    const rooms = data.rooms || [];
+    const devices = data.devices || [];
+    const b = bounds(data);
+    const label = document.getElementById('smart-room-label');
+
+    if(!selectedRoomName && rooms[0]) selectedRoomName = rooms[0].name || '';
+
+    const roomMarkers = rooms.map(room => {
+      const x = (Number(room.x) || 0) + (Number(room.w) || 2) / 2;
+      const y = (Number(room.y) || 0) + (Number(room.d) || 2) / 2;
+      const p = markerPosition(x, y, b);
+      const name = room.name || 'Stanza';
+      const active = selectedRoomName === name;
+      const mark = esc(name.trim().charAt(0).toUpperCase() || 'R');
+      return `<button class="smart-static-marker room${active ? ' active' : ''}" type="button" style="left:${p.left}%;top:${p.top}%" data-room="${esc(name)}" aria-label="${esc(name)}">${mark}</button>`;
+    }).join('');
+
+    const deviceMarkers = devices.map(device => {
+      const p = markerPosition(device.x, device.y, b);
+      return `<button class="smart-static-marker" type="button" style="left:${p.left}%;top:${p.top}%" data-device="${esc(device.id || '')}" data-room="${esc(device.room || '')}" aria-label="${esc(device.name || 'Device')}">${glyph(device.kind)}</button>`;
+    }).join('');
+
+    const selectedRoom = rooms.find(room => room.name === selectedRoomName) || rooms[0];
+    if(label && selectedRoom){
+      const count = devices.filter(device => device.room === selectedRoom.name).length;
+      label.textContent = `${selectedRoom.name || 'Stanza'} - ${count || 0} dispositivi`;
+    }
+
+    sceneRoot.innerHTML = `
+      <img class="smart-render-photo" src="${renderImage}" alt="Render fotorealistico della casa smart">
+      <div class="smart-marker-layer" aria-label="Stanze e dispositivi">${roomMarkers}${deviceMarkers}</div>
+    `;
+
+    sceneRoot.querySelectorAll('.smart-static-marker.room[data-room]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedRoomName = btn.dataset.room || selectedRoomName;
+        render();
+      });
+    });
+
+    sceneRoot.querySelectorAll('[data-device]').forEach(btn => {
+      btn.addEventListener('click', event => {
+        event.stopPropagation();
+        const device = devices.find(item => item.id === btn.dataset.device);
+        selectedRoomName = btn.dataset.room || selectedRoomName;
+        if(label && device){
+          label.textContent = `${device.name || 'Device'}${device.room ? ' - ' + device.room : ''}`;
+        }
+      });
+    });
+  }
+
+  function renderSoon(){
+    clearTimeout(renderSoon.t);
+    renderSoon.t = setTimeout(render, 80);
+  }
+
+  render();
+  window.addEventListener('resize', renderSoon);
+  window.addEventListener('casa-smart-backend-updated', render);
+})();
 </script>
 
 </body>

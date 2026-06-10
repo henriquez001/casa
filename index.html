@@ -175,18 +175,74 @@ body.smart-open .smart-view {
   bottom: 0;
   left: min(30vw, 220px);
   background: #15181d;
+  overflow: hidden;
 }
 
-.smart-scene canvas {
+.smart-scene::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 58% 45%, transparent 0 46%, rgba(0,0,0,.18) 78%),
+    linear-gradient(90deg, rgba(21,24,29,.26), transparent 18%, transparent 82%, rgba(21,24,29,.32));
+}
+
+.smart-render {
   display: block;
   width: 100%;
   height: 100%;
-  cursor: grab;
-  touch-action: none;
+  filter: saturate(.96) contrast(1.03);
 }
 
-.smart-scene canvas:active {
-  cursor: grabbing;
+.render-shell {
+  fill: rgba(8,10,13,.72);
+}
+
+.render-room {
+  stroke: rgba(255,255,255,.42);
+  stroke-width: 10;
+  filter: url(#render-shadow);
+  cursor: pointer;
+}
+
+.render-room.selected {
+  stroke: rgba(255,255,255,.9);
+  filter: url(#render-selected);
+}
+
+.render-wall {
+  stroke: #d9d4ca;
+  stroke-width: 14;
+  stroke-linecap: square;
+  filter: url(#render-wall-shadow);
+}
+
+.render-furniture {
+  filter: url(#render-soft-shadow);
+}
+
+.render-label {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 800;
+  fill: rgba(255,255,255,.7);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.render-device {
+  fill: #fff;
+  stroke: rgba(0,0,0,.16);
+  stroke-width: 2;
+  filter: url(#render-device-shadow);
+  cursor: pointer;
+}
+
+.render-device-dot {
+  fill: #15181d;
+  pointer-events: none;
 }
 
 .smart-topbar {
@@ -1942,9 +1998,9 @@ let smartCloudSyncTimer = null;
 function defaultSmartBackend(){
   return {
     rooms:[
-      { id:'room-sala', name:'Sala', x:1, y:1, w:4.2, d:3, h:2.7 },
-      { id:'room-cucina', name:'Cucina', x:1, y:4.25, w:2.4, d:2.2, h:2.7 },
-      { id:'room-camera', name:'Camera', x:5.55, y:4.25, w:2.7, d:2.2, h:2.7 }
+      { id:'room-sala', name:'Sala', x:1, y:1, w:4.2, d:3, h:2.7, material:'wood' },
+      { id:'room-cucina', name:'Cucina', x:1, y:4.25, w:2.4, d:2.2, h:2.7, material:'tile' },
+      { id:'room-camera', name:'Camera', x:5.55, y:4.25, w:2.7, d:2.2, h:2.7, material:'wood' }
     ],
     walls:[
       { id:'wall-nord', name:'Parete nord', x1:1, y1:1, x2:8.25, y2:1, h:2.7 },
@@ -2050,7 +2106,7 @@ function handleSmartPlanClick(e){
   const data = loadSmartBackend();
 
   if(smartTool === 'room'){
-    const room = { id:smartId('room'), name:'Nuova stanza', x:p.x, y:p.y, w:3, d:2.4, h:2.7 };
+    const room = { id:smartId('room'), name:'Nuova stanza', x:p.x, y:p.y, w:3, d:2.4, h:2.7, material:'wood' };
     data.rooms.push(room);
     smartSelected = { type:'room', id:room.id };
     setSmartTool('select');
@@ -2087,7 +2143,7 @@ function handleSmartPlanClick(e){
 
 function addSmartRoom(){
   loadSmartBackend();
-  const room = { id:smartId('room'), name:'Nuova stanza', x:2, y:2, w:3, d:2.4, h:2.7 };
+  const room = { id:smartId('room'), name:'Nuova stanza', x:2, y:2, w:3, d:2.4, h:2.7, material:'wood' };
   smartBackend.rooms.push(room);
   smartSelected = { type:'room', id:room.id };
   saveSmartBackend(false);
@@ -2247,6 +2303,12 @@ function renderSmartInspector(){
   if(smartSelected.type === 'room'){
     box.innerHTML = `
       ${smartInput('Nome','name',item.name)}
+      <div class="backend-field"><label>Materiale</label><select onchange="updateSmartSelected('material', this.value)">
+        <option value="wood" ${item.material === 'wood' ? 'selected' : ''}>Legno</option>
+        <option value="tile" ${item.material === 'tile' ? 'selected' : ''}>Piastrelle</option>
+        <option value="stone" ${item.material === 'stone' ? 'selected' : ''}>Pietra</option>
+        <option value="fabric" ${item.material === 'fabric' ? 'selected' : ''}>Tessuto</option>
+      </select></div>
       ${smartInput('X','x',item.x,'number')}
       ${smartInput('Y','y',item.y,'number')}
       ${smartInput('Larghezza','w',item.w,'number')}
@@ -4169,7 +4231,7 @@ setupSmartActions();
           <div id="smart-inspector" class="backend-hint">Seleziona un elemento o usa gli strumenti per crearne uno.</div>
         </div>
         <div class="backend-block">
-          <div class="backend-block-title">Arredi 3D</div>
+          <div class="backend-block-title">Arredi e texture</div>
           <input class="backend-file" id="smart-furniture-file" type="file" accept=".glb,.gltf,.obj,.fbx" multiple onchange="handleSmartFurnitureFiles(this.files);this.value=''">
           <div id="smart-assets-list" class="backend-hint" style="margin-top:10px"></div>
         </div>
@@ -4218,7 +4280,7 @@ setupSmartActions();
 
     <div class="arch-entry" style="cursor:pointer" onclick="closePanel('panel-impostazioni');openSmartBackend()">
       <div class="arch-entry-title">Backend smart home</div>
-      <div class="arch-entry-note">Configura planimetria, quote, altezze, arredi 3D e dispositivi</div>
+      <div class="arch-entry-note">Configura planimetria, quote, altezze, materiali e dispositivi</div>
     </div>
 
     <div class="panel-section-title">Account</div>
@@ -4246,134 +4308,13 @@ setupSmartActions();
   </div>
 </div>
 
-<script type="module">
-import * as THREE from 'https://unpkg.com/three@0.165.0/build/three.module.js';
-
+<script>
 const smartSceneRoot = document.getElementById('smart-scene');
 
 if(smartSceneRoot){
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x15181d);
+  let selectedSmartRoomName = '';
 
-  const camera = new THREE.OrthographicCamera(-4, 4, 3, -3, 0.1, 100);
-  camera.position.set(0, 12, 0);
-  camera.up.set(0, 0, -1);
-  camera.lookAt(0, 0, 0);
-
-  const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:false });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-  renderer.shadowMap.enabled = true;
-  renderer.outputColorSpace = THREE.SRGBColorSpace;
-  smartSceneRoot.appendChild(renderer.domElement);
-
-  const sceneTarget = new THREE.Vector3(0, .18, -.18);
-  const orbit = {
-    yaw:.18,
-    radius:12,
-    zoom:.98,
-    minZoom:.65,
-    maxZoom:2.9,
-    dragStart:null,
-    lastPinch:0
-  };
-
-  function clamp(v, min, max){
-    return Math.max(min, Math.min(max, v));
-  }
-
-  function updateCameraOrbit(){
-    camera.position.set(sceneTarget.x, sceneTarget.y + orbit.radius, sceneTarget.z);
-    camera.up.set(Math.sin(orbit.yaw), 0, -Math.cos(orbit.yaw));
-    camera.lookAt(sceneTarget);
-    camera.zoom = orbit.zoom;
-    camera.updateProjectionMatrix();
-  }
-
-  const ambient = new THREE.HemisphereLight(0xffffff, 0x20242b, 1.45);
-  scene.add(ambient);
-
-  const sun = new THREE.DirectionalLight(0xffffff, 3.2);
-  sun.position.set(2.5, 7.5, 3);
-  sun.castShadow = true;
-  scene.add(sun);
-
-  const house = new THREE.Group();
-  house.rotation.y = 0;
-  scene.add(house);
-
-  const mats = {
-    floor:new THREE.MeshStandardMaterial({ color:0x795838, roughness:.76, metalness:.02 }),
-    selected:new THREE.MeshStandardMaterial({ color:0x9b7a4f, roughness:.62, metalness:.02 }),
-    wall:new THREE.MeshStandardMaterial({ color:0xbdb8aa, roughness:.7, metalness:.02 }),
-    trim:new THREE.MeshStandardMaterial({ color:0xe8e0d1, roughness:.55 }),
-    glass:new THREE.MeshStandardMaterial({ color:0xcfefff, transparent:true, opacity:.42, roughness:.18, metalness:.05 }),
-    wood:new THREE.MeshStandardMaterial({ color:0x5b3b24, roughness:.62 }),
-    dark:new THREE.MeshStandardMaterial({ color:0x171a1f, roughness:.72 }),
-    fabric:new THREE.MeshStandardMaterial({ color:0x202a32, roughness:.84 }),
-    bed:new THREE.MeshStandardMaterial({ color:0x8f806f, roughness:.78 }),
-    counter:new THREE.MeshStandardMaterial({ color:0xd6d2c8, roughness:.46 }),
-    metal:new THREE.MeshStandardMaterial({ color:0xb8c3c8, roughness:.32, metalness:.28 }),
-    rug:new THREE.MeshStandardMaterial({ color:0x4a3627, roughness:.92 }),
-    lamp:new THREE.MeshStandardMaterial({ color:0xffd60a, emissive:0xffc400, emissiveIntensity:.55, roughness:.4 }),
-    off:new THREE.MeshStandardMaterial({ color:0x4f5a5f, roughness:.82 }),
-    marker:new THREE.MeshStandardMaterial({ color:0xffffff, roughness:.38, metalness:.05 }),
-    markerDot:new THREE.MeshStandardMaterial({ color:0x171a1f, roughness:.5 })
-  };
-
-  let roomData = [];
-  let roomMeshes = [];
-  let roomObjects = new Map();
-  let selectedRoom = null;
-
-  function addBox(group, x, y, z, w, h, d, material, cast=true, receive=true){
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
-    mesh.position.set(x, y, z);
-    mesh.castShadow = cast;
-    mesh.receiveShadow = receive;
-    group.add(mesh);
-    return mesh;
-  }
-
-  function addCylinder(group, x, y, z, radius, height, material, segments=36){
-    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, height, segments), material);
-    mesh.position.set(x, y, z);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    group.add(mesh);
-    return mesh;
-  }
-
-  function addControlMarker(group, x, z, room, radius=.18, y=.42){
-    const disk = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, .08, 36), mats.marker);
-    disk.position.set(x, y, z);
-    disk.castShadow = true;
-    disk.userData.room = room;
-    const dot = new THREE.Mesh(new THREE.CylinderGeometry(radius*.22, radius*.22, .026, 24), mats.markerDot);
-    dot.position.y = .055;
-    disk.add(dot);
-    group.add(disk);
-    return disk;
-  }
-
-  function addRoomLabel(room){
-    const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 64;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = 'rgba(0,0,0,.72)';
-    ctx.font = '700 28px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(room.name, 128, 32);
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map:texture, transparent:true }));
-    sprite.position.set(room.x, .08, room.z - room.d * .33);
-    sprite.scale.set(1.15, .29, 1);
-    house.add(sprite);
-  }
-
-  function readSmartBackendScene(){
+  function readSmartPreviewData(){
     try{
       return JSON.parse(localStorage.getItem('casa_smart_backend_v1')) || null;
     }catch(e){
@@ -4381,265 +4322,141 @@ if(smartSceneRoot){
     }
   }
 
-  function sceneBounds(data){
+  function previewBounds(data){
     const xs = [], ys = [];
     (data.rooms || []).forEach(r => {
-      xs.push(r.x, r.x + r.w);
-      ys.push(r.y, r.y + r.d);
+      xs.push(Number(r.x) || 0, (Number(r.x) || 0) + (Number(r.w) || 2));
+      ys.push(Number(r.y) || 0, (Number(r.y) || 0) + (Number(r.d) || 2));
     });
     (data.walls || []).forEach(w => {
-      xs.push(w.x1, w.x2);
-      ys.push(w.y1, w.y2);
+      xs.push(Number(w.x1) || 0, Number(w.x2) || 0);
+      ys.push(Number(w.y1) || 0, Number(w.y2) || 0);
     });
-    if(!xs.length) return { cx:0, cy:0, w:6, d:4 };
-    const minX = Math.min(...xs), maxX = Math.max(...xs);
-    const minY = Math.min(...ys), maxY = Math.max(...ys);
-    return { cx:(minX + maxX) / 2, cy:(minY + maxY) / 2, w:maxX - minX, d:maxY - minY };
+    if(!xs.length) return { minX:0, minY:0, maxX:8, maxY:5.5 };
+    return { minX:Math.min(...xs), minY:Math.min(...ys), maxX:Math.max(...xs), maxY:Math.max(...ys) };
   }
 
-  function roomColor(i){
-    return [0x795838, 0x704d31, 0x5f4938, 0x80613d, 0x6b5845][i % 5];
+  function materialFill(material, i){
+    const m = material || 'wood';
+    if(m === 'tile') return 'url(#mat-tile)';
+    if(m === 'stone') return 'url(#mat-stone)';
+    if(m === 'fabric') return 'url(#mat-fabric)';
+    return i % 2 ? 'url(#mat-wood-dark)' : 'url(#mat-wood)';
   }
 
-  function deviceColor(kind){
-    return { light:0xffd60a, plug:0x64d2ff, climate:0x30d158, sensor:0xbf5af2 }[kind] || 0xffd60a;
+  function deviceGlyph(kind){
+    return { light:'●', plug:'◌', climate:'▲', sensor:'◆' }[kind] || '●';
   }
 
-  function clearHouse(){
-    while(house.children.length){
-      const child = house.children.pop();
-      child.traverse?.(obj => {
-        obj.geometry?.dispose?.();
-        if(obj.material?.map) obj.material.map.dispose?.();
-      });
-    }
-    roomMeshes = [];
-    roomObjects = new Map();
-    roomData = [];
-  }
-
-  function addWallFromLine(wall, bounds){
-    const x1 = wall.x1 - bounds.cx;
-    const z1 = wall.y1 - bounds.cy;
-    const x2 = wall.x2 - bounds.cx;
-    const z2 = wall.y2 - bounds.cy;
-    const len = Math.max(.1, Math.hypot(x2 - x1, z2 - z1));
-    const h = Math.max(.45, Math.min(1.25, (Number(wall.h) || 2.7) * .32));
-    const mesh = addBox(house, (x1+x2)/2, h/2, (z1+z2)/2, len, h, .12, mats.wall);
-    mesh.rotation.y = -Math.atan2(z2 - z1, x2 - x1);
-  }
-
-  function addGenericFurniture(room, group){
-    const name = (room.name || '').toLowerCase();
+  function renderPreviewFurniture(room, p){
+    const name = String(room.name || '').toLowerCase();
+    const x = p.x, y = p.y, w = p.w, h = p.h;
     if(name.includes('cucina')){
-      addBox(group, room.x - room.w*.28, .22, room.z - room.d*.28, room.w*.46, .44, .32, mats.counter);
-      addCylinder(group, room.x + room.w*.18, .33, room.z - room.d*.2, .18, .08, mats.wood);
-      return;
+      return `
+        <rect class="render-furniture" x="${x+w*.08}" y="${y+h*.08}" width="${w*.18}" height="${h*.78}" rx="4" fill="#d6d2c8"/>
+        <rect class="render-furniture" x="${x+w*.28}" y="${y+h*.08}" width="${w*.46}" height="${h*.16}" rx="4" fill="#c6beb0"/>
+        <circle class="render-furniture" cx="${x+w*.52}" cy="${y+h*.53}" r="${Math.min(w,h)*.09}" fill="#5b3b24"/>
+      `;
     }
     if(name.includes('camera')){
-      addBox(group, room.x, .22, room.z, room.w*.58, .32, room.d*.48, mats.bed);
-      addBox(group, room.x - room.w*.31, .48, room.z, .14, .28, room.d*.48, mats.trim);
-      return;
+      return `
+        <rect class="render-furniture" x="${x+w*.2}" y="${y+h*.22}" width="${w*.52}" height="${h*.46}" rx="6" fill="#8f806f"/>
+        <rect class="render-furniture" x="${x+w*.2}" y="${y+h*.22}" width="${w*.14}" height="${h*.46}" rx="4" fill="#e8e0d1"/>
+        <rect class="render-furniture" x="${x+w*.74}" y="${y+h*.18}" width="${w*.16}" height="${h*.64}" rx="3" fill="#5b3b24"/>
+      `;
     }
-    addBox(group, room.x - room.w*.14, .13, room.z + room.d*.18, room.w*.5, .26, .38, mats.fabric);
-    addBox(group, room.x - room.w*.14, .43, room.z + room.d*.32, room.w*.5, .38, .14, mats.fabric);
-    addBox(group, room.x + room.w*.18, .17, room.z, room.w*.28, .09, room.d*.24, mats.wood);
+    return `
+      <rect class="render-furniture" x="${x+w*.18}" y="${y+h*.58}" width="${w*.48}" height="${h*.16}" rx="5" fill="#202a32"/>
+      <rect class="render-furniture" x="${x+w*.18}" y="${y+h*.74}" width="${w*.48}" height="${h*.08}" rx="4" fill="#171a1f"/>
+      <rect class="render-furniture" x="${x+w*.54}" y="${y+h*.3}" width="${w*.22}" height="${h*.18}" rx="5" fill="#5b3b24"/>
+      <rect class="render-furniture" x="${x+w*.74}" y="${y+h*.08}" width="${w*.18}" height="${h*.1}" rx="2" fill="#111"/>
+    `;
   }
 
-  function rebuildSmartScene(){
-    const data = readSmartBackendScene() || {
-      rooms:[
-        { name:'Sala', x:1, y:1, w:4.2, d:3, h:2.7 },
-        { name:'Cucina', x:1, y:4.25, w:2.4, d:2.2, h:2.7 },
-        { name:'Camera', x:5.55, y:4.25, w:2.7, d:2.2, h:2.7 }
-      ],
-      walls:[],
-      devices:[]
-    };
-    const bounds = sceneBounds(data);
-    clearHouse();
+  function renderStaticSmartPreview(){
+    const data = readSmartPreviewData() || defaultSmartBackend();
+    const bounds = previewBounds(data);
+    const vb = { w:1000, h:640, pad:56 };
+    const bw = Math.max(.1, bounds.maxX - bounds.minX);
+    const bh = Math.max(.1, bounds.maxY - bounds.minY);
+    const scale = Math.min((vb.w - vb.pad*2) / bw, (vb.h - vb.pad*2) / bh);
+    const ox = (vb.w - bw * scale) / 2 - bounds.minX * scale;
+    const oy = (vb.h - bh * scale) / 2 - bounds.minY * scale;
+    const sx = v => ox + (Number(v) || 0) * scale;
+    const sy = v => oy + (Number(v) || 0) * scale;
+    const sw = v => (Number(v) || 0) * scale;
+    const label = document.getElementById('smart-room-label');
 
-    const base = new THREE.Mesh(
-      new THREE.BoxGeometry(Math.max(4, bounds.w + .8), .12, Math.max(3, bounds.d + .8)),
-      new THREE.MeshStandardMaterial({ color:0x0c0f10, roughness:.8 })
-    );
-    base.position.y = -.12;
-    base.receiveShadow = true;
-    house.add(base);
+    const rooms = (data.rooms || []).map((room, i) => {
+      const x = sx(room.x), y = sy(room.y), w = sw(room.w || 2), h = sw(room.d || 2);
+      const selected = selectedSmartRoomName ? selectedSmartRoomName === room.name : i === 0;
+      const devices = (data.devices || []).filter(d => d.room === room.name);
+      if(selected && label) label.textContent = `${room.name || 'Stanza'} - ${devices.length || 0} dispositivi`;
+      return `
+        <g data-preview-room="${smartEsc(room.name || '')}">
+          <rect class="render-room${selected ? ' selected' : ''}" x="${x}" y="${y}" width="${w}" height="${h}" rx="5" fill="${materialFill(room.material, i)}"/>
+          ${renderPreviewFurniture(room, { x, y, w, h })}
+          <text class="render-label" x="${x + 18}" y="${y + 28}">${smartEsc(room.name || 'Stanza')}</text>
+        </g>
+      `;
+    }).join('');
 
-    (data.rooms || []).forEach((src, i) => {
-      const devices = (data.devices || []).filter(d => d.room === src.name);
-      const room = {
-        name:src.name || `Stanza ${i+1}`,
-        note:devices.length ? `${devices.length} dispositivi` : `h ${src.h || 2.7}m`,
-        x:(Number(src.x) || 0) + (Number(src.w) || 2) / 2 - bounds.cx,
-        z:(Number(src.y) || 0) + (Number(src.d) || 2) / 2 - bounds.cy,
-        w:Number(src.w) || 2,
-        d:Number(src.d) || 2,
-        active:devices.length > 0,
-        color:devices.length ? deviceColor(devices[0].kind) : 0x7c8b92,
-        floor:roomColor(i)
-      };
-      roomData.push(room);
+    const walls = (data.walls || []).map(wall => `
+      <line class="render-wall" x1="${sx(wall.x1)}" y1="${sy(wall.y1)}" x2="${sx(wall.x2)}" y2="${sy(wall.y2)}"/>
+    `).join('');
 
-      const floorMat = mats.floor.clone();
-      floorMat.color.setHex(room.floor);
-      const floor = new THREE.Mesh(new THREE.BoxGeometry(room.w, .12, room.d), floorMat);
-      floor.position.set(room.x, 0, room.z);
-      floor.receiveShadow = true;
-      floor.userData.room = room;
-      house.add(floor);
-      roomMeshes.push(floor);
+    const devices = (data.devices || []).map(dev => {
+      const x = sx(dev.x), y = sy(dev.y);
+      return `
+        <g data-preview-device="${smartEsc(dev.id || '')}">
+          <circle class="render-device" cx="${x}" cy="${y}" r="19"/>
+          <text class="render-device-dot" x="${x}" y="${y+5}" text-anchor="middle" font-family="Arial" font-size="16" font-weight="700">${deviceGlyph(dev.kind)}</text>
+        </g>
+      `;
+    }).join('');
 
-      const marker = addControlMarker(house, room.x, room.z, room, room.active ? .18 : .13, .42);
-      roomMeshes.push(marker);
-      roomObjects.set(room.name, { floor, marker, floorMat });
-      addRoomLabel(room);
-      addGenericFurniture(room, house);
+    smartSceneRoot.innerHTML = `
+      <svg class="smart-render" viewBox="0 0 ${vb.w} ${vb.h}" role="img" aria-label="Anteprima statica fotorealistica casa smart">
+        <defs>
+          <filter id="render-shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#000" flood-opacity=".34"/></filter>
+          <filter id="render-selected" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="0" stdDeviation="9" flood-color="#fff" flood-opacity=".34"/></filter>
+          <filter id="render-wall-shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="7" stdDeviation="5" flood-color="#000" flood-opacity=".36"/></filter>
+          <filter id="render-soft-shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#000" flood-opacity=".28"/></filter>
+          <filter id="render-device-shadow" x="-80%" y="-80%" width="260%" height="260%"><feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000" flood-opacity=".45"/></filter>
+          <pattern id="mat-wood" width="46" height="46" patternUnits="userSpaceOnUse" patternTransform="rotate(0)">
+            <rect width="46" height="46" fill="#795838"/><path d="M0 7H46M0 20H46M0 34H46" stroke="#5f4129" stroke-width="2" opacity=".45"/><path d="M8 0V46M28 0V46" stroke="#9a7048" stroke-width="1" opacity=".3"/>
+          </pattern>
+          <pattern id="mat-wood-dark" width="42" height="42" patternUnits="userSpaceOnUse">
+            <rect width="42" height="42" fill="#704d31"/><path d="M0 9H42M0 24H42M0 38H42" stroke="#4f3422" stroke-width="2" opacity=".42"/>
+          </pattern>
+          <pattern id="mat-tile" width="34" height="34" patternUnits="userSpaceOnUse">
+            <rect width="34" height="34" fill="#b9b4aa"/><path d="M34 0H0V34" fill="none" stroke="#918a80" stroke-width="1" opacity=".65"/>
+          </pattern>
+          <pattern id="mat-stone" width="58" height="58" patternUnits="userSpaceOnUse">
+            <rect width="58" height="58" fill="#77736a"/><path d="M0 18H58M0 39H58M18 0V18M42 18V39M24 39V58" stroke="#5e5a52" stroke-width="2" opacity=".45"/>
+          </pattern>
+          <pattern id="mat-fabric" width="16" height="16" patternUnits="userSpaceOnUse">
+            <rect width="16" height="16" fill="#4b535b"/><path d="M0 0L16 16M16 0L0 16" stroke="#343b42" stroke-width="1" opacity=".5"/>
+          </pattern>
+        </defs>
+        <rect width="${vb.w}" height="${vb.h}" fill="#15181d"/>
+        <rect class="render-shell" x="${sx(bounds.minX)-34}" y="${sy(bounds.minY)-34}" width="${bw*scale+68}" height="${bh*scale+68}" rx="10"/>
+        ${rooms}
+        ${walls}
+        ${devices}
+      </svg>
+    `;
+
+    smartSceneRoot.querySelectorAll('[data-preview-room]').forEach(node => {
+      node.addEventListener('click', () => {
+        selectedSmartRoomName = node.dataset.previewRoom;
+        renderStaticSmartPreview();
+      });
     });
-
-    (data.walls || []).forEach(wall => addWallFromLine(wall, bounds));
-
-    (data.devices || []).forEach(dev => {
-      const room = roomData.find(r => r.name === dev.room) || roomData[0];
-      const marker = addControlMarker(house, (Number(dev.x)||0) - bounds.cx, (Number(dev.y)||0) - bounds.cy, room, .16, .52);
-      roomMeshes.push(marker);
-    });
-
-    selectedRoom = roomData[0] || null;
-    if(selectedRoom) selectRoom(selectedRoom);
   }
 
-  const raycaster = new THREE.Raycaster();
-  const pointer = new THREE.Vector2();
-  const label = document.getElementById('smart-room-label');
-  let pointerDownPoint = null;
-  const activePointers = new Map();
-
-  function selectRoom(room){
-    if(!room) return;
-    selectedRoom = room;
-    if(label) label.textContent = `${room.name} - ${room.note}`;
-    roomObjects.forEach((obj, name) => {
-      const active = name === room.name;
-      obj.floor.material = active ? mats.selected : obj.floorMat;
-      obj.marker.scale.setScalar(active ? 1.38 : 1);
-    });
-    sceneTarget.set(room.x, .18, room.z);
-    updateCameraOrbit();
-  }
-
-  function resizeSmartScene(){
-    const rect = smartSceneRoot.getBoundingClientRect();
-    const width = Math.max(1, rect.width);
-    const height = Math.max(1, rect.height);
-    const aspect = width / height;
-    const zoom = aspect > 1 ? 3.45 : 4.45;
-    camera.left = -zoom * aspect;
-    camera.right = zoom * aspect;
-    camera.top = zoom;
-    camera.bottom = -zoom;
-    renderer.setSize(width, height, false);
-    updateCameraOrbit();
-  }
-
-  function getPointerDistance(){
-    const pts = [...activePointers.values()];
-    if(pts.length < 2) return 0;
-    return Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-  }
-
-  function handleScenePointerDown(e){
-    renderer.domElement.setPointerCapture?.(e.pointerId);
-    pointerDownPoint = { x:e.clientX, y:e.clientY };
-    activePointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
-
-    if(activePointers.size === 1){
-      orbit.dragStart = { x:e.clientX, y:e.clientY, yaw:orbit.yaw };
-      return;
-    }
-
-    if(activePointers.size === 2){
-      orbit.lastPinch = getPointerDistance();
-      orbit.dragStart = null;
-    }
-  }
-
-  function handleScenePointerMove(e){
-    if(!activePointers.has(e.pointerId)) return;
-    activePointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
-
-    if(activePointers.size >= 2){
-      const dist = getPointerDistance();
-      if(orbit.lastPinch > 0 && dist > 0){
-        orbit.zoom = clamp(orbit.zoom * (dist / orbit.lastPinch), orbit.minZoom, orbit.maxZoom);
-        updateCameraOrbit();
-      }
-      orbit.lastPinch = dist;
-      return;
-    }
-
-    if(!orbit.dragStart) return;
-    const dx = e.clientX - orbit.dragStart.x;
-    orbit.yaw = orbit.dragStart.yaw - dx * .006;
-    updateCameraOrbit();
-  }
-
-  function handleScenePointerEnd(e){
-    const wasPinching = activePointers.size > 1;
-    activePointers.delete(e.pointerId);
-    if(activePointers.size < 2) orbit.lastPinch = 0;
-    if(activePointers.size === 0) orbit.dragStart = null;
-    if(wasPinching){
-      pointerDownPoint = null;
-      return;
-    }
-    pickRoom(e);
-  }
-
-  function handleSceneWheel(e){
-    e.preventDefault();
-    const direction = e.deltaY > 0 ? .9 : 1.1;
-    orbit.zoom = clamp(orbit.zoom * direction, orbit.minZoom, orbit.maxZoom);
-    updateCameraOrbit();
-  }
-
-  function pickRoom(e){
-    if(pointerDownPoint){
-      const moved = Math.hypot(e.clientX - pointerDownPoint.x, e.clientY - pointerDownPoint.y);
-      pointerDownPoint = null;
-      if(moved > 8) return;
-    }
-    const rect = renderer.domElement.getBoundingClientRect();
-    pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-    pointer.y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
-    raycaster.setFromCamera(pointer, camera);
-    const hit = raycaster.intersectObjects(roomMeshes, false)[0];
-    if(hit) selectRoom(hit.object.userData.room);
-  }
-
-  renderer.domElement.addEventListener('pointerdown', handleScenePointerDown);
-  renderer.domElement.addEventListener('pointermove', handleScenePointerMove);
-  renderer.domElement.addEventListener('pointerup', handleScenePointerEnd);
-  renderer.domElement.addEventListener('pointercancel', handleScenePointerEnd);
-  renderer.domElement.addEventListener('wheel', handleSceneWheel, { passive:false });
-  window.addEventListener('resize', resizeSmartScene);
-  window.addEventListener('orientationchange', () => setTimeout(resizeSmartScene, 120));
-
-  function animateSmartScene(t){
-    const current = selectedRoom ? roomObjects.get(selectedRoom.name) : null;
-    if(current) current.marker.position.y = .24 + Math.sin(t * .004) * .035;
-    renderer.render(scene, camera);
-    requestAnimationFrame(animateSmartScene);
-  }
-
-  rebuildSmartScene();
-  resizeSmartScene();
-  window.addEventListener('casa-smart-backend-updated', () => {
-    rebuildSmartScene();
-    resizeSmartScene();
-  });
-  requestAnimationFrame(animateSmartScene);
+  renderStaticSmartPreview();
+  window.addEventListener('casa-smart-backend-updated', renderStaticSmartPreview);
 }
 </script>
 

@@ -4256,7 +4256,8 @@ if(smartSceneRoot){
   scene.background = new THREE.Color(0x15181d);
 
   const camera = new THREE.OrthographicCamera(-4, 4, 3, -3, 0.1, 100);
-  camera.position.set(4.6, 8.2, 4.8);
+  camera.position.set(0, 12, 0);
+  camera.up.set(0, 0, -1);
   camera.lookAt(0, 0, 0);
 
   const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:false });
@@ -4268,8 +4269,7 @@ if(smartSceneRoot){
   const sceneTarget = new THREE.Vector3(0, .18, -.18);
   const orbit = {
     yaw:.18,
-    pitch:1.08,
-    radius:8.9,
+    radius:12,
     zoom:.98,
     minZoom:.65,
     maxZoom:2.9,
@@ -4282,12 +4282,8 @@ if(smartSceneRoot){
   }
 
   function updateCameraOrbit(){
-    const cp = Math.cos(orbit.pitch);
-    camera.position.set(
-      sceneTarget.x + Math.sin(orbit.yaw) * cp * orbit.radius,
-      sceneTarget.y + Math.sin(orbit.pitch) * orbit.radius,
-      sceneTarget.z + Math.cos(orbit.yaw) * cp * orbit.radius
-    );
+    camera.position.set(sceneTarget.x, sceneTarget.y + orbit.radius, sceneTarget.z);
+    camera.up.set(Math.sin(orbit.yaw), 0, -Math.cos(orbit.yaw));
     camera.lookAt(sceneTarget);
     camera.zoom = orbit.zoom;
     camera.updateProjectionMatrix();
@@ -4559,7 +4555,7 @@ if(smartSceneRoot){
     activePointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
 
     if(activePointers.size === 1){
-      orbit.dragStart = { x:e.clientX, y:e.clientY, yaw:orbit.yaw, pitch:orbit.pitch };
+      orbit.dragStart = { x:e.clientX, y:e.clientY, yaw:orbit.yaw };
       return;
     }
 
@@ -4585,9 +4581,7 @@ if(smartSceneRoot){
 
     if(!orbit.dragStart) return;
     const dx = e.clientX - orbit.dragStart.x;
-    const dy = e.clientY - orbit.dragStart.y;
     orbit.yaw = orbit.dragStart.yaw - dx * .006;
-    orbit.pitch = clamp(orbit.dragStart.pitch + dy * .004, .36, 1.22);
     updateCameraOrbit();
   }
 

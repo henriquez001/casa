@@ -126,19 +126,7 @@ html, body {
   gap: 0;
   position: relative;
   overflow: hidden;
-}
-
-#home::after {
-  content: "";
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  width: 3px;
-  height: 42px;
-  border-radius: 999px;
-  background: rgba(255,255,255,.18);
-  transform: translateY(-50%);
-  pointer-events: none;
+  touch-action: pan-y;
 }
 
 /* ── Widget row ── */
@@ -154,11 +142,6 @@ html, body {
 
 body.smart-open .widget-row {
   transform: translateX(calc(-100vw - var(--home-gap)));
-}
-
-body.smart-open #home::after {
-  left: 8px;
-  right: auto;
 }
 
 .smart-view {
@@ -1758,26 +1741,52 @@ function setSmartOpen(open){
   if(view) view.setAttribute('aria-hidden', open ? 'false' : 'true');
 }
 
+function canStartHomeSwipe(target){
+  if(document.body.classList.contains('panel-open') || document.body.classList.contains('menu-open')) return false;
+  return !target.closest?.('input, textarea, select');
+}
+
+function getSwipePoint(e){
+  const touch = e.changedTouches && e.changedTouches[0];
+  const p = touch || e;
+  if(p.clientX == null || p.clientY == null) return null;
+  return { x:p.clientX, y:p.clientY };
+}
+
+function beginHomeSwipe(e){
+  if(!canStartHomeSwipe(e.target)) return;
+  const p = getSwipePoint(e);
+  if(!p) return;
+  homeSwipeStart = { x:p.x, y:p.y, t:Date.now() };
+}
+
+function finishHomeSwipe(e){
+  if(!homeSwipeStart) return;
+  const p = getSwipePoint(e);
+  if(!p){
+    homeSwipeStart = null;
+    return;
+  }
+
+  const dx = p.x - homeSwipeStart.x;
+  const dy = p.y - homeSwipeStart.y;
+  const dt = Date.now() - homeSwipeStart.t;
+  homeSwipeStart = null;
+
+  if(Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy) * 1.35 || dt > 900) return;
+  setSmartOpen(dx < 0);
+}
+
 function setupHomeSwipe(){
   const home = document.getElementById('home');
   if(!home) return;
 
-  home.addEventListener('pointerdown', e => {
-    if(document.body.classList.contains('panel-open') || document.body.classList.contains('menu-open')) return;
-    if(e.target.closest('input, textarea, select')) return;
-    homeSwipeStart = { x:e.clientX, y:e.clientY, t:Date.now() };
-  }, { passive:true });
-
-  home.addEventListener('pointerup', e => {
-    if(!homeSwipeStart) return;
-    const dx = e.clientX - homeSwipeStart.x;
-    const dy = e.clientY - homeSwipeStart.y;
-    const dt = Date.now() - homeSwipeStart.t;
-    homeSwipeStart = null;
-
-    if(Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy) * 1.35 || dt > 900) return;
-    setSmartOpen(dx < 0);
-  }, { passive:true });
+  home.addEventListener('pointerdown', beginHomeSwipe, { passive:true });
+  home.addEventListener('pointerup', finishHomeSwipe, { passive:true });
+  home.addEventListener('pointercancel', () => { homeSwipeStart = null; }, { passive:true });
+  home.addEventListener('touchstart', beginHomeSwipe, { passive:true });
+  home.addEventListener('touchend', finishHomeSwipe, { passive:true });
+  home.addEventListener('touchcancel', () => { homeSwipeStart = null; }, { passive:true });
 }
 
 function setupSmartActions(){

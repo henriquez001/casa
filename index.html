@@ -1887,6 +1887,7 @@ let elVoice = '';  // ElevenLabs Voice ID
 // URL tabella fisso (il nome tabella è 'Archivio' con A maiuscola come creata)
 const SB_URL    = 'https://thmoyxfkgtkteajzande.supabase.co/rest/v1/Archivio';
 const SB_SMART_URL = 'https://thmoyxfkgtkteajzande.supabase.co/rest/v1/SmartHome';
+const SB_SMART_RENDER_URL = 'https://thmoyxfkgtkteajzande.supabase.co/functions/v1/render-smart-home';
 // SB_CONFIG rimosso — le chiavi non vengono mai salvate sul cloud
 let sbKey = ''; // anon key — inserita nel setup
 
@@ -1978,6 +1979,7 @@ const CAT_COLORS = {
 
 const SMART_BACKEND_KEY = 'casa_smart_backend_v1';
 const SMART_ASSET_DB = 'casa_smart_assets';
+const SMART_RENDER_IMAGE_KEY = 'casa_smart_render_image_v1';
 const PLAN_SCALE = 70;
 const PLAN_OFFSET = 50;
 let smartBackend = null;
@@ -2024,6 +2026,105 @@ function saveSmartBackend(show=true){
   window.dispatchEvent(new CustomEvent('casa-smart-backend-updated', { detail:smartBackend }));
   if(sbKey) queueSmartBackendCloudSync(smartBackend, show);
   if(show) showToast('Backend smart salvato');
+}
+
+function smartRenderPrompt(data){
+  const rooms = (data.rooms || []).map(room =>
+    `${room.name || 'Stanza'}: x ${smartFmt(room.x || 0)}, y ${smartFmt(room.y || 0)}, larghezza ${smartFmt(room.w || 0)}m, profondita ${smartFmt(room.d || 0)}m, altezza ${smartFmt(room.h || 2.7)}m, materiale ${room.material || 'wood'}`
+  ).join('\n');
+  const walls = (data.walls || []).map(wall =>
+    `${wall.name || 'Parete'}: da ${smartFmt(wall.x1 || 0)},${smartFmt(wall.y1 || 0)} a ${smartFmt(wall.x2 || 0)},${smartFmt(wall.y2 || 0)}, altezza ${smartFmt(wall.h || 2.7)}m`
+  ).join('\n');
+  const devices = (data.devices || []).map(device =>
+    `${device.name || 'Device'} (${device.kind || 'device'}) in ${device.room || 'stanza non assegnata'} a x ${smartFmt(device.x || 0)}, y ${smartFmt(device.y || 0)}`
+  ).join('\n');
+  const assets = (data.assets || []).map(asset => `${asset.name} (${asset.type})`).join(', ') || 'nessun file 3D caricato';
+
+  return `Crea un render fotorealistico architettonico in vista perfettamente dall'alto, camera ortografica verticale, di una casa smart moderna basata su questa planimetria.
+
+Stanze:
+${rooms || 'nessuna stanza'}
+
+Pareti:
+${walls || 'nessuna parete'}
+
+Dispositivi smart:
+${devices || 'nessun dispositivo'}
+
+Arredi caricati dall'utente: ${assets}.
+
+Inventare con gusto i dettagli mancanti: divani, tappeti, letto, cucina, tavolo, sedie, texture, illuminazione, piante e complementi, mantenendo proporzioni e posizione delle stanze. Deve sembrare un vero render 3D premium, non una planimetria disegnata. Niente testo, niente icone, niente marker, niente persone, niente watermark.`;
+}
+
+function updateSmartRenderStatus(){
+  const el = document.getElementById('smart-render-status');
+  if(!el) return;
+  const data = loadSmartBackend();
+  const status = data.renderStatus || (data.renderImage ? 'ready' : 'static');
+  if(status === 'generating') el.textContent = 'Render: generazione in corso dopo il salvataggio.';
+  else if(status === 'ready') el.textContent = `Render: aggiornato${data.renderGeneratedAt ? ' il ' + new Date(data.renderGeneratedAt).toLocaleString('it-IT') : ''}.`;
+  else if(status === 'error') el.textContent = 'Render: ultimo tentativo non riuscito. La planimetria e stata comunque salvata.';
+  else el.textContent = 'Render: immagine statica iniziale. Salva e chiudi per rigenerarla.';
+}
+
+async function requestSmartRenderGeneration(payload){
+  if(!payload) return;
+  if(!sbKey){
+    showToast('Render non generato: manca Supabase');
+    return;
+  }
+
+  payload.renderStatus = 'generating';
+  payload.renderRequestedAt = new Date().toISOString();
+  localStorage.setItem(SMART_BACKEND_KEY, JSON.stringify(payload));
+  window.dispatchEvent(new CustomEvent('casa-smart-backend-updated', { detail:payload }));
+  updateSmartRenderStatus();
+  showToast('Genero il render smart...');
+
+  try{
+    const res = await fetch(SB_SMART_RENDER_URL, {
+      method:'POST',
+      headers:{
+        'apikey': sbKey,
+        'Authorization': `Bearer ${sbKey}`,
+        'Content-Type':'application/json'
+      },
+      body: JSON.stringify({
+        payload,
+        prompt: smartRenderPrompt(payload),
+        size: '1536x1024'
+      })
+    });
+    if(!res.ok){
+      const err = await res.text();
+      throw new Error(err || `HTTP ${res.status}`);
+    }
+
+    const out = await res.json();
+    const image = out.imageDataUrl || out.image_data_url || (out.imageBase64 || out.image_base64 ? `data:image/png;base64,${out.imageBase64 || out.image_base64}` : '');
+    if(!image) throw new Error('Render vuoto');
+
+    payload.renderImage = image;
+    payload.renderStatus = 'ready';
+    payload.renderGeneratedAt = out.generatedAt || new Date().toISOString();
+    localStorage.setItem(SMART_RENDER_IMAGE_KEY, image);
+    saveSmartBackend(false);
+    updateSmartRenderStatus();
+    showToast('Render smart aggiornato');
+  }catch(e){
+    console.warn('Render smart non riuscito:', e);
+    payload.renderStatus = 'error';
+    payload.renderError = String(e.message || e).slice(0, 240);
+    saveSmartBackend(false);
+    updateSmartRenderStatus();
+    showToast('Render non riuscito');
+  }
+}
+
+function saveAndCloseSmartBackend(){
+  saveSmartBackend(true);
+  closeSmartBackend();
+  requestSmartRenderGeneration(loadSmartBackend());
 }
 
 function queueSmartBackendCloudSync(payload, immediate=false){
@@ -2229,6 +2330,7 @@ function renderSmartBackend(){
   renderSmartPlan(data);
   renderSmartInspector();
   renderSmartAssets(data);
+  updateSmartRenderStatus();
 }
 
 function renderSmartPlan(data){
@@ -3747,6 +3849,7 @@ async function syncSmartBackendFromCloud(){
 
     smartBackend = row.payload;
     localStorage.setItem(SMART_BACKEND_KEY, JSON.stringify(smartBackend));
+    if(smartBackend.renderImage) localStorage.setItem(SMART_RENDER_IMAGE_KEY, smartBackend.renderImage);
     window.dispatchEvent(new CustomEvent('casa-smart-backend-updated', { detail:smartBackend }));
     renderSmartBackend();
     showToast('Backend smart sincronizzato');
@@ -4197,10 +4300,10 @@ setupSmartActions();
 <div class="panel" id="panel-smart-backend">
   <div class="panel-hdr">
     <div class="panel-title">Backend smart</div>
-    <button class="panel-close" aria-label="Chiudi" onclick="closeSmartBackend()">✕</button>
+    <button class="panel-close" aria-label="Salva e chiudi" onclick="saveAndCloseSmartBackend()">✕</button>
   </div>
   <div class="panel-actions">
-    <button class="panel-action" onclick="saveSmartBackend()">Salva</button>
+    <button class="panel-action" onclick="saveAndCloseSmartBackend()">Salva e chiudi</button>
     <button class="panel-action" onclick="addSmartRoom()">Stanza</button>
     <button class="panel-action" onclick="resetSmartBackend()">Reset</button>
   </div>
@@ -4227,7 +4330,8 @@ setupSmartActions();
         </div>
         <div class="backend-block">
           <div class="backend-block-title">Dati locali</div>
-          <div class="backend-hint">La configurazione resta su questo dispositivo e non richiede API. Quote in metri, altezze in metri.</div>
+          <div class="backend-hint">La planimetria resta modificabile senza API. Quote in metri, altezze in metri. Il render viene rigenerato solo su Salva e chiudi se la funzione Supabase e configurata.</div>
+          <div class="backend-hint" id="smart-render-status" style="margin-top:10px">Render: immagine statica iniziale.</div>
         </div>
       </div>
     </div>
@@ -4528,6 +4632,7 @@ if(false && smartSceneRoot){
     const devices = data.devices || [];
     const b = bounds(data);
     const label = document.getElementById('smart-room-label');
+    const currentRenderImage = data.renderImage || localStorage.getItem(SMART_RENDER_IMAGE_KEY) || renderImage;
 
     if(!selectedRoomName && rooms[0]) selectedRoomName = rooms[0].name || '';
 
@@ -4553,7 +4658,7 @@ if(false && smartSceneRoot){
     }
 
     sceneRoot.innerHTML = `
-      <img class="smart-render-photo" src="${renderImage}" alt="Render fotorealistico della casa smart">
+      <img class="smart-render-photo" src="${currentRenderImage}" alt="Render fotorealistico della casa smart">
       <div class="smart-marker-layer" aria-label="Stanze e dispositivi">${roomMarkers}${deviceMarkers}</div>
     `;
 

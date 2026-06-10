@@ -2073,8 +2073,8 @@ function smartRenderErrorMessage(raw){
     const parsed = JSON.parse(text);
     if(parsed.error) return String(parsed.error);
   }catch(_){}
-  if(text.includes('404')) return 'Funzione render-smart-home non trovata o non deployata';
-  if(text.includes('Failed to fetch')) return 'Funzione Supabase non raggiungibile';
+  if(text.includes('404')) return 'Funzione render-smart-home non deployata su Supabase';
+  if(text.includes('Failed to fetch')) return 'Funzione Supabase non raggiungibile: verifica deploy render-smart-home e CORS';
   return text.slice(0, 220);
 }
 

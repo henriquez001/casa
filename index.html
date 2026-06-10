@@ -128,6 +128,19 @@ html, body {
   overflow: hidden;
 }
 
+#home::after {
+  content: "";
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  width: 3px;
+  height: 42px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.18);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
 /* ── Widget row ── */
 .widget-row {
   flex: 1;
@@ -135,6 +148,133 @@ html, body {
   gap: var(--home-gap);
   padding-bottom: var(--home-bottom-gap);
   min-height: 0;
+  transition: transform .34s cubic-bezier(.4,0,.2,1);
+  will-change: transform;
+}
+
+body.smart-open .widget-row {
+  transform: translateX(calc(-100vw - var(--home-gap)));
+}
+
+body.smart-open #home::after {
+  left: 8px;
+  right: auto;
+}
+
+.smart-view {
+  position: absolute;
+  top: var(--home-pad-top);
+  left: calc(100% + var(--home-gap));
+  width: calc(100% - var(--home-pad-left) - var(--home-pad-right));
+  bottom: var(--home-bottom-gap);
+  color: #000;
+  background: var(--blue);
+  border-radius: var(--r);
+  overflow: hidden;
+  transform: translateX(0);
+  transition: transform .34s cubic-bezier(.4,0,.2,1);
+  will-change: transform;
+  touch-action: pan-y;
+}
+
+body:not(.smart-open) .smart-view {
+  pointer-events: none;
+}
+
+body.smart-open .smart-view {
+  transform: translateX(calc(-100vw - var(--home-gap)));
+}
+
+.smart-scene {
+  position: absolute;
+  inset: 0;
+  background: #c7f3ff;
+}
+
+.smart-scene canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.smart-topbar {
+  position: absolute;
+  top: var(--section-title-top);
+  left: var(--tab-title-x);
+  right: var(--tab-title-x);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.smart-title {
+  font-family: var(--mono);
+  font-size: var(--section-title-size);
+  font-weight: 700;
+  letter-spacing: .14em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: rgba(0,0,0,.62);
+}
+
+.smart-room-label {
+  font-family: var(--sep);
+  font-size: var(--menu-item-sub-size);
+  font-weight: 500;
+  color: rgba(0,0,0,.68);
+  text-align: right;
+  line-height: 1.1;
+}
+
+.smart-bottom {
+  position: absolute;
+  left: var(--tab-title-x);
+  right: var(--tab-title-x);
+  bottom: 22px;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.smart-action {
+  min-width: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: #000;
+  text-align: left;
+  padding: 8px 0;
+  font-family: var(--mono);
+  cursor: pointer;
+}
+
+.smart-action-main {
+  display: block;
+  font-size: var(--section-title-size);
+  font-weight: 800;
+  letter-spacing: .06em;
+  line-height: 1;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.smart-action-sub {
+  display: block;
+  margin-top: 5px;
+  font-family: var(--sep);
+  font-size: 1.05rem;
+  font-weight: 500;
+  line-height: 1.12;
+  color: rgba(0,0,0,.58);
+  overflow-wrap: anywhere;
+}
+
+.smart-action:active {
+  opacity: .62;
 }
 
 /* ── Pannello sinistro (2/3) ── */
@@ -1144,6 +1284,32 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
 
   </div>
 
+  <section class="smart-view" id="smart-view" aria-label="Smart home" aria-hidden="true">
+    <div class="smart-scene" id="smart-scene"></div>
+    <div class="smart-topbar">
+      <div class="smart-title">Casa smart</div>
+      <div class="smart-room-label" id="smart-room-label">Sala - 2 luci</div>
+    </div>
+    <div class="smart-bottom">
+      <button class="smart-action" type="button" data-smart-action="lights">
+        <span class="smart-action-main">Luci</span>
+        <span class="smart-action-sub">3 accese</span>
+      </button>
+      <button class="smart-action" type="button" data-smart-action="plugs">
+        <span class="smart-action-main">Prese</span>
+        <span class="smart-action-sub">2 attive</span>
+      </button>
+      <button class="smart-action" type="button" data-smart-action="night">
+        <span class="smart-action-main">Notte</span>
+        <span class="smart-action-sub">Scena</span>
+      </button>
+      <button class="smart-action" type="button" data-smart-action="off">
+        <span class="smart-action-main">Off</span>
+        <span class="smart-action-sub">Tutto</span>
+      </button>
+    </div>
+  </section>
+
   <!-- Elementi nascosti per retrocompatibilità JS -->
   <div style="display:none" aria-hidden="true">
     <div class="weather-bar">
@@ -1584,6 +1750,46 @@ function closeMenu(){
   setMenuOpen(false);
 }
 
+let homeSwipeStart = null;
+
+function setSmartOpen(open){
+  document.body.classList.toggle('smart-open', open);
+  const view = document.getElementById('smart-view');
+  if(view) view.setAttribute('aria-hidden', open ? 'false' : 'true');
+}
+
+function setupHomeSwipe(){
+  const home = document.getElementById('home');
+  if(!home) return;
+
+  home.addEventListener('pointerdown', e => {
+    if(document.body.classList.contains('panel-open') || document.body.classList.contains('menu-open')) return;
+    if(e.target.closest('input, textarea, select')) return;
+    homeSwipeStart = { x:e.clientX, y:e.clientY, t:Date.now() };
+  }, { passive:true });
+
+  home.addEventListener('pointerup', e => {
+    if(!homeSwipeStart) return;
+    const dx = e.clientX - homeSwipeStart.x;
+    const dy = e.clientY - homeSwipeStart.y;
+    const dt = Date.now() - homeSwipeStart.t;
+    homeSwipeStart = null;
+
+    if(Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy) * 1.35 || dt > 900) return;
+    setSmartOpen(dx < 0);
+  }, { passive:true });
+}
+
+function setupSmartActions(){
+  document.querySelectorAll('.smart-action').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = btn.dataset.smartAction || 'smart';
+      const labels = { lights:'Luci', plugs:'Prese', night:'Scena notte', off:'Spegnimento' };
+      showToast(`${labels[action] || action}: pronto per collegamento smart home`);
+    });
+  });
+}
+
 function openPanelFromMenu(id, afterOpen){
   if(typeof afterOpen === 'function') afterOpen();
   openPanel(id);
@@ -1608,7 +1814,10 @@ function openPanelFromMenu(id, afterOpen){
 }
 
 document.addEventListener('keydown', e => {
-  if(e.key === 'Escape') closeMenu();
+  if(e.key === 'Escape'){
+    closeMenu();
+    setSmartOpen(false);
+  }
 });
 
 window.addEventListener('resize', syncMenuGeometry);
@@ -3124,6 +3333,8 @@ function setupMicHitArea(){
 
 setupClockFullscreenTap();
 setupMicHitArea();
+setupHomeSwipe();
+setupSmartActions();
 
 </script>
 
@@ -3207,6 +3418,143 @@ setupMicHitArea();
     <div style="opacity:.3;text-align:center;margin-top:40px">Nessun log ancora</div>
   </div>
 </div>
+
+<script type="module">
+import * as THREE from 'https://unpkg.com/three@0.165.0/build/three.module.js';
+
+const smartSceneRoot = document.getElementById('smart-scene');
+
+if(smartSceneRoot){
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xc7f3ff);
+
+  const camera = new THREE.OrthographicCamera(-4, 4, 3, -3, 0.1, 100);
+  camera.position.set(4.8, 5.4, 5.2);
+  camera.lookAt(0, 0, 0);
+
+  const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:false });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.shadowMap.enabled = true;
+  smartSceneRoot.appendChild(renderer.domElement);
+
+  const ambient = new THREE.HemisphereLight(0xffffff, 0x7aa8b8, 2.2);
+  scene.add(ambient);
+
+  const sun = new THREE.DirectionalLight(0xffffff, 2.4);
+  sun.position.set(3, 6, 4);
+  sun.castShadow = true;
+  scene.add(sun);
+
+  const house = new THREE.Group();
+  house.rotation.y = -0.36;
+  scene.add(house);
+
+  const matFloor = new THREE.MeshStandardMaterial({ color:0xf6f2df, roughness:.72, metalness:.02 });
+  const matWall = new THREE.MeshStandardMaterial({ color:0x111314, roughness:.65, metalness:.02 });
+  const matOff = new THREE.MeshStandardMaterial({ color:0x4f5a5f, roughness:.82 });
+
+  const roomData = [
+    { name:'Sala', note:'2 luci', x:0, z:.55, w:3.15, d:2.25, active:true, color:0xffd60a },
+    { name:'Cucina', note:'1 luce', x:-2.02, z:-1.05, w:1.85, d:1.7, active:true, color:0x30d158 },
+    { name:'Camera', note:'clima spento', x:1.8, z:-1.05, w:2, d:1.7, active:false, color:0x7c8b92 },
+    { name:'Ingresso', note:'presa attiva', x:-.1, z:-1.72, w:1.52, d:.82, active:true, color:0x64d2ff }
+  ];
+
+  const roomMeshes = [];
+  const markerGeo = new THREE.CylinderGeometry(.16, .16, .16, 36);
+
+  roomData.forEach(room => {
+    const floor = new THREE.Mesh(new THREE.BoxGeometry(room.w, .12, room.d), matFloor);
+    floor.position.set(room.x, 0, room.z);
+    floor.receiveShadow = true;
+    floor.userData.room = room;
+    house.add(floor);
+    roomMeshes.push(floor);
+
+    const markerMat = room.active
+      ? new THREE.MeshStandardMaterial({ color:room.color, emissive:room.color, emissiveIntensity:.65, roughness:.4 })
+      : matOff;
+    const marker = new THREE.Mesh(markerGeo, markerMat);
+    marker.position.set(room.x, .24, room.z);
+    marker.userData.room = room;
+    marker.castShadow = true;
+    house.add(marker);
+    roomMeshes.push(marker);
+  });
+
+  const wallSpecs = [
+    { x:0, z:1.74, w:5.9, d:.12 },
+    { x:0, z:-2.2, w:5.9, d:.12 },
+    { x:-2.98, z:-.22, w:.12, d:4.05 },
+    { x:2.98, z:-.22, w:.12, d:4.05 },
+    { x:-1.05, z:-1.05, w:.12, d:2.32 },
+    { x:.76, z:-1.05, w:.12, d:2.32 },
+    { x:.08, z:-.17, w:2.18, d:.12 }
+  ];
+
+  wallSpecs.forEach(wall => {
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(wall.w, .58, wall.d), matWall);
+    mesh.position.set(wall.x, .29, wall.z);
+    mesh.castShadow = true;
+    house.add(mesh);
+  });
+
+  const base = new THREE.Mesh(
+    new THREE.BoxGeometry(6.35, .12, 4.55),
+    new THREE.MeshStandardMaterial({ color:0x0c0f10, roughness:.8 })
+  );
+  base.position.y = -.12;
+  base.receiveShadow = true;
+  house.add(base);
+
+  const raycaster = new THREE.Raycaster();
+  const pointer = new THREE.Vector2();
+  const label = document.getElementById('smart-room-label');
+
+  function selectRoom(room){
+    if(!room) return;
+    if(label) label.textContent = `${room.name} - ${room.note}`;
+  }
+
+  function resizeSmartScene(){
+    const rect = smartSceneRoot.getBoundingClientRect();
+    const width = Math.max(1, rect.width);
+    const height = Math.max(1, rect.height);
+    const aspect = width / height;
+    const zoom = aspect > 1 ? 3.45 : 4.45;
+    camera.left = -zoom * aspect;
+    camera.right = zoom * aspect;
+    camera.top = zoom;
+    camera.bottom = -zoom;
+    camera.updateProjectionMatrix();
+    renderer.setSize(width, height, false);
+  }
+
+  function pickRoom(e){
+    const rect = renderer.domElement.getBoundingClientRect();
+    pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    pointer.y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
+    raycaster.setFromCamera(pointer, camera);
+    const hit = raycaster.intersectObjects(roomMeshes, false)[0];
+    if(hit) selectRoom(hit.object.userData.room);
+  }
+
+  renderer.domElement.addEventListener('pointerup', pickRoom);
+  window.addEventListener('resize', resizeSmartScene);
+  window.addEventListener('orientationchange', () => setTimeout(resizeSmartScene, 120));
+
+  function animateSmartScene(t){
+    house.rotation.y = -0.36 + Math.sin(t * .00045) * .035;
+    house.position.y = Math.sin(t * .0011) * .035;
+    renderer.render(scene, camera);
+    requestAnimationFrame(animateSmartScene);
+  }
+
+  selectRoom(roomData[0]);
+  resizeSmartScene();
+  requestAnimationFrame(animateSmartScene);
+}
+</script>
 
 </body>
 </html>

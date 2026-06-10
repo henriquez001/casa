@@ -28,6 +28,8 @@
   --control-size: 46px;
   --control-offset: calc(var(--edge-gap) - (var(--control-size) / 2));
   --mic-size: 60px;
+  --mic-hit-size: 72px;
+  --mic-touch-size: 104px;
   --clock-size: clamp(5.01rem, 26.72vw, 11.69rem);
   --home-pad-top: 16px;
   --home-pad-left: 16px;
@@ -228,22 +230,34 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
   left: 50%;
   top: calc(75% + (var(--clock-size) / 4));
   transform: translate(-50%, -50%);
+  z-index: 12;
 }
 
 .mic-area {
   display: flex;
   align-items: center;
   justify-content: center;
+  pointer-events: auto;
+  width: var(--mic-touch-size);
+  height: var(--mic-touch-size);
 }
 
 .mic-ring-wrap {
-  position: relative;
-  width: var(--mic-size);
-  height: var(--mic-size);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: var(--mic-hit-size);
+  height: var(--mic-hit-size);
+  background: var(--yel);
+  border-radius: 50%;
+  cursor: pointer;
+  touch-action: manipulation;
 }
 
 .mic-ring {
-  position: absolute; inset: -4px;
+  position: absolute;
+  inset: calc((var(--mic-hit-size) - var(--mic-size)) / 2 - 4px);
   border-radius: 50%;
   border: 1px solid transparent;
   pointer-events: none;
@@ -253,26 +267,96 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
 .mic-btn {
   position: absolute; inset: 0;
   border-radius: 50%;
-  border: 2px solid rgba(0,0,0,.3);
-  background: transparent;
+  border: none;
+  background: var(--yel);
   color: #000;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  transition: all .2s;
+  touch-action: manipulation;
+  z-index: 2;
 }
-.mic-btn:active { background: rgba(0,0,0,.1); }
+
+.mic-btn::before {
+  content: "";
+  position: absolute;
+  width: var(--mic-size);
+  height: var(--mic-size);
+  border-radius: 50%;
+  border: 2px solid rgba(0,0,0,.3);
+  transition: background .2s, border-color .2s, border-width .2s;
+  pointer-events: none;
+}
+
+.mic-btn svg {
+  position: relative;
+  z-index: 1;
+}
+
+.mic-btn:active::before { background: rgba(0,0,0,.1); }
+
+.mic-hit-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0,0,0,.001);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+body.mic-debug .mic-hit-layer {
+  background: rgba(255,45,85,.22);
+  outline: 2px solid rgba(255,45,85,.8);
+}
+
+body.mic-debug .mic-ring-wrap {
+  outline: 2px solid rgba(10,132,255,.8);
+}
+
+.mic-debug-dot {
+  position: fixed;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ff2d55;
+  border: 2px solid #fff;
+  z-index: 1000;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  display: none;
+}
+
+.mic-debug-banner {
+  position: fixed;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  background: #ff2d55;
+  color: #fff;
+  border: 2px solid #fff;
+  border-radius: 8px;
+  padding: 5px 9px;
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  font-weight: 900;
+  letter-spacing: .06em;
+  pointer-events: none;
+}
 
 /* Stati microfono */
-.state-wake-active  .mic-btn { border-color: rgba(0,0,0,.6); }
-.state-listening    .mic-btn { border-color: #000; border-width: 2.5px; }
-.state-thinking     .mic-btn { border-color: rgba(0,0,0,.4); }
-.state-speaking     .mic-btn { border-color: rgba(0,0,0,.4); }
-.state-idle-manual  .mic-btn { border-color: var(--red); color: var(--red); }
+.state-wake-active  .mic-btn::before { border-color: rgba(0,0,0,.6); }
+.state-listening    .mic-btn::before { border-color: #000; border-width: 2.5px; }
+.state-thinking     .mic-btn::before { border-color: rgba(0,0,0,.4); }
+.state-speaking     .mic-btn::before { border-color: rgba(0,0,0,.4); }
+.state-idle-manual  .mic-btn { color: var(--red); }
+.state-idle-manual  .mic-btn::before { border-color: var(--red); }
 
 .state-wake-active  .mic-ring { border-color: rgba(0,0,0,.2); animation: ringrot 2s linear infinite; }
 .state-listening    .mic-ring { border-color: rgba(0,0,0,.4); animation: ringrot 1s linear infinite; }
 .state-thinking     .mic-ring {
-  inset: -7px;
+  inset: calc((var(--mic-hit-size) - var(--mic-size)) / 2 - 7px);
   border-width: 2px;
   border-color: rgba(0,0,0,.1);
   border-top-color: rgba(0,0,0,.9);
@@ -443,6 +527,7 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
   transform: translateX(calc(-100% - 24px));
   transition: transform .34s cubic-bezier(.4,0,.2,1);
   overflow: hidden;
+  pointer-events: none;
 }
 
 .menu-title {
@@ -499,7 +584,10 @@ body.menu-open .menu-toggle line:nth-child(3) { transform: translateY(-5px) rota
   overflow-wrap: anywhere;
 }
 
-body.menu-open .menu-panel { transform: translateX(0); }
+body.menu-open .menu-panel {
+  transform: translateX(0);
+  pointer-events: auto;
+}
 body.menu-open .widget-left {
   transform: translateX(calc(var(--menu-w) + var(--home-gap)));
 }
@@ -525,11 +613,13 @@ body.menu-skip-transition .menu-toggle line {
   overflow: hidden;
   transform: translateY(calc(100% + var(--panel-gap) + var(--panel-hide-extra)));
   visibility: hidden;
+  pointer-events: none;
   transition: transform .34s linear, visibility 0s .34s;
 }
 .panel.open {
   transform: translateY(0);
   visibility: visible;
+  pointer-events: auto;
   transition: transform .34s linear, visibility 0s;
 }
 body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel-gap)) * -1)); }
@@ -823,6 +913,70 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
 }
 
 /* ── Pannello dettaglio ── */
+#arch-dialog {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.85);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .2s, visibility 0s .2s;
+}
+#arch-dialog.open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity .2s, visibility 0s;
+}
+.adlg-box {
+  width: 100%; background: #111;
+  border-radius: var(--r) var(--r) 0 0;
+  padding: 24px 20px 32px;
+  display: flex; flex-direction: column; gap: 12px;
+  max-height: 90vh; overflow-y: auto;
+}
+.adlg-handle {
+  width: 44px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.25);
+  align-self: center;
+  margin-bottom: 4px;
+}
+.adlg-title { font-size: 1.47rem; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 4px; }
+.adlg-field { display: flex; flex-direction: column; gap: 5px; }
+.adlg-lbl { font-size: 1.4rem; font-weight: 700; color: rgba(255,255,255,.85); letter-spacing: .14em; text-transform: uppercase; display: block; }
+.adlg-inp,
+.adlg-sel,
+.adlg-textarea {
+  width:100%; background: rgba(255,255,255,.1);
+  border: 1px solid var(--brd); border-radius: 16px;
+  color: var(--text); font-family: var(--mono);
+  font-size: 1.95rem; font-weight: 500;
+  padding: 9px 12px; outline: none;
+}
+.adlg-textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+.adlg-inp:focus,
+.adlg-sel:focus,
+.adlg-textarea:focus { border-color: var(--yel); }
+.adlg-sel { -webkit-appearance: none; }
+.adlg-row { display:flex; gap:10px; }
+.adlg-btn {
+  flex: 1;
+  border: none; border-radius: 30px;
+  font-family: var(--mono);
+  font-size: 1.65rem; font-weight: 900;
+  letter-spacing: .06em; text-transform: uppercase;
+  padding: 13px; cursor: pointer; margin-top: 4px;
+}
+.adlg-btn.confirm { background: var(--yel); color: #000; }
+.adlg-btn.cancel { background: transparent; border: 1px solid var(--brd); color: rgba(255,255,255,.85); }
+
 #detail-panel {
   position: fixed; inset: 0;
   background: var(--bg); z-index: 200;
@@ -997,7 +1151,7 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
       <div class="mic-area">
         <div class="mic-ring-wrap" id="mic-wrap">
           <div class="mic-ring" id="mic-ring"></div>
-          <button class="mic-btn" id="mic-btn" onclick="toggleWake()">
+          <button class="mic-btn" id="mic-btn" type="button" aria-label="Attiva microfono">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
               <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
@@ -1006,6 +1160,7 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
             </svg>
           </button>
         </div>
+        <button class="mic-hit-layer" id="mic-hit-layer" type="button" aria-label="Attiva microfono"></button>
       </div>
     </div>
 
@@ -1169,8 +1324,6 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
     </div>
   </div>
 </div>
-
-<div class="toast" id="toast"></div>
 
 <script>
 // ╔══════════════════════════════════════════════════════════════╗
@@ -2047,6 +2200,7 @@ function setState(s){
   currentState = s;
   const wrap = document.getElementById('mic-wrap');
   const btn  = document.getElementById('mic-btn');
+  const hit  = document.getElementById('mic-hit-layer');
 
   wrap.className = 'mic-ring-wrap';
 
@@ -2061,8 +2215,13 @@ function setState(s){
   if(states[s]){
     wrap.classList.add(states[s][0]);
     btn.dataset.state = states[s][1];
+    const label = s === 'idle-manual' ? 'Attiva microfono' : 'Disattiva microfono';
+    btn.setAttribute('aria-label', label);
+    if(hit) hit.setAttribute('aria-label', label);
   } else {
     btn.dataset.state = 'idle';
+    btn.setAttribute('aria-label', 'Attiva microfono');
+    if(hit) hit.setAttribute('aria-label', 'Attiva microfono');
   }
 }
 
@@ -2966,7 +3125,86 @@ function setupClockFullscreenTap(){
   if(clock) clock.addEventListener('pointerup', handleClockFullscreenTap);
 }
 
+let lastMicTap = 0;
+function eventPoint(e){
+  const t = e.changedTouches && e.changedTouches[0];
+  return t || e;
+}
+
+function pointInMicHitLayer(e){
+  const layer = document.getElementById('mic-hit-layer');
+  const p = eventPoint(e);
+  if(!layer || p.clientX == null || p.clientY == null) return false;
+  const r = layer.getBoundingClientRect();
+  return p.clientX >= r.left && p.clientX <= r.right && p.clientY >= r.top && p.clientY <= r.bottom;
+}
+
+function handleMicHit(e){
+  if(!pointInMicHitLayer(e)) return;
+  e.preventDefault();
+  e.stopPropagation();
+
+  const now = Date.now();
+  if(now - lastMicTap < 250) return;
+  lastMicTap = now;
+  toggleWake();
+}
+
+function updateMicDebugPoint(e){
+  if(!document.body.classList.contains('mic-debug')) return;
+  const p = eventPoint(e);
+  if(p.clientX == null || p.clientY == null) return;
+  let dot = document.getElementById('mic-debug-dot');
+  if(!dot){
+    dot = document.createElement('div');
+    dot.id = 'mic-debug-dot';
+    dot.className = 'mic-debug-dot';
+    document.body.appendChild(dot);
+  }
+  dot.style.left = `${p.clientX}px`;
+  dot.style.top = `${p.clientY}px`;
+  dot.style.display = 'block';
+
+  const underFinger = document.elementFromPoint(p.clientX, p.clientY);
+  console.log('mic debug touch', {
+    x: Math.round(p.clientX),
+    y: Math.round(p.clientY),
+    inMic: pointInMicHitLayer(e),
+    target: e.target && (e.target.id || e.target.className || e.target.tagName),
+    underFinger: underFinger && (underFinger.id || underFinger.className || underFinger.tagName)
+  });
+}
+
+function setupMicHitArea(){
+  const layer = document.getElementById('mic-hit-layer');
+  if(layer){
+    layer.addEventListener('pointerup', handleMicHit);
+    layer.addEventListener('click', handleMicHit);
+    layer.addEventListener('touchend', handleMicHit, { passive: false });
+  }
+  document.addEventListener('pointerup', handleMicHit, true);
+  document.addEventListener('click', handleMicHit, true);
+  document.addEventListener('touchend', handleMicHit, { capture: true, passive: false });
+}
+
+function setupMicDebug(){
+  document.body.classList.add('mic-debug');
+  if(!document.getElementById('mic-debug-banner')){
+    const banner = document.createElement('div');
+    banner.id = 'mic-debug-banner';
+    banner.className = 'mic-debug-banner';
+    banner.textContent = 'MIC DEBUG';
+    document.body.appendChild(banner);
+  }
+  document.addEventListener('pointerdown', updateMicDebugPoint, true);
+  document.addEventListener('pointerup', updateMicDebugPoint, true);
+  document.addEventListener('touchend', updateMicDebugPoint, { capture: true, passive: true });
+  setTimeout(() => showToast('Debug microfono attivo'), 500);
+}
+
 setupClockFullscreenTap();
+setupMicHitArea();
+setupMicDebug();
 
 </script>
 
@@ -3051,84 +3289,5 @@ setupClockFullscreenTap();
   </div>
 </div>
 
-
-
-<script>
-
-// ╔══════════════════════════════════════════════════════════════╗
-// ║                    CASA — ASSISTENTE DOMESTICO               ║
-// ║                                                              ║
-// ║  STRUTTURA DEL CODICE:                                       ║
-// ║  1. STORAGE      — salvataggio dati nel browser              ║
-// ║  2. GLOBALS      — variabili condivise tra le funzioni        ║
-// ║  3. SETUP        — avvio e configurazione iniziale           ║
-// ║  4. PANELS       — apertura/chiusura pannelli slide-up       ║
-// ║  5. CLOCK        — orologio aggiornato ogni secondo          ║
-// ║  6. WEATHER      — meteo da open-meteo.com                   ║
-// ║  7. ARCHIVIO     — gestione interventi di manutenzione       ║
-// ║  8. AI           — comunicazione con Claude API              ║
-// ║  9. WAKE WORD    — rilevamento "Claude" nel parlato          ║
-// ║  10. TTS         — sintesi vocale (ElevenLabs o browser)     ║
-// ║  11. UTILITIES   — fullscreen, toast, ecc.                   ║
-// ╚══════════════════════════════════════════════════════════════╝
-
-
-// ══════════════════════════════════════════════
-// 1. STORAGE — Persistenza dati nel localStorage
-//
-// localStorage è un database chiave-valore nel browser.
-// I dati rimangono anche dopo la chiusura dell'app.
-// Vengono persi solo se si svuota la cache del browser.
-//
-// CHIAVI USATE:
-//   'casa_key'       → API key di Claude
-//   'el_key'         → API key di ElevenLabs
-//   'el_voice'       → Voice ID di ElevenLabs
-//   'casa_archivio_v1' → array JSON degli interventi
-// ══════════════════════════════════════════════
-
-const AKEY = 'casa_archivio_v1'; // chiave per l'archivio interventi
-
-// Carica l'archivio dal localStorage. Se non esiste o è corrotto, restituisce array vuoto.
-function loadArch(){
-  try{ return JSON.parse(localStorage.getItem(AKEY)||'[]'); }
-  catch{ return []; }
-}
-
-// Salva l'archivio nel localStorage e sincronizza con Supabase se disponibile
-function saveArch(l){
-  localStorage.setItem(AKEY, JSON.stringify(l));
-  if(sbKey) syncToCloud(l); // fire-and-forget
-  syncSW(); // aggiorna il service worker
-}
-
-// Variabile globale con tutti gli interventi caricati all'avvio
-let archivio = loadArch();
-
-
-// ══════════════════════════════════════════════
-// 2. GLOBALS — Variabili condivise tra le funzioni
-//
-// Queste variabili sono accessibili da tutte le funzioni.
-// Modificarle qui cambia il comportamento globale dell'app.
-// ══════════════════════════════════════════════
-
-// Coordinate GPS di Contrada Cervare, Macerata (usate per il meteo)
-// Per cambiare città: trova lat/lon su maps.google.com e aggiorna qui
-const LAT  = 43.2832;
-const LON  = 13.4534;
-const CITY = 'Contrada Cervare, Macerata';
-
-// Chiavi API — vengono caricate dal localStorage in window.onload
-let apiKey  = '';  // Claude API key
-let elKey   = '';  // ElevenLabs API key
-let elVoice = '';  // ElevenLabs Voice ID
-
-// Supabase — cloud sync archivio
-// URL tabella fisso (il nome tabella è 'Archivio' con A maiuscola come creata)
-const SB_URL    = 'https://thmoyxfkgtkteajzande.supabase.co/rest/v1/Archivio';
-// SB_CONFIG rimosso — le chiavi non vengono mai salvate sul cloud
-let sbKey = ''; // anon key — inserita nel setup
-
-// Stato della conversazione con Claude
-// È un array di oggett
+</body>
+</html>

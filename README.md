@@ -123,9 +123,9 @@ Il pulsante "Controlla attività ora" in Impostazioni forza il controllo immedia
 
 ## Sicurezza e storage
 
-Le chiavi API (Claude, ElevenLabs, Supabase) sono salvate **solo in localStorage** sul dispositivo. Non vengono mai trasmesse al cloud. Su un nuovo dispositivo vanno inserite una volta sola tramite il form di setup.
+Le chiavi API (Claude, ElevenLabs, Supabase) sono salvate **solo in localStorage** sul dispositivo e non sono incluse nel repository. Vengono inviate solo ai rispettivi servizi quando l'app effettua una richiesta. Su un nuovo dispositivo vanno inserite una volta sola tramite il form di setup.
 
-Su Supabase è sincronizzato **solo l'archivio** (dati non sensibili). Row Level Security (RLS) abilitato con policy `anon ALL true`.
+Su Supabase è sincronizzato **solo l'archivio**. Evitare di pubblicare la anon key nel codice o nel README. La policy `anon ALL true` è comoda per uso personale ma permette a chiunque abbia URL progetto + anon key di leggere e modificare la tabella.
 
 ```
 localStorage keys:
@@ -171,6 +171,7 @@ create table public.Archivio (
 
 -- RLS
 alter table public.Archivio enable row level security;
+-- Uso personale: semplice, ma non adatto se la anon key viene condivisa.
 create policy "anon all" on public.Archivio for all using (true);
 ```
 

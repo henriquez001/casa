@@ -1979,7 +1979,6 @@ const CAT_COLORS = {
 
 const SMART_BACKEND_KEY = 'casa_smart_backend_v1';
 const SMART_ASSET_DB = 'casa_smart_assets';
-const SMART_RENDER_IMAGE_KEY = 'casa_smart_render_image_v1';
 const PLAN_SCALE = 70;
 const PLAN_OFFSET = 50;
 let smartBackend = null;
@@ -2060,11 +2059,23 @@ function updateSmartRenderStatus(){
   const el = document.getElementById('smart-render-status');
   if(!el) return;
   const data = loadSmartBackend();
-  const status = data.renderStatus || (data.renderImage ? 'ready' : 'static');
+  const status = data.renderStatus || (data.renderImageUrl ? 'ready' : 'static');
   if(status === 'generating') el.textContent = 'Render: generazione in corso dopo il salvataggio.';
   else if(status === 'ready') el.textContent = `Render: aggiornato${data.renderGeneratedAt ? ' il ' + new Date(data.renderGeneratedAt).toLocaleString('it-IT') : ''}.`;
-  else if(status === 'error') el.textContent = 'Render: ultimo tentativo non riuscito. La planimetria e stata comunque salvata.';
+  else if(status === 'error') el.textContent = `Render: non riuscito${data.renderError ? ' - ' + data.renderError : ''}. La planimetria e stata comunque salvata.`;
   else el.textContent = 'Render: immagine statica iniziale. Salva e chiudi per rigenerarla.';
+}
+
+function smartRenderErrorMessage(raw){
+  const text = String(raw || '').trim();
+  if(!text) return 'Errore sconosciuto';
+  try{
+    const parsed = JSON.parse(text);
+    if(parsed.error) return String(parsed.error);
+  }catch(_){}
+  if(text.includes('404')) return 'Funzione render-smart-home non trovata o non deployata';
+  if(text.includes('Failed to fetch')) return 'Funzione Supabase non raggiungibile';
+  return text.slice(0, 220);
 }
 
 async function requestSmartRenderGeneration(payload){
@@ -2074,7 +2085,9 @@ async function requestSmartRenderGeneration(payload){
     return;
   }
 
+  delete payload.renderImage;
   payload.renderStatus = 'generating';
+  payload.renderError = '';
   payload.renderRequestedAt = new Date().toISOString();
   localStorage.setItem(SMART_BACKEND_KEY, JSON.stringify(payload));
   window.dispatchEvent(new CustomEvent('casa-smart-backend-updated', { detail:payload }));
@@ -2097,27 +2110,27 @@ async function requestSmartRenderGeneration(payload){
     });
     if(!res.ok){
       const err = await res.text();
-      throw new Error(err || `HTTP ${res.status}`);
+      throw new Error(smartRenderErrorMessage(err || `HTTP ${res.status}`));
     }
 
     const out = await res.json();
-    const image = out.imageDataUrl || out.image_data_url || (out.imageBase64 || out.image_base64 ? `data:image/png;base64,${out.imageBase64 || out.image_base64}` : '');
-    if(!image) throw new Error('Render vuoto');
+    const imageUrl = out.imageUrl || out.image_url || '';
+    if(!imageUrl) throw new Error(out.error || 'URL render vuoto');
 
-    payload.renderImage = image;
+    delete payload.renderImage;
+    payload.renderImageUrl = imageUrl;
     payload.renderStatus = 'ready';
     payload.renderGeneratedAt = out.generatedAt || new Date().toISOString();
-    localStorage.setItem(SMART_RENDER_IMAGE_KEY, image);
     saveSmartBackend(false);
     updateSmartRenderStatus();
     showToast('Render smart aggiornato');
   }catch(e){
     console.warn('Render smart non riuscito:', e);
     payload.renderStatus = 'error';
-    payload.renderError = String(e.message || e).slice(0, 240);
+    payload.renderError = smartRenderErrorMessage(e.message || e);
     saveSmartBackend(false);
     updateSmartRenderStatus();
-    showToast('Render non riuscito');
+    showToast('Render non riuscito: ' + payload.renderError);
   }
 }
 
@@ -3849,7 +3862,6 @@ async function syncSmartBackendFromCloud(){
 
     smartBackend = row.payload;
     localStorage.setItem(SMART_BACKEND_KEY, JSON.stringify(smartBackend));
-    if(smartBackend.renderImage) localStorage.setItem(SMART_RENDER_IMAGE_KEY, smartBackend.renderImage);
     window.dispatchEvent(new CustomEvent('casa-smart-backend-updated', { detail:smartBackend }));
     renderSmartBackend();
     showToast('Backend smart sincronizzato');
@@ -4632,7 +4644,7 @@ if(false && smartSceneRoot){
     const devices = data.devices || [];
     const b = bounds(data);
     const label = document.getElementById('smart-room-label');
-    const currentRenderImage = data.renderImage || localStorage.getItem(SMART_RENDER_IMAGE_KEY) || renderImage;
+    const currentRenderImage = data.renderImageUrl || renderImage;
 
     if(!selectedRoomName && rooms[0]) selectedRoomName = rooms[0].name || '';
 

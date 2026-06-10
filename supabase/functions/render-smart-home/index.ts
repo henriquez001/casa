@@ -4,6 +4,8 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
+const renderBucket = 'smart-renders';
+
 function fmt(value: unknown, fallback = 0){
   const n = Number(value);
   return Number.isFinite(n) ? String(Math.round(n * 10) / 10) : String(fallback);
@@ -92,9 +94,57 @@ Deno.serve(async req => {
       });
     }
 
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if(!supabaseUrl || !serviceRoleKey){
+      return new Response(JSON.stringify({ error:'SUPABASE_SERVICE_ROLE_KEY secret missing' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type':'application/json' },
+      });
+    }
+
+    const bucketRes = await fetch(`${supabaseUrl}/storage/v1/bucket`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${serviceRoleKey}`,
+        'apikey': serviceRoleKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ id:renderBucket, name:renderBucket, public:true }),
+    });
+    if(!bucketRes.ok && bucketRes.status !== 409){
+      const err = await bucketRes.text();
+      return new Response(JSON.stringify({ error:`Storage bucket failed: ${err}` }), {
+        status: bucketRes.status,
+        headers: { ...corsHeaders, 'Content-Type':'application/json' },
+      });
+    }
+
+    const bytes = Uint8Array.from(atob(imageBase64), ch => ch.charCodeAt(0));
+    const fileName = `smart-home-${Date.now()}.png`;
+    const uploadRes = await fetch(`${supabaseUrl}/storage/v1/object/${renderBucket}/${fileName}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${serviceRoleKey}`,
+        'apikey': serviceRoleKey,
+        'Content-Type': 'image/png',
+        'x-upsert': 'true',
+      },
+      body: bytes,
+    });
+
+    if(!uploadRes.ok){
+      const err = await uploadRes.text();
+      return new Response(JSON.stringify({ error:`Storage upload failed: ${err}` }), {
+        status: uploadRes.status,
+        headers: { ...corsHeaders, 'Content-Type':'application/json' },
+      });
+    }
+
+    const imageUrl = `${supabaseUrl}/storage/v1/object/public/${renderBucket}/${fileName}`;
+
     return new Response(JSON.stringify({
-      imageBase64,
-      imageDataUrl: `data:image/png;base64,${imageBase64}`,
+      imageUrl,
       generatedAt: new Date().toISOString(),
     }), {
       headers: { ...corsHeaders, 'Content-Type':'application/json' },

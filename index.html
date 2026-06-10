@@ -1164,6 +1164,205 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
 }
 .panel-action:active { color: #000; }
 
+.setup-backend-open #setup {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-18px);
+  transition: opacity .22s, transform .22s;
+}
+
+#panel-smart-backend {
+  z-index: 260;
+}
+
+.s-btn.secondary {
+  margin-top: 10px;
+  background: transparent;
+  border: 1px solid var(--brd);
+  color: var(--text);
+  font-size: 1.35rem;
+}
+
+.backend-toolbar {
+  flex-shrink: 0;
+  display: flex;
+  gap: 12px;
+  padding: 0 var(--tab-title-x) 12px;
+  overflow-x: auto;
+}
+
+.backend-tool {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: rgba(0,0,0,.58);
+  font-family: var(--mono);
+  font-size: var(--section-title-size);
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 6px 0;
+  cursor: pointer;
+}
+
+.backend-tool.active { color: #000; }
+
+.backend-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(260px, .65fr);
+  gap: 18px;
+  padding-bottom: 24px;
+}
+
+.plan-wrap {
+  min-height: 360px;
+  border: 1px solid rgba(0,0,0,.22);
+  background: rgba(255,255,255,.28);
+  overflow: hidden;
+}
+
+.plan-svg {
+  display: block;
+  width: 100%;
+  min-height: 360px;
+  touch-action: manipulation;
+}
+
+.plan-room {
+  fill: rgba(255,255,255,.74);
+  stroke: rgba(0,0,0,.62);
+  stroke-width: 2;
+  cursor: pointer;
+}
+
+.plan-room.selected { fill: rgba(255,214,10,.72); }
+
+.plan-wall {
+  stroke: #000;
+  stroke-width: 7;
+  stroke-linecap: square;
+  cursor: pointer;
+}
+
+.plan-wall.selected { stroke: var(--red); }
+
+.plan-device {
+  fill: var(--blue);
+  stroke: #000;
+  stroke-width: 2;
+  cursor: pointer;
+}
+
+.plan-device.selected { fill: var(--yel); }
+
+.plan-label {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 700;
+  fill: rgba(0,0,0,.7);
+  pointer-events: none;
+}
+
+.backend-side {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+.backend-block {
+  border-top: 1px solid rgba(0,0,0,.2);
+  padding-top: 12px;
+}
+
+.backend-block:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.backend-block-title {
+  font-family: var(--mono);
+  font-size: var(--section-title-size);
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(0,0,0,.58);
+  margin-bottom: 10px;
+}
+
+.backend-field {
+  display: grid;
+  grid-template-columns: minmax(92px, .7fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 9px;
+}
+
+.backend-field label {
+  font-family: var(--mono);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: rgba(0,0,0,.58);
+}
+
+.backend-field input,
+.backend-field select {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(0,0,0,.35);
+  color: #000;
+  font-family: var(--sep);
+  font-size: 1.22rem;
+  padding: 7px 0;
+  outline: none;
+}
+
+.backend-hint,
+.backend-asset {
+  font-family: var(--sep);
+  font-size: var(--menu-item-sub-size);
+  line-height: 1.35;
+  color: rgba(0,0,0,.62);
+}
+
+.backend-mini-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.backend-mini-btn {
+  border: none;
+  background: transparent;
+  color: rgba(0,0,0,.68);
+  font-family: var(--mono);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 6px 0;
+  cursor: pointer;
+}
+
+.backend-mini-btn:active { color: #000; }
+
+.backend-file {
+  width: 100%;
+  font-family: var(--mono);
+  font-size: 1rem;
+  color: rgba(0,0,0,.62);
+}
+
+@media (max-width: 760px) {
+  .backend-layout { grid-template-columns: 1fr; }
+  .plan-wrap,
+  .plan-svg { min-height: 320px; }
+}
+
 @media (orientation: landscape) and (max-height: 450px) {
   :root { --mic-size: 60px; --clock-size: clamp(2.5rem, 28.39vh, 6.68rem); --section-title-size: clamp(0.95rem, 2.9vh, 1.2rem); --menu-item-title-size: clamp(1.22rem, 4.2vh, 1.55rem); --menu-item-sub-size: clamp(0.98rem, 3.0vh, 1.18rem); --home-pad-top: 6px; --home-pad-left: 10px; --home-pad-right: 10px; --panel-h: calc(100dvh - var(--home-pad-top) - var(--home-bottom-gap)); }
   .wl-hms  { font-size: var(--clock-size); }
@@ -1209,6 +1408,7 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
     <input class="s-inp" type="password" id="sb-key-input" placeholder="eyJ..." autocomplete="off"
       onkeydown="if(event.key==='Enter')saveAndStart()">
     <button class="s-btn" onclick="saveAndStart()">Attiva →</button>
+    <button class="s-btn secondary" type="button" onclick="openSmartBackend()">Backend smart</button>
   </div>
   <p class="s-note">Le chiavi restano solo su questo dispositivo<br>
   <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>
@@ -1598,6 +1798,366 @@ const CAT_COLORS = {
   altro:        '#555555'  // grigio
 };
 
+const SMART_BACKEND_KEY = 'casa_smart_backend_v1';
+const SMART_ASSET_DB = 'casa_smart_assets';
+const PLAN_SCALE = 70;
+const PLAN_OFFSET = 50;
+let smartBackend = null;
+let smartTool = 'select';
+let smartSelected = { type:'room', id:'room-sala' };
+let smartWallDraft = null;
+
+function defaultSmartBackend(){
+  return {
+    rooms:[
+      { id:'room-sala', name:'Sala', x:1, y:1, w:4.2, d:3, h:2.7 },
+      { id:'room-cucina', name:'Cucina', x:1, y:4.25, w:2.4, d:2.2, h:2.7 },
+      { id:'room-camera', name:'Camera', x:5.55, y:4.25, w:2.7, d:2.2, h:2.7 }
+    ],
+    walls:[
+      { id:'wall-nord', name:'Parete nord', x1:1, y1:1, x2:8.25, y2:1, h:2.7 },
+      { id:'wall-est', name:'Parete est', x1:8.25, y1:1, x2:8.25, y2:6.45, h:2.7 },
+      { id:'wall-sud', name:'Parete sud', x1:1, y1:6.45, x2:8.25, y2:6.45, h:2.7 },
+      { id:'wall-ovest', name:'Parete ovest', x1:1, y1:1, x2:1, y2:6.45, h:2.7 }
+    ],
+    devices:[
+      { id:'dev-luce-sala', name:'Luce sala', kind:'light', room:'Sala', x:3.1, y:2.5, entity:'' },
+      { id:'dev-presa-tv', name:'Presa TV', kind:'plug', room:'Sala', x:5.1, y:2.2, entity:'' }
+    ],
+    assets:[]
+  };
+}
+
+function loadSmartBackend(){
+  if(smartBackend) return smartBackend;
+  try{
+    smartBackend = JSON.parse(localStorage.getItem(SMART_BACKEND_KEY)) || defaultSmartBackend();
+  }catch(e){
+    smartBackend = defaultSmartBackend();
+  }
+  return smartBackend;
+}
+
+function saveSmartBackend(show=true){
+  loadSmartBackend();
+  localStorage.setItem(SMART_BACKEND_KEY, JSON.stringify(smartBackend));
+  if(show) showToast('Backend smart salvato');
+}
+
+function openSmartBackend(){
+  document.body.classList.add('setup-backend-open');
+  openPanel('panel-smart-backend');
+  renderSmartBackend();
+}
+
+function closeSmartBackend(){
+  closePanel('panel-smart-backend');
+  document.body.classList.remove('setup-backend-open');
+}
+
+function setSmartTool(tool){
+  smartTool = tool;
+  document.querySelectorAll('.backend-tool').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tool === tool);
+  });
+  smartWallDraft = null;
+  renderSmartBackend();
+}
+
+function smartId(prefix){
+  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,6)}`;
+}
+
+function planToSvg(v){ return PLAN_OFFSET + v * PLAN_SCALE; }
+function svgToPlan(v){ return Math.max(0, Math.round(((v - PLAN_OFFSET) / PLAN_SCALE) * 10) / 10); }
+function smartLen(wall){ return Math.hypot(wall.x2 - wall.x1, wall.y2 - wall.y1); }
+function smartFmt(n){ return Number(n).toFixed(1).replace('.0',''); }
+function smartEsc(v){
+  return String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+function smartPlanPoint(e){
+  const svg = document.getElementById('smart-plan-svg');
+  const pt = svg.createSVGPoint();
+  pt.x = e.clientX;
+  pt.y = e.clientY;
+  const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+  return { x:svgToPlan(p.x), y:svgToPlan(p.y) };
+}
+
+function selectSmartItem(type, id){
+  smartSelected = { type, id };
+  renderSmartBackend();
+}
+
+function selectedSmartItem(){
+  const data = loadSmartBackend();
+  if(!smartSelected) return null;
+  const list = smartSelected.type === 'room' ? data.rooms : smartSelected.type === 'wall' ? data.walls : data.devices;
+  return list.find(item => item.id === smartSelected.id) || null;
+}
+
+function handleSmartPlanClick(e){
+  const hit = e.target.closest('[data-smart-type]');
+  if(hit){
+    selectSmartItem(hit.dataset.smartType, hit.dataset.smartId);
+    return;
+  }
+
+  const p = smartPlanPoint(e);
+  const data = loadSmartBackend();
+
+  if(smartTool === 'room'){
+    const room = { id:smartId('room'), name:'Nuova stanza', x:p.x, y:p.y, w:3, d:2.4, h:2.7 };
+    data.rooms.push(room);
+    smartSelected = { type:'room', id:room.id };
+    setSmartTool('select');
+    saveSmartBackend(false);
+    renderSmartBackend();
+    return;
+  }
+
+  if(smartTool === 'device'){
+    const device = { id:smartId('dev'), name:'Nuovo device', kind:'light', room:'', x:p.x, y:p.y, entity:'' };
+    data.devices.push(device);
+    smartSelected = { type:'device', id:device.id };
+    setSmartTool('select');
+    saveSmartBackend(false);
+    renderSmartBackend();
+    return;
+  }
+
+  if(smartTool === 'wall'){
+    if(!smartWallDraft){
+      smartWallDraft = p;
+      renderSmartBackend();
+      return;
+    }
+    const wall = { id:smartId('wall'), name:'Nuova parete', x1:smartWallDraft.x, y1:smartWallDraft.y, x2:p.x, y2:p.y, h:2.7 };
+    data.walls.push(wall);
+    smartWallDraft = null;
+    smartSelected = { type:'wall', id:wall.id };
+    setSmartTool('select');
+    saveSmartBackend(false);
+    renderSmartBackend();
+  }
+}
+
+function addSmartRoom(){
+  loadSmartBackend();
+  const room = { id:smartId('room'), name:'Nuova stanza', x:2, y:2, w:3, d:2.4, h:2.7 };
+  smartBackend.rooms.push(room);
+  smartSelected = { type:'room', id:room.id };
+  saveSmartBackend(false);
+  renderSmartBackend();
+}
+
+function resetSmartBackend(){
+  if(!confirm('Ripristinare la planimetria smart di esempio?')) return;
+  smartBackend = defaultSmartBackend();
+  smartSelected = { type:'room', id:'room-sala' };
+  saveSmartBackend(false);
+  renderSmartBackend();
+  showToast('Backend smart ripristinato');
+}
+
+function deleteSmartSelected(){
+  const data = loadSmartBackend();
+  if(!smartSelected) return;
+  const key = smartSelected.type === 'room' ? 'rooms' : smartSelected.type === 'wall' ? 'walls' : 'devices';
+  data[key] = data[key].filter(item => item.id !== smartSelected.id);
+  smartSelected = data.rooms[0] ? { type:'room', id:data.rooms[0].id } : null;
+  saveSmartBackend(false);
+  renderSmartBackend();
+}
+
+function updateSmartSelected(field, value){
+  const item = selectedSmartItem();
+  if(!item) return;
+  if(['x','y','w','d','h','x1','y1','x2','y2'].includes(field)){
+    item[field] = Number(value) || 0;
+  }else{
+    item[field] = value;
+  }
+  saveSmartBackend(false);
+  renderSmartPlan(loadSmartBackend());
+  renderSmartAssets(loadSmartBackend());
+}
+
+function removeSmartAsset(id){
+  const data = loadSmartBackend();
+  data.assets = data.assets.filter(asset => asset.id !== id);
+  deleteSmartAssetBlob(id);
+  saveSmartBackend(false);
+  renderSmartBackend();
+}
+
+function withSmartAssetStore(mode, action){
+  if(!('indexedDB' in window)) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(SMART_ASSET_DB, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore('files');
+    req.onerror = () => reject(req.error);
+    req.onsuccess = () => {
+      const db = req.result;
+      const tx = db.transaction('files', mode);
+      const store = tx.objectStore('files');
+      action(store);
+      tx.oncomplete = () => { db.close(); resolve(); };
+      tx.onerror = () => { db.close(); reject(tx.error); };
+    };
+  });
+}
+
+function saveSmartAssetBlob(id, file){
+  return withSmartAssetStore('readwrite', store => store.put(file, id)).catch(err => console.warn('Asset 3D non salvato:', err));
+}
+
+function deleteSmartAssetBlob(id){
+  return withSmartAssetStore('readwrite', store => store.delete(id)).catch(err => console.warn('Asset 3D non rimosso:', err));
+}
+
+function handleSmartFurnitureFiles(files){
+  const data = loadSmartBackend();
+  [...files].forEach(file => {
+    const asset = {
+      id:smartId('asset'),
+      name:file.name,
+      type:file.name.split('.').pop().toUpperCase(),
+      size:file.size,
+      added:new Date().toISOString()
+    };
+    data.assets.push(asset);
+    saveSmartAssetBlob(asset.id, file);
+  });
+  saveSmartBackend(false);
+  renderSmartBackend();
+  if(files.length) showToast('Arredi 3D aggiunti alla libreria');
+}
+
+function renderSmartBackend(){
+  const data = loadSmartBackend();
+  renderSmartPlan(data);
+  renderSmartInspector();
+  renderSmartAssets(data);
+}
+
+function renderSmartPlan(data){
+  const svg = document.getElementById('smart-plan-svg');
+  if(!svg) return;
+  const grid = [];
+  for(let x=0; x<=900; x+=35) grid.push(`<line x1="${x}" y1="0" x2="${x}" y2="520" stroke="rgba(0,0,0,.08)" stroke-width="1"/>`);
+  for(let y=0; y<=520; y+=35) grid.push(`<line x1="0" y1="${y}" x2="900" y2="${y}" stroke="rgba(0,0,0,.08)" stroke-width="1"/>`);
+
+  const rooms = data.rooms.map(room => {
+    const selected = smartSelected?.type === 'room' && smartSelected.id === room.id;
+    const x = planToSvg(room.x), y = planToSvg(room.y), w = room.w * PLAN_SCALE, h = room.d * PLAN_SCALE;
+    return `<g data-smart-type="room" data-smart-id="${room.id}">
+      <rect class="plan-room${selected ? ' selected' : ''}" x="${x}" y="${y}" width="${w}" height="${h}" rx="2"/>
+      <text class="plan-label" x="${x + 10}" y="${y + 24}">${smartEsc(room.name)}</text>
+      <text class="plan-label" x="${x + w/2 - 24}" y="${y + h - 12}">${smartFmt(room.w)}m</text>
+      <text class="plan-label" x="${x + w - 42}" y="${y + h/2}">${smartFmt(room.d)}m</text>
+      <text class="plan-label" x="${x + 10}" y="${y + h - 12}">h ${smartFmt(room.h)}m</text>
+    </g>`;
+  }).join('');
+
+  const walls = data.walls.map(wall => {
+    const selected = smartSelected?.type === 'wall' && smartSelected.id === wall.id;
+    const x1 = planToSvg(wall.x1), y1 = planToSvg(wall.y1), x2 = planToSvg(wall.x2), y2 = planToSvg(wall.y2);
+    return `<g data-smart-type="wall" data-smart-id="${wall.id}">
+      <line class="plan-wall${selected ? ' selected' : ''}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>
+      <text class="plan-label" x="${(x1+x2)/2 + 8}" y="${(y1+y2)/2 - 8}">${smartFmt(smartLen(wall))}m - h ${smartFmt(wall.h)}m</text>
+    </g>`;
+  }).join('');
+
+  const devices = data.devices.map(dev => {
+    const selected = smartSelected?.type === 'device' && smartSelected.id === dev.id;
+    const x = planToSvg(dev.x), y = planToSvg(dev.y);
+    return `<g data-smart-type="device" data-smart-id="${dev.id}">
+      <circle class="plan-device${selected ? ' selected' : ''}" cx="${x}" cy="${y}" r="13"/>
+      <text class="plan-label" x="${x + 18}" y="${y + 5}">${smartEsc(dev.name)}</text>
+    </g>`;
+  }).join('');
+
+  const draft = smartWallDraft
+    ? `<circle cx="${planToSvg(smartWallDraft.x)}" cy="${planToSvg(smartWallDraft.y)}" r="8" fill="#ff3b30"/>`
+    : '';
+
+  svg.innerHTML = `${grid.join('')}${rooms}${walls}${devices}${draft}`;
+}
+
+function smartInput(label, field, value, type='text'){
+  return `<div class="backend-field">
+    <label>${label}</label>
+    <input type="${type}" value="${smartEsc(value)}" oninput="updateSmartSelected('${field}', this.value)">
+  </div>`;
+}
+
+function renderSmartInspector(){
+  const box = document.getElementById('smart-inspector');
+  if(!box) return;
+  const item = selectedSmartItem();
+  if(!item){
+    box.innerHTML = 'Nessun elemento selezionato.';
+    return;
+  }
+
+  if(smartSelected.type === 'room'){
+    box.innerHTML = `
+      ${smartInput('Nome','name',item.name)}
+      ${smartInput('X','x',item.x,'number')}
+      ${smartInput('Y','y',item.y,'number')}
+      ${smartInput('Larghezza','w',item.w,'number')}
+      ${smartInput('Profondita','d',item.d,'number')}
+      ${smartInput('Altezza','h',item.h,'number')}
+      <div class="backend-mini-actions"><button class="backend-mini-btn" onclick="deleteSmartSelected()">Elimina stanza</button></div>`;
+    return;
+  }
+
+  if(smartSelected.type === 'wall'){
+    box.innerHTML = `
+      ${smartInput('Nome','name',item.name)}
+      ${smartInput('X1','x1',item.x1,'number')}
+      ${smartInput('Y1','y1',item.y1,'number')}
+      ${smartInput('X2','x2',item.x2,'number')}
+      ${smartInput('Y2','y2',item.y2,'number')}
+      ${smartInput('Altezza','h',item.h,'number')}
+      <div class="backend-hint">Lunghezza: ${smartFmt(smartLen(item))}m</div>
+      <div class="backend-mini-actions"><button class="backend-mini-btn" onclick="deleteSmartSelected()">Elimina parete</button></div>`;
+    return;
+  }
+
+  const roomOptions = loadSmartBackend().rooms.map(room => `<option value="${smartEsc(room.name)}" ${item.room === room.name ? 'selected' : ''}>${smartEsc(room.name)}</option>`).join('');
+  box.innerHTML = `
+    ${smartInput('Nome','name',item.name)}
+    <div class="backend-field"><label>Tipo</label><select onchange="updateSmartSelected('kind', this.value)">
+      <option value="light" ${item.kind === 'light' ? 'selected' : ''}>Luce</option>
+      <option value="plug" ${item.kind === 'plug' ? 'selected' : ''}>Presa</option>
+      <option value="climate" ${item.kind === 'climate' ? 'selected' : ''}>Clima</option>
+      <option value="sensor" ${item.kind === 'sensor' ? 'selected' : ''}>Sensore</option>
+    </select></div>
+    <div class="backend-field"><label>Stanza</label><select onchange="updateSmartSelected('room', this.value)"><option value="">Non assegnato</option>${roomOptions}</select></div>
+    ${smartInput('Entity','entity',item.entity)}
+    ${smartInput('X','x',item.x,'number')}
+    ${smartInput('Y','y',item.y,'number')}
+    <div class="backend-mini-actions"><button class="backend-mini-btn" onclick="deleteSmartSelected()">Elimina device</button></div>`;
+}
+
+function renderSmartAssets(data){
+  const box = document.getElementById('smart-assets-list');
+  if(!box) return;
+  if(!data.assets.length){
+    box.innerHTML = 'Nessun arredo caricato. Puoi aggiungere GLB, GLTF, OBJ o FBX.';
+    return;
+  }
+  box.innerHTML = data.assets.map(asset => `
+    <div class="backend-asset">
+      ${smartEsc(asset.name)} - ${smartEsc(asset.type)} - ${Math.max(1, Math.round(asset.size / 1024))} KB
+      <div><button class="backend-mini-btn" onclick="removeSmartAsset('${asset.id}')">Rimuovi</button></div>
+    </div>
+  `).join('');
+}
+
 
 // ══════════════════════════════════════════════
 // 3. SETUP — Configurazione iniziale e avvio
@@ -1831,6 +2391,7 @@ function openPanelFromMenu(id, afterOpen){
 
 document.addEventListener('keydown', e => {
   if(e.key === 'Escape'){
+    if(document.getElementById('panel-smart-backend')?.classList.contains('open')) closeSmartBackend();
     closeMenu();
     setSmartOpen(false);
   }
@@ -3376,6 +3937,47 @@ setupSmartActions();
   </div>
 </div>
 
+<!-- PANNELLO BACKEND SMART HOME -->
+<div class="panel" id="panel-smart-backend">
+  <div class="panel-hdr">
+    <div class="panel-title">Backend smart</div>
+    <button class="panel-close" aria-label="Chiudi" onclick="closeSmartBackend()">✕</button>
+  </div>
+  <div class="panel-actions">
+    <button class="panel-action" onclick="saveSmartBackend()">Salva</button>
+    <button class="panel-action" onclick="addSmartRoom()">Stanza</button>
+    <button class="panel-action" onclick="resetSmartBackend()">Reset</button>
+  </div>
+  <div class="backend-toolbar" id="backend-toolbar">
+    <button class="backend-tool active" type="button" data-tool="select" onclick="setSmartTool('select')">Seleziona</button>
+    <button class="backend-tool" type="button" data-tool="room" onclick="setSmartTool('room')">Stanza</button>
+    <button class="backend-tool" type="button" data-tool="wall" onclick="setSmartTool('wall')">Parete</button>
+    <button class="backend-tool" type="button" data-tool="device" onclick="setSmartTool('device')">Device</button>
+  </div>
+  <div class="panel-body">
+    <div class="backend-layout">
+      <div class="plan-wrap">
+        <svg class="plan-svg" id="smart-plan-svg" viewBox="0 0 900 520" role="img" aria-label="Editor planimetria smart home" onclick="handleSmartPlanClick(event)"></svg>
+      </div>
+      <div class="backend-side">
+        <div class="backend-block">
+          <div class="backend-block-title">Elemento</div>
+          <div id="smart-inspector" class="backend-hint">Seleziona un elemento o usa gli strumenti per crearne uno.</div>
+        </div>
+        <div class="backend-block">
+          <div class="backend-block-title">Arredi 3D</div>
+          <input class="backend-file" id="smart-furniture-file" type="file" accept=".glb,.gltf,.obj,.fbx" multiple onchange="handleSmartFurnitureFiles(this.files);this.value=''">
+          <div id="smart-assets-list" class="backend-hint" style="margin-top:10px"></div>
+        </div>
+        <div class="backend-block">
+          <div class="backend-block-title">Dati locali</div>
+          <div class="backend-hint">La configurazione resta su questo dispositivo e non richiede API. Quote in metri, altezze in metri.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- PANNELLO IMPOSTAZIONI -->
 <div class="panel" id="panel-impostazioni">
   <div class="panel-hdr">
@@ -3408,6 +4010,11 @@ setupSmartActions();
     <div class="arch-entry" style="cursor:pointer" onclick="closePanel('panel-impostazioni');openPanel('panel-log')">
       <div class="arch-entry-title">Log di sistema</div>
       <div class="arch-entry-note">Visualizza gli eventi e gli errori dell'app</div>
+    </div>
+
+    <div class="arch-entry" style="cursor:pointer" onclick="closePanel('panel-impostazioni');openSmartBackend()">
+      <div class="arch-entry-title">Backend smart home</div>
+      <div class="arch-entry-note">Configura planimetria, quote, altezze, arredi 3D e dispositivi</div>
     </div>
 
     <div class="panel-section-title">Account</div>

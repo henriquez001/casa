@@ -1713,6 +1713,7 @@ let elVoice = '';  // ElevenLabs Voice ID
 // Supabase — cloud sync archivio
 // URL tabella fisso (il nome tabella è 'Archivio' con A maiuscola come creata)
 const SB_URL    = 'https://thmoyxfkgtkteajzande.supabase.co/rest/v1/Archivio';
+const SB_SMART_URL = 'https://thmoyxfkgtkteajzande.supabase.co/rest/v1/SmartHome';
 // SB_CONFIG rimosso — le chiavi non vengono mai salvate sul cloud
 let sbKey = ''; // anon key — inserita nel setup
 
@@ -1806,6 +1807,7 @@ let smartBackend = null;
 let smartTool = 'select';
 let smartSelected = { type:'room', id:'room-sala' };
 let smartWallDraft = null;
+let smartCloudSyncTimer = null;
 
 function defaultSmartBackend(){
   return {
@@ -1840,8 +1842,18 @@ function loadSmartBackend(){
 
 function saveSmartBackend(show=true){
   loadSmartBackend();
+  smartBackend.updatedAt = new Date().toISOString();
   localStorage.setItem(SMART_BACKEND_KEY, JSON.stringify(smartBackend));
+  window.dispatchEvent(new CustomEvent('casa-smart-backend-updated', { detail:smartBackend }));
+  if(sbKey) queueSmartBackendCloudSync(smartBackend, show);
   if(show) showToast('Backend smart salvato');
+}
+
+function queueSmartBackendCloudSync(payload, immediate=false){
+  clearTimeout(smartCloudSyncTimer);
+  const run = () => syncSmartBackendToCloud(payload);
+  if(immediate){ run(); return; }
+  smartCloudSyncTimer = setTimeout(run, 900);
 }
 
 function openSmartBackend(){
@@ -2203,6 +2215,7 @@ function boot(){
   setInterval(controlloProattivo, 2 * 60 * 60 * 1000);
   // Carica archivio da Supabase (sovrascrive localStorage se cloud più aggiornato)
   setTimeout(syncFromCloud, 1500);
+  setTimeout(syncSmartBackendFromCloud, 1800);
   // Mantieni lo schermo acceso
   requestWakeLock();
 }
@@ -3526,6 +3539,66 @@ async function syncToCloud(lista){
 // Claude riformula SOLO le note esistenti —
 // non aggiunge nulla che non sia già scritto.
 // ══════════════════════════════════════════════
+async function syncSmartBackendFromCloud(){
+  if(!sbKey) return;
+  try{
+    const res = await fetch(`${SB_SMART_URL}?id=eq.casa&select=id,payload,updated_at`, {
+      headers: {
+        'apikey': sbKey,
+        'Authorization': `Bearer ${sbKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    if(!res.ok){
+      console.warn('Supabase smart read error:', res.status);
+      return;
+    }
+    const rows = await res.json();
+    const row = Array.isArray(rows) ? rows[0] : null;
+    if(!row || !row.payload) return;
+
+    const local = loadSmartBackend();
+    const cloudTime = Date.parse(row.updated_at || row.payload.updatedAt || 0);
+    const localTime = Date.parse(local.updatedAt || 0);
+    if(cloudTime <= localTime) return;
+
+    smartBackend = row.payload;
+    localStorage.setItem(SMART_BACKEND_KEY, JSON.stringify(smartBackend));
+    window.dispatchEvent(new CustomEvent('casa-smart-backend-updated', { detail:smartBackend }));
+    renderSmartBackend();
+    showToast('Backend smart sincronizzato');
+  }catch(e){
+    console.warn('Sync smart dal cloud fallita:', e);
+  }
+}
+
+async function syncSmartBackendToCloud(payload){
+  if(!sbKey || !payload) return;
+  try{
+    const body = {
+      id:'casa',
+      payload,
+      updated_at: payload.updatedAt || new Date().toISOString()
+    };
+    const res = await fetch(`${SB_SMART_URL}?on_conflict=id`, {
+      method:'POST',
+      headers:{
+        'apikey': sbKey,
+        'Authorization': `Bearer ${sbKey}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates,return=minimal'
+      },
+      body: JSON.stringify(body)
+    });
+    if(!res.ok){
+      const err = await res.text();
+      console.warn('Supabase smart write error:', res.status, err);
+    }
+  }catch(e){
+    console.warn('Sync smart al cloud fallita:', e);
+  }
+}
+
 async function openDetail(id){
   const e = archivio.find(x => x.id === id);
   if(!e) return;
@@ -4118,15 +4191,10 @@ if(smartSceneRoot){
     off:new THREE.MeshStandardMaterial({ color:0x4f5a5f, roughness:.82 })
   };
 
-  const roomData = [
-    { name:'Sala', note:'2 luci', x:0, z:.55, w:3.15, d:2.25, active:true, color:0xffd60a, floor:0xf6f2df },
-    { name:'Cucina', note:'1 luce', x:-2.02, z:-1.05, w:1.85, d:1.7, active:true, color:0x30d158, floor:0xe8f6ee },
-    { name:'Camera', note:'clima spento', x:1.8, z:-1.05, w:2, d:1.7, active:false, color:0x7c8b92, floor:0xf7ece5 },
-    { name:'Ingresso', note:'presa attiva', x:-.1, z:-1.72, w:1.52, d:.82, active:true, color:0x64d2ff, floor:0xeef5f7 }
-  ];
-
-  const roomMeshes = [];
-  const roomObjects = new Map();
+  let roomData = [];
+  let roomMeshes = [];
+  let roomObjects = new Map();
+  let selectedRoom = null;
   const markerGeo = new THREE.CylinderGeometry(.16, .16, .16, 36);
 
   function addBox(group, x, y, z, w, h, d, material, cast=true, receive=true){
@@ -4165,94 +4233,155 @@ if(smartSceneRoot){
     house.add(sprite);
   }
 
-  roomData.forEach(room => {
-    const floorMat = mats.floor.clone();
-    floorMat.color.setHex(room.floor);
-    const floor = new THREE.Mesh(new THREE.BoxGeometry(room.w, .12, room.d), floorMat);
-    floor.position.set(room.x, 0, room.z);
-    floor.receiveShadow = true;
-    floor.userData.room = room;
-    house.add(floor);
-    roomMeshes.push(floor);
+  function readSmartBackendScene(){
+    try{
+      return JSON.parse(localStorage.getItem('casa_smart_backend_v1')) || null;
+    }catch(e){
+      return null;
+    }
+  }
 
-    const markerMat = room.active
-      ? new THREE.MeshStandardMaterial({ color:room.color, emissive:room.color, emissiveIntensity:.65, roughness:.4 })
-      : mats.off;
-    const marker = new THREE.Mesh(markerGeo, markerMat);
-    marker.position.set(room.x, .24, room.z);
-    marker.userData.room = room;
-    marker.castShadow = true;
-    house.add(marker);
-    roomMeshes.push(marker);
-    roomObjects.set(room.name, { floor, marker, floorMat });
-    addRoomLabel(room);
-  });
+  function sceneBounds(data){
+    const xs = [], ys = [];
+    (data.rooms || []).forEach(r => {
+      xs.push(r.x, r.x + r.w);
+      ys.push(r.y, r.y + r.d);
+    });
+    (data.walls || []).forEach(w => {
+      xs.push(w.x1, w.x2);
+      ys.push(w.y1, w.y2);
+    });
+    if(!xs.length) return { cx:0, cy:0, w:6, d:4 };
+    const minX = Math.min(...xs), maxX = Math.max(...xs);
+    const minY = Math.min(...ys), maxY = Math.max(...ys);
+    return { cx:(minX + maxX) / 2, cy:(minY + maxY) / 2, w:maxX - minX, d:maxY - minY };
+  }
 
-  const wallSpecs = [
-    { x:0, z:1.74, w:5.9, d:.12 },
-    { x:0, z:-2.2, w:5.9, d:.12 },
-    { x:-2.98, z:-.22, w:.12, d:4.05 },
-    { x:2.98, z:-.22, w:.12, d:4.05 },
-    { x:-1.05, z:-1.05, w:.12, d:2.32 },
-    { x:.76, z:-1.05, w:.12, d:2.32 },
-    { x:.08, z:-.17, w:2.18, d:.12 }
-  ];
+  function roomColor(i){
+    return [0xf6f2df, 0xe8f6ee, 0xf7ece5, 0xeef5f7, 0xf4efff][i % 5];
+  }
 
-  wallSpecs.forEach(wall => {
-    addBox(house, wall.x, .29, wall.z, wall.w, .58, wall.d, mats.wall);
-  });
+  function deviceColor(kind){
+    return { light:0xffd60a, plug:0x64d2ff, climate:0x30d158, sensor:0xbf5af2 }[kind] || 0xffd60a;
+  }
 
-  const base = new THREE.Mesh(
-    new THREE.BoxGeometry(6.35, .12, 4.55),
-    new THREE.MeshStandardMaterial({ color:0x0c0f10, roughness:.8 })
-  );
-  base.position.y = -.12;
-  base.receiveShadow = true;
-  house.add(base);
+  function clearHouse(){
+    while(house.children.length){
+      const child = house.children.pop();
+      child.traverse?.(obj => {
+        obj.geometry?.dispose?.();
+        if(obj.material?.map) obj.material.map.dispose?.();
+      });
+    }
+    roomMeshes = [];
+    roomObjects = new Map();
+    roomData = [];
+  }
 
-  [
-    { x:-1.85, z:1.79, w:.92, d:.06 },
-    { x:.95, z:1.79, w:1.16, d:.06 },
-    { x:3.04, z:-.92, w:.06, d:.92 },
-    { x:-3.04, z:-1.12, w:.06, d:.86 }
-  ].forEach(win => addBox(house, win.x, .48, win.z, win.w, .32, win.d, mats.glass, false, false));
+  function addWallFromLine(wall, bounds){
+    const x1 = wall.x1 - bounds.cx;
+    const z1 = wall.y1 - bounds.cy;
+    const x2 = wall.x2 - bounds.cx;
+    const z2 = wall.y2 - bounds.cy;
+    const len = Math.max(.1, Math.hypot(x2 - x1, z2 - z1));
+    const h = Math.max(.45, Math.min(1.25, (Number(wall.h) || 2.7) * .32));
+    const mesh = addBox(house, (x1+x2)/2, h/2, (z1+z2)/2, len, h, .12, mats.wall);
+    mesh.rotation.y = -Math.atan2(z2 - z1, x2 - x1);
+  }
 
-  [
-    { x:-.62, z:-.18, w:.72, d:.055 },
-    { x:.92, z:-2.14, w:.82, d:.055 },
-    { x:-2.05, z:-2.14, w:.72, d:.055 }
-  ].forEach(door => addBox(house, door.x, .22, door.z, door.w, .34, door.d, mats.wood));
+  function addGenericFurniture(room, group){
+    const name = (room.name || '').toLowerCase();
+    if(name.includes('cucina')){
+      addBox(group, room.x - room.w*.28, .22, room.z - room.d*.28, room.w*.46, .44, .32, mats.counter);
+      addCylinder(group, room.x + room.w*.18, .33, room.z - room.d*.2, .18, .08, mats.wood);
+      return;
+    }
+    if(name.includes('camera')){
+      addBox(group, room.x, .22, room.z, room.w*.58, .32, room.d*.48, mats.bed);
+      addBox(group, room.x - room.w*.31, .48, room.z, .14, .28, room.d*.48, mats.trim);
+      return;
+    }
+    addBox(group, room.x - room.w*.14, .13, room.z + room.d*.18, room.w*.5, .26, .38, mats.fabric);
+    addBox(group, room.x - room.w*.14, .43, room.z + room.d*.32, room.w*.5, .38, .14, mats.fabric);
+    addBox(group, room.x + room.w*.18, .17, room.z, room.w*.28, .09, room.d*.24, mats.wood);
+  }
 
-  const furniture = new THREE.Group();
-  house.add(furniture);
+  function rebuildSmartScene(){
+    const data = readSmartBackendScene() || {
+      rooms:[
+        { name:'Sala', x:1, y:1, w:4.2, d:3, h:2.7 },
+        { name:'Cucina', x:1, y:4.25, w:2.4, d:2.2, h:2.7 },
+        { name:'Camera', x:5.55, y:4.25, w:2.7, d:2.2, h:2.7 }
+      ],
+      walls:[],
+      devices:[]
+    };
+    const bounds = sceneBounds(data);
+    clearHouse();
 
-  addBox(furniture, -.35, .13, 1.04, 1.35, .26, .42, mats.fabric);
-  addBox(furniture, -.35, .45, 1.24, 1.35, .44, .16, mats.fabric);
-  addBox(furniture, -.95, .29, .72, .22, .32, .38, mats.fabric);
-  addBox(furniture, .25, .29, .72, .22, .32, .38, mats.fabric);
-  addBox(furniture, .82, .18, .46, .82, .09, .48, mats.wood);
-  addBox(furniture, 1.45, .28, 1.67, .92, .32, .08, mats.dark);
-  addBox(furniture, .12, .065, .35, 1.72, .03, .92, mats.rug, false, true);
+    const base = new THREE.Mesh(
+      new THREE.BoxGeometry(Math.max(4, bounds.w + .8), .12, Math.max(3, bounds.d + .8)),
+      new THREE.MeshStandardMaterial({ color:0x0c0f10, roughness:.8 })
+    );
+    base.position.y = -.12;
+    base.receiveShadow = true;
+    house.add(base);
 
-  addBox(furniture, -2.46, .22, -1.44, .32, .44, 1.12, mats.counter);
-  addBox(furniture, -1.62, .22, -1.78, .88, .44, .32, mats.counter);
-  addBox(furniture, -2.08, .32, -.66, .62, .18, .42, mats.metal);
-  addCylinder(furniture, -1.54, .33, -.68, .22, .08, mats.wood);
+    (data.rooms || []).forEach((src, i) => {
+      const devices = (data.devices || []).filter(d => d.room === src.name);
+      const room = {
+        name:src.name || `Stanza ${i+1}`,
+        note:devices.length ? `${devices.length} dispositivi` : `h ${src.h || 2.7}m`,
+        x:(Number(src.x) || 0) + (Number(src.w) || 2) / 2 - bounds.cx,
+        z:(Number(src.y) || 0) + (Number(src.d) || 2) / 2 - bounds.cy,
+        w:Number(src.w) || 2,
+        d:Number(src.d) || 2,
+        active:devices.length > 0,
+        color:devices.length ? deviceColor(devices[0].kind) : 0x7c8b92,
+        floor:roomColor(i)
+      };
+      roomData.push(room);
 
-  addBox(furniture, 1.86, .22, -1.15, 1.12, .32, .86, mats.bed);
-  addBox(furniture, 1.34, .48, -1.15, .16, .28, .86, mats.trim);
-  addBox(furniture, 2.55, .36, -.38, .34, .72, 1.02, mats.wood);
-  addBox(furniture, 1.55, .18, -1.94, .58, .34, .22, mats.wood);
+      const floorMat = mats.floor.clone();
+      floorMat.color.setHex(room.floor);
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(room.w, .12, room.d), floorMat);
+      floor.position.set(room.x, 0, room.z);
+      floor.receiveShadow = true;
+      floor.userData.room = room;
+      house.add(floor);
+      roomMeshes.push(floor);
 
-  addBox(furniture, -.1, .17, -1.7, .88, .34, .26, mats.dark);
-  addCylinder(furniture, -.9, .34, -1.7, .11, .44, mats.lamp);
-  addCylinder(furniture, 1.26, .34, .66, .1, .52, mats.lamp);
-  addCylinder(furniture, -2.42, .34, -.4, .1, .48, mats.lamp);
+      const markerMat = room.active
+        ? new THREE.MeshStandardMaterial({ color:room.color, emissive:room.color, emissiveIntensity:.65, roughness:.4 })
+        : mats.off;
+      const marker = new THREE.Mesh(markerGeo, markerMat);
+      marker.position.set(room.x, .24, room.z);
+      marker.userData.room = room;
+      marker.castShadow = true;
+      house.add(marker);
+      roomMeshes.push(marker);
+      roomObjects.set(room.name, { floor, marker, floorMat });
+      addRoomLabel(room);
+      addGenericFurniture(room, house);
+    });
+
+    (data.walls || []).forEach(wall => addWallFromLine(wall, bounds));
+
+    (data.devices || []).forEach(dev => {
+      const color = deviceColor(dev.kind);
+      const mat = new THREE.MeshStandardMaterial({ color, emissive:color, emissiveIntensity:.5, roughness:.4 });
+      const marker = addCylinder(house, (Number(dev.x)||0) - bounds.cx, .38, (Number(dev.y)||0) - bounds.cy, .09, .28, mat, 24);
+      marker.userData.room = roomData.find(r => r.name === dev.room) || roomData[0];
+      roomMeshes.push(marker);
+    });
+
+    selectedRoom = roomData[0] || null;
+    if(selectedRoom) selectRoom(selectedRoom);
+  }
 
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
   const label = document.getElementById('smart-room-label');
-  let selectedRoom = roomData[0];
   let pointerDownPoint = null;
   const activePointers = new Map();
 
@@ -4369,14 +4498,18 @@ if(smartSceneRoot){
   window.addEventListener('orientationchange', () => setTimeout(resizeSmartScene, 120));
 
   function animateSmartScene(t){
-    const current = roomObjects.get(selectedRoom.name);
+    const current = selectedRoom ? roomObjects.get(selectedRoom.name) : null;
     if(current) current.marker.position.y = .24 + Math.sin(t * .004) * .035;
     renderer.render(scene, camera);
     requestAnimationFrame(animateSmartScene);
   }
 
-  selectRoom(roomData[0]);
+  rebuildSmartScene();
   resizeSmartScene();
+  window.addEventListener('casa-smart-backend-updated', () => {
+    rebuildSmartScene();
+    resizeSmartScene();
+  });
   requestAnimationFrame(animateSmartScene);
 }
 </script>

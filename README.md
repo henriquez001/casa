@@ -173,6 +173,16 @@ create table public.Archivio (
 alter table public.Archivio enable row level security;
 -- Uso personale: semplice, ma non adatto se la anon key viene condivisa.
 create policy "anon all" on public.Archivio for all using (true);
+
+-- Tabella backend smart home
+create table public.SmartHome (
+  id          text primary key,
+  payload     jsonb not null,
+  updated_at  timestamptz default now()
+);
+
+alter table public.SmartHome enable row level security;
+create policy "anon all smart" on public.SmartHome for all using (true);
 ```
 
 ---

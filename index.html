@@ -2230,6 +2230,17 @@ function smartRenderPrompt(data){
 
   return `Crea un render fotorealistico architettonico in vista perfettamente dall'alto, camera ortografica verticale, di una casa smart moderna basata su questa planimetria.
 
+PRIORITA ASSOLUTA: accuratezza geometrica della planimetria. La bellezza del render viene dopo.
+Sistema coordinate: x cresce da sinistra verso destra, y cresce dall'alto verso il basso, 1 unita = 1 metro. Mantieni proporzioni reali del perimetro: circa ${smartFmt(p.w)}m di larghezza per ${smartFmt(p.d)}m di profondita. Non trasformare la planimetria in una casa generica, non spostare stanze, non cambiare numero di ambienti.
+
+Schema vincolante della planimetria:
+- Colonna sinistra, dall'alto verso il basso: Soggiorno 5.41 x 3.90; Cucina 5.41 x 4.20; Camera grande 5.41 x 4.22.
+- Fascia centrale: piccolo Dis. sopra, poi Disimpegno verticale stretto largo circa 1.20m.
+- Zona alta destra: Bagno alto 2.80 x 2.60 a sinistra, Stanza 2.51 x 3.90 a destra.
+- Colonna destra, dall'alto verso il basso sotto la Stanza: Camera 4.11 x 2.30; Bagno 4.11 x 1.80; Camera padronale 5.41 x 4.22.
+- La Camera padronale in basso a destra parte vicino al disimpegno centrale e arriva alla parete esterna destra.
+- Le tre stanze grandi inferiori devono restare allineate alla base della planimetria.
+
 Stanze:
 ${rooms || 'nessuna stanza'}
 
@@ -2250,7 +2261,14 @@ ${furnishings || 'nessun arredo placeholder'}
 
 Arredi caricati dall'utente: ${assets}.
 
-Usa perimetro, stanze e placeholder come vincoli principali: non spostare ambienti o arredi fuori dal perimetro e mantieni relazioni spaziali coerenti. Inventare con gusto solo i dettagli mancanti: texture, colori, piccoli complementi, illuminazione e materiali. Deve sembrare un vero render 3D premium, non una planimetria disegnata. Niente testo, niente icone, niente marker, niente persone, niente watermark.`;
+Regole severe:
+- Vista esattamente dall'alto, senza prospettiva inclinata.
+- Mantieni tutte le stanze come rettangoli ortogonali e adiacenti secondo coordinate e pareti.
+- Non aggiungere corridoi, scale, terrazzi, muri curvi o ambienti non presenti.
+- Non fondere stanze e non invertire destra/sinistra o alto/basso.
+- Usa perimetro, stanze e placeholder come vincoli principali: non spostare ambienti o arredi fuori dal perimetro.
+- Inventare con gusto solo dettagli mancanti: texture, colori, piccoli complementi, illuminazione e materiali.
+Deve sembrare un vero render 3D premium visto dall'alto, non una planimetria disegnata. Niente testo, niente icone, niente marker, niente persone, niente watermark.`;
 }
 
 function smartRenderSignature(data){
@@ -2371,7 +2389,7 @@ async function requestSmartRenderGeneration(payload){
       body: JSON.stringify({
         payload,
         prompt: smartRenderPrompt(payload),
-        size: '1536x1024'
+        size: '1024x1536'
       })
     });
     if(!res.ok){
@@ -4991,7 +5009,8 @@ if(false && smartSceneRoot){
 
   let selectedRoomName = '';
   const renderImage = 'assets/smart-home-render.png';
-  const renderAspect = 1536 / 1024;
+  const fallbackRenderAspect = 1536 / 1024;
+  const generatedRenderAspect = 1024 / 1536;
   const planInset = { x:21, y:8, w:58, h:84 };
 
   function readData(){
@@ -5025,21 +5044,21 @@ if(false && smartSceneRoot){
       : { minX:0, minY:0, maxX:8, maxY:5.5 };
   }
 
-  function frame(){
+  function frame(aspect){
     const rect = sceneRoot.getBoundingClientRect();
     const rootW = rect.width || 1000;
     const rootH = rect.height || 640;
     let w = rootW;
-    let h = w / renderAspect;
+    let h = w / aspect;
     if(h > rootH){
       h = rootH;
-      w = h * renderAspect;
+      w = h * aspect;
     }
     return { rootW, rootH, x:(rootW - w) / 2, y:(rootH - h) / 2, w, h };
   }
 
-  function markerPosition(x, y, b){
-    const f = frame();
+  function markerPosition(x, y, b, aspect){
+    const f = frame(aspect);
     const bw = Math.max(.1, b.maxX - b.minX);
     const bh = Math.max(.1, b.maxY - b.minY);
     const nx = Math.max(0, Math.min(1, ((Number(x) || 0) - b.minX) / bw));
@@ -5063,13 +5082,14 @@ if(false && smartSceneRoot){
     const b = bounds(data);
     const label = document.getElementById('smart-room-label');
     const currentRenderImage = data.renderImageUrl || renderImage;
+    const renderAspect = data.renderImageUrl ? generatedRenderAspect : fallbackRenderAspect;
 
     if(!selectedRoomName && rooms[0]) selectedRoomName = rooms[0].name || '';
 
     const roomMarkers = rooms.map(room => {
       const x = (Number(room.x) || 0) + (Number(room.w) || 2) / 2;
       const y = (Number(room.y) || 0) + (Number(room.d) || 2) / 2;
-      const p = markerPosition(x, y, b);
+      const p = markerPosition(x, y, b, renderAspect);
       const name = room.name || 'Stanza';
       const active = selectedRoomName === name;
       const mark = esc(name.trim().charAt(0).toUpperCase() || 'R');
@@ -5077,7 +5097,7 @@ if(false && smartSceneRoot){
     }).join('');
 
     const deviceMarkers = devices.map(device => {
-      const p = markerPosition(device.x, device.y, b);
+      const p = markerPosition(device.x, device.y, b, renderAspect);
       return `<button class="smart-static-marker" type="button" style="left:${p.left}%;top:${p.top}%" data-device="${esc(device.id || '')}" data-room="${esc(device.room || '')}" aria-label="${esc(device.name || 'Device')}">${glyph(device.kind)}</button>`;
     }).join('');
 

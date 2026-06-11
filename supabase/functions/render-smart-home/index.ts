@@ -31,6 +31,17 @@ function buildPrompt(payload: any){
 
   return `Crea un render fotorealistico architettonico in vista perfettamente dall'alto, camera ortografica verticale, di una casa smart moderna basata su questa planimetria.
 
+PRIORITA ASSOLUTA: accuratezza geometrica della planimetria. La bellezza del render viene dopo.
+Sistema coordinate: x cresce da sinistra verso destra, y cresce dall'alto verso il basso, 1 unita = 1 metro. Mantieni proporzioni reali del perimetro: circa ${fmt(perimeterSource.w)}m di larghezza per ${fmt(perimeterSource.d)}m di profondita. Non trasformare la planimetria in una casa generica, non spostare stanze, non cambiare numero di ambienti.
+
+Schema vincolante della planimetria:
+- Colonna sinistra, dall'alto verso il basso: Soggiorno 5.41 x 3.90; Cucina 5.41 x 4.20; Camera grande 5.41 x 4.22.
+- Fascia centrale: piccolo Dis. sopra, poi Disimpegno verticale stretto largo circa 1.20m.
+- Zona alta destra: Bagno alto 2.80 x 2.60 a sinistra, Stanza 2.51 x 3.90 a destra.
+- Colonna destra, dall'alto verso il basso sotto la Stanza: Camera 4.11 x 2.30; Bagno 4.11 x 1.80; Camera padronale 5.41 x 4.22.
+- La Camera padronale in basso a destra parte vicino al disimpegno centrale e arriva alla parete esterna destra.
+- Le tre stanze grandi inferiori devono restare allineate alla base della planimetria.
+
 Stanze:
 ${rooms || 'nessuna stanza'}
 
@@ -51,7 +62,14 @@ ${furnishings || 'nessun arredo placeholder'}
 
 Arredi caricati dall'utente: ${assets}.
 
-Usa perimetro, stanze e placeholder come vincoli principali: non spostare ambienti o arredi fuori dal perimetro e mantieni relazioni spaziali coerenti. Inventare con gusto solo i dettagli mancanti: texture, colori, piccoli complementi, illuminazione e materiali. Deve sembrare un vero render 3D premium, non una planimetria disegnata. Niente testo, niente icone, niente marker, niente persone, niente watermark.`;
+Regole severe:
+- Vista esattamente dall'alto, senza prospettiva inclinata.
+- Mantieni tutte le stanze come rettangoli ortogonali e adiacenti secondo coordinate e pareti.
+- Non aggiungere corridoi, scale, terrazzi, muri curvi o ambienti non presenti.
+- Non fondere stanze e non invertire destra/sinistra o alto/basso.
+- Usa perimetro, stanze e placeholder come vincoli principali: non spostare ambienti o arredi fuori dal perimetro.
+- Inventare con gusto solo dettagli mancanti: texture, colori, piccoli complementi, illuminazione e materiali.
+Deve sembrare un vero render 3D premium visto dall'alto, non una planimetria disegnata. Niente testo, niente icone, niente marker, niente persone, niente watermark.`;
 }
 
 Deno.serve(async req => {
@@ -77,7 +95,7 @@ Deno.serve(async req => {
   try{
     const body = await req.json();
     const prompt = body.prompt || buildPrompt(body.payload);
-    const size = body.size || '1536x1024';
+    const size = body.size || '1024x1536';
 
     const imageRes = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',

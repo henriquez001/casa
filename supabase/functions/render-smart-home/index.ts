@@ -21,6 +21,9 @@ function buildPrompt(payload: any){
   const walls = (payload?.walls || []).map((wall: any) =>
     `${wall.name || 'Parete'}: da ${fmt(wall.x1)},${fmt(wall.y1)} a ${fmt(wall.x2)},${fmt(wall.y2)}, altezza ${fmt(wall.h, 2.7)}m`
   ).join('\n');
+  const openings = (payload?.openings || []).map((opening: any) =>
+    `${opening.name || 'Apertura'}: tipo ${opening.kind === 'window' ? 'finestra' : 'porta'}, parete ${opening.wallId || 'non assegnata'}, centro x ${fmt(opening.x)}, y ${fmt(opening.y)}, larghezza ${fmt(opening.w)}m, altezza ${fmt(opening.h)}m, davanzale ${fmt(opening.sill)}m`
+  ).join('\n');
   const devices = (payload?.devices || []).map((device: any) =>
     `${device.name || 'Device'} (${device.kind || 'device'}) in ${device.room || 'stanza non assegnata'} a x ${fmt(device.x)}, y ${fmt(device.y)}`
   ).join('\n');
@@ -54,6 +57,9 @@ planimetria ruotata di ${rotation} gradi verso destra rispetto ai dati originali
 Pareti:
 ${walls || 'nessuna parete'}
 
+Aperture:
+${openings || 'nessuna porta o finestra'}
+
 Dispositivi smart:
 ${devices || 'nessun dispositivo'}
 
@@ -65,6 +71,7 @@ Arredi caricati dall'utente: ${assets}.
 Regole severe:
 - Vista esattamente dall'alto, senza prospettiva inclinata.
 - Mantieni tutte le stanze come rettangoli ortogonali e adiacenti secondo coordinate e pareti.
+- Porte e finestre sono vincoli murari: taglia o evidenzia i muri nelle posizioni indicate, senza spostarle.
 - Non aggiungere corridoi, scale, terrazzi, muri curvi o ambienti non presenti.
 - Non fondere stanze e non invertire destra/sinistra o alto/basso.
 - Usa perimetro, stanze e placeholder come vincoli principali: non spostare ambienti o arredi fuori dal perimetro.

@@ -1457,13 +1457,14 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
 }
 
 .plan-room {
-  fill: rgba(255,255,255,.74);
-  stroke: rgba(0,0,0,.62);
-  stroke-width: 2;
+  fill: rgba(255,255,255,.18);
+  stroke: rgba(0,0,0,.28);
+  stroke-width: 1.5;
+  stroke-dasharray: 7 5;
   cursor: pointer;
 }
 
-.plan-room.selected { fill: rgba(255,214,10,.72); }
+.plan-room.selected { fill: rgba(255,214,10,.28); stroke: rgba(0,0,0,.65); }
 
 .plan-perimeter {
   fill: rgba(255,255,255,.18);
@@ -1490,6 +1491,20 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
 }
 
 .plan-device.selected { fill: var(--yel); }
+
+.plan-opening {
+  fill: rgba(255,255,255,.9);
+  stroke: #000;
+  stroke-width: 2;
+  cursor: pointer;
+}
+
+.plan-opening.door { fill: rgba(48,209,88,.85); }
+.plan-opening.window { fill: rgba(10,132,255,.84); }
+.plan-opening.selected {
+  fill: var(--yel);
+  stroke-width: 3;
+}
 
 .plan-furniture {
   fill: rgba(0,0,0,.16);
@@ -2078,7 +2093,7 @@ const CAT_COLORS = {
 
 const SMART_BACKEND_KEY = 'casa_smart_backend_v1';
 const SMART_ASSET_DB = 'casa_smart_assets';
-const SMART_RENDER_PROMPT_VERSION = 'geometry-v2';
+const SMART_RENDER_PROMPT_VERSION = 'geometry-v3';
 const PLAN_SCALE = 42;
 const PLAN_OFFSET = 42;
 let smartBackend = null;
@@ -2120,6 +2135,17 @@ function defaultSmartBackend(){
       { id:'wall-camera-bagno-dx', name:'Camera/Bagno dx', x1:7.17, y1:6.95, x2:12.35, y2:6.95, h:2.8 },
       { id:'wall-bagno-camera-dx', name:'Bagno/Camera dx', x1:7.17, y1:8.95, x2:12.35, y2:8.95, h:2.8 },
       { id:'wall-camera-padronale-top', name:'Camera padronale alta', x1:6.94, y1:8.55, x2:12.35, y2:8.55, h:2.8 }
+    ],
+    openings:[
+      { id:'open-porta-cucina', name:'Porta cucina', kind:'door', wallId:'wall-sep-sogg-cucina', x:4.7, y:4.1, w:.9, h:2.1, sill:0 },
+      { id:'open-porta-disimpegno', name:'Porta disimpegno', kind:'door', wallId:'wall-corridoio-ovest', x:5.72, y:4.25, w:.85, h:2.1, sill:0 },
+      { id:'open-finestra-soggiorno', name:'Finestra soggiorno', kind:'window', wallId:'wall-nord', x:3.1, y:0, w:1.2, h:1.4, sill:.9 },
+      { id:'open-finestra-cucina', name:'Finestra cucina', kind:'window', wallId:'wall-ovest', x:0, y:6.7, w:1.2, h:1.4, sill:.9 },
+      { id:'open-finestra-camera-sx', name:'Finestra camera grande', kind:'window', wallId:'wall-sud', x:3.3, y:13, w:.8, h:1.4, sill:.9 },
+      { id:'open-finestra-stanza', name:'Finestra stanza', kind:'window', wallId:'wall-est', x:12.35, y:2.3, w:1.2, h:1.4, sill:.9 },
+      { id:'open-finestra-camera-dx', name:'Finestra camera', kind:'window', wallId:'wall-est', x:12.35, y:5.6, w:.8, h:1.4, sill:.9 },
+      { id:'open-finestra-bagno-dx', name:'Finestra bagno', kind:'window', wallId:'wall-est', x:12.35, y:7.8, w:.8, h:1.2, sill:1.05 },
+      { id:'open-finestra-padronale', name:'Finestra camera padronale', kind:'window', wallId:'wall-est', x:12.35, y:11.2, w:1.2, h:1.4, sill:.9 }
     ],
     devices:[
       { id:'dev-luce-soggiorno', name:'Luce soggiorno', kind:'light', room:'Soggiorno', x:2.9, y:2.15, entity:'' },
@@ -2229,6 +2255,63 @@ function clampSmartWall(wall, data){
   return wall;
 }
 
+function smartWallProjection(wall, x, y){
+  const x1 = Number(wall.x1) || 0, y1 = Number(wall.y1) || 0;
+  const dx = (Number(wall.x2) || 0) - x1;
+  const dy = (Number(wall.y2) || 0) - y1;
+  const len2 = dx * dx + dy * dy;
+  if(!len2) return { wall, x:x1, y:y1, t:0, distance:Infinity, len:0, angle:0 };
+  const t = smartClamp(((x - x1) * dx + (y - y1) * dy) / len2, 0, 1);
+  const px = x1 + dx * t;
+  const py = y1 + dy * t;
+  return {
+    wall,
+    x:px,
+    y:py,
+    t,
+    distance:Math.hypot(x - px, y - py),
+    len:Math.sqrt(len2),
+    angle:Math.atan2(dy, dx)
+  };
+}
+
+function nearestSmartWall(data, point){
+  const walls = data.walls || [];
+  if(!walls.length) return null;
+  return walls
+    .map(wall => smartWallProjection(wall, point.x, point.y))
+    .sort((a,b) => a.distance - b.distance)[0] || null;
+}
+
+function smartOpeningWallInfo(data, opening){
+  const walls = data.walls || [];
+  const wall = walls.find(item => item.id === opening.wallId) || walls[0];
+  if(!wall) return null;
+  return smartWallProjection(wall, Number(opening.x) || 0, Number(opening.y) || 0);
+}
+
+function clampSmartOpening(opening, data){
+  data.openings = Array.isArray(data.openings) ? data.openings : [];
+  let wall = (data.walls || []).find(item => item.id === opening.wallId);
+  if(!wall){
+    const snap = nearestSmartWall(data, opening);
+    wall = snap?.wall;
+    if(wall) opening.wallId = wall.id;
+  }
+  if(!wall) return opening;
+
+  const proj = smartWallProjection(wall, Number(opening.x) || 0, Number(opening.y) || 0);
+  const maxW = Math.max(.35, proj.len - .1);
+  opening.kind = opening.kind === 'window' ? 'window' : 'door';
+  opening.w = smartRound(smartClamp(opening.w || (opening.kind === 'window' ? 1.2 : .85), .35, maxW));
+  opening.h = smartRound(smartClamp(opening.h || (opening.kind === 'window' ? 1.3 : 2.1), .4, Number(wall.h) || 2.8));
+  opening.sill = smartRound(smartClamp(opening.kind === 'door' ? 0 : (opening.sill ?? .9), 0, Math.max(0, (Number(wall.h) || 2.8) - opening.h)));
+  opening.x = smartRound(proj.x);
+  opening.y = smartRound(proj.y);
+  opening.t = Math.round(proj.t * 1000) / 1000;
+  return opening;
+}
+
 function smartRoomAtPoint(data, x, y){
   return (data.rooms || []).find(room =>
     x >= room.x && x <= room.x + room.w && y >= room.y && y <= room.y + room.d
@@ -2244,9 +2327,11 @@ function normalizeSmartBackend(data){
   data.perimeter = data.perimeter || smartPerimeterFromWalls(data.walls) || defaults.perimeter;
   data.planRotation = smartPlanRotation(data);
   data.furnishings = Array.isArray(data.furnishings) ? data.furnishings : defaults.furnishings;
+  data.openings = Array.isArray(data.openings) ? data.openings : [];
 
   data.rooms.forEach(room => clampSmartRect(room, data));
   data.walls.forEach(wall => clampSmartWall(wall, data));
+  data.openings.forEach(opening => clampSmartOpening(opening, data));
   data.devices.forEach(device => {
     clampSmartPoint(device, data);
     if(!device.room){
@@ -2294,6 +2379,9 @@ function smartRenderPrompt(data){
   const walls = (data.walls || []).map(wall =>
     `${wall.name || 'Parete'}: da ${smartFmt(wall.x1 || 0)},${smartFmt(wall.y1 || 0)} a ${smartFmt(wall.x2 || 0)},${smartFmt(wall.y2 || 0)}, altezza ${smartFmt(wall.h || 2.7)}m`
   ).join('\n');
+  const openings = (data.openings || []).map(opening =>
+    `${opening.name || 'Apertura'}: tipo ${opening.kind === 'window' ? 'finestra' : 'porta'}, parete ${opening.wallId || 'non assegnata'}, centro x ${smartFmt(opening.x || 0)}, y ${smartFmt(opening.y || 0)}, larghezza ${smartFmt(opening.w || 0)}m, altezza ${smartFmt(opening.h || 0)}m, davanzale ${smartFmt(opening.sill || 0)}m`
+  ).join('\n');
   const devices = (data.devices || []).map(device =>
     `${device.name || 'Device'} (${device.kind || 'device'}) in ${device.room || 'stanza non assegnata'} a x ${smartFmt(device.x || 0)}, y ${smartFmt(device.y || 0)}`
   ).join('\n');
@@ -2327,6 +2415,9 @@ planimetria ruotata di ${rotation} gradi verso destra rispetto ai dati originali
 Pareti:
 ${walls || 'nessuna parete'}
 
+Aperture:
+${openings || 'nessuna porta o finestra'}
+
 Dispositivi smart:
 ${devices || 'nessun dispositivo'}
 
@@ -2338,6 +2429,7 @@ Arredi caricati dall'utente: ${assets}.
 Regole severe:
 - Vista esattamente dall'alto, senza prospettiva inclinata.
 - Mantieni tutte le stanze come rettangoli ortogonali e adiacenti secondo coordinate e pareti.
+- Porte e finestre sono vincoli murari: taglia o evidenzia i muri nelle posizioni indicate, senza spostarle.
 - Non aggiungere corridoi, scale, terrazzi, muri curvi o ambienti non presenti.
 - Non fondere stanze e non invertire destra/sinistra o alto/basso.
 - Usa perimetro, stanze e placeholder come vincoli principali: non spostare ambienti o arredi fuori dal perimetro.
@@ -2365,6 +2457,18 @@ function smartRenderSignature(data){
     x2:smartRound(wall.x2),
     y2:smartRound(wall.y2),
     h:smartRound(wall.h || 2.8)
+  });
+  const cleanOpening = opening => ({
+    id:opening.id || '',
+    name:opening.name || '',
+    kind:opening.kind || '',
+    wallId:opening.wallId || '',
+    x:smartRound(opening.x),
+    y:smartRound(opening.y),
+    w:smartRound(opening.w),
+    h:smartRound(opening.h),
+    sill:smartRound(opening.sill),
+    t:Math.round((Number(opening.t) || 0) * 1000) / 1000
   });
   const cleanPoint = item => ({
     id:item.id || '',
@@ -2401,6 +2505,7 @@ function smartRenderSignature(data){
     perimeter:cleanRoom(source.perimeter || smartPerimeter(source)),
     rooms:(source.rooms || []).map(cleanRoom).sort(byId),
     walls:(source.walls || []).map(cleanWall).sort(byId),
+    openings:(source.openings || []).map(cleanOpening).sort(byId),
     devices:(source.devices || []).map(cleanPoint).sort(byId),
     furnishings:(source.furnishings || []).map(cleanFurnishing).sort(byId),
     assets:(source.assets || []).map(cleanAsset).sort(byId)
@@ -2589,6 +2694,7 @@ function selectedSmartItem(){
   if(!smartSelected) return null;
   const list = smartSelected.type === 'room' ? data.rooms
     : smartSelected.type === 'wall' ? data.walls
+    : smartSelected.type === 'opening' ? data.openings
     : smartSelected.type === 'furniture' ? data.furnishings
     : data.devices;
   return list.find(item => item.id === smartSelected.id) || null;
@@ -2622,6 +2728,33 @@ function handleSmartPlanClick(e){
     if(room) device.room = room.name;
     data.devices.push(device);
     smartSelected = { type:'device', id:device.id };
+    setSmartTool('select');
+    saveSmartBackend(false);
+    renderSmartBackend();
+    return;
+  }
+
+  if(smartTool === 'door' || smartTool === 'window'){
+    const snap = nearestSmartWall(data, p);
+    if(!snap || snap.distance > 1.1){
+      showToast('Tocca vicino a una parete');
+      return;
+    }
+    const isWindow = smartTool === 'window';
+    const opening = {
+      id:smartId(isWindow ? 'win' : 'door'),
+      name:isWindow ? 'Nuova finestra' : 'Nuova porta',
+      kind:isWindow ? 'window' : 'door',
+      wallId:snap.wall.id,
+      x:snap.x,
+      y:snap.y,
+      w:isWindow ? 1.2 : .85,
+      h:isWindow ? 1.35 : 2.1,
+      sill:isWindow ? .9 : 0
+    };
+    clampSmartOpening(opening, data);
+    data.openings.push(opening);
+    smartSelected = { type:'opening', id:opening.id };
     setSmartTool('select');
     saveSmartBackend(false);
     renderSmartBackend();
@@ -2704,6 +2837,7 @@ function deleteSmartSelected(){
   if(!smartSelected) return;
   const key = smartSelected.type === 'room' ? 'rooms'
     : smartSelected.type === 'wall' ? 'walls'
+    : smartSelected.type === 'opening' ? 'openings'
     : smartSelected.type === 'furniture' ? 'furnishings'
     : 'devices';
   data[key] = data[key].filter(item => item.id !== smartSelected.id);
@@ -2718,12 +2852,23 @@ function updateSmartSelected(field, value){
   if(!item) return;
   if(['x','y','w','d','h','x1','y1','x2','y2','rotation'].includes(field)){
     item[field] = Number(value) || 0;
+  }else if(['sill'].includes(field)){
+    item[field] = Number(value) || 0;
   }else{
     item[field] = value;
   }
   if(smartSelected.type === 'room' || smartSelected.type === 'furniture') clampSmartRect(item, data);
   if(smartSelected.type === 'device') clampSmartPoint(item, data);
-  if(smartSelected.type === 'wall') clampSmartWall(item, data);
+  if(smartSelected.type === 'wall'){
+    clampSmartWall(item, data);
+    (data.openings || []).filter(opening => opening.wallId === item.id).forEach(opening => {
+      const t = smartClamp(opening.t ?? .5, 0, 1);
+      opening.x = (Number(item.x1) || 0) + ((Number(item.x2) || 0) - (Number(item.x1) || 0)) * t;
+      opening.y = (Number(item.y1) || 0) + ((Number(item.y2) || 0) - (Number(item.y1) || 0)) * t;
+      clampSmartOpening(opening, data);
+    });
+  }
+  if(smartSelected.type === 'opening') clampSmartOpening(item, data);
   if((smartSelected.type === 'device' || smartSelected.type === 'furniture') && !item.room){
     const room = smartRoomAtPoint(data, item.x, item.y);
     if(room) item.room = room.name;
@@ -2990,15 +3135,63 @@ function renderSmartModel3D(data, keepView=false){
     const len = Math.max(.05, Math.hypot(dx, dz));
     const h = Number(wall.h) || 2.8;
     const selected = smartSelected?.type === 'wall' && smartSelected.id === wall.id;
-    smartModelAddBox(model.root, {
-      x:((Number(wall.x1) || 0) + (Number(wall.x2) || 0)) / 2 - centerX,
-      y:h / 2,
-      z:((Number(wall.y1) || 0) + (Number(wall.y2) || 0)) / 2 - centerZ,
-      w:len,
-      h,
-      d:.18,
-      rotation:-Math.atan2(dz, dx),
-      color:selected ? 0xff3b30 : smartModelMaterialColor('wall')
+    const angle = -Math.atan2(dz, dx);
+    const ux = dx / len;
+    const uz = dz / len;
+    const wallOpenings = (data.openings || [])
+      .filter(opening => opening.wallId === wall.id)
+      .map(opening => ({ ...opening, center:(Number(opening.t) || 0) * len }))
+      .sort((a,b) => a.center - b.center);
+    const doorCuts = wallOpenings
+      .filter(opening => opening.kind === 'door')
+      .map(opening => ({
+        start:smartClamp(opening.center - (Number(opening.w) || .85) / 2, 0, len),
+        end:smartClamp(opening.center + (Number(opening.w) || .85) / 2, 0, len),
+        opening
+      }))
+      .filter(cut => cut.end - cut.start > .05);
+    const addWallPart = (start, end, height=h, y=height / 2, color=selected ? 0xff3b30 : smartModelMaterialColor('wall')) => {
+      const segLen = Math.max(.05, end - start);
+      const mid = (start + end) / 2;
+      smartModelAddBox(model.root, {
+        x:(Number(wall.x1) || 0) + ux * mid - centerX,
+        y,
+        z:(Number(wall.y1) || 0) + uz * mid - centerZ,
+        w:segLen,
+        h:height,
+        d:.18,
+        rotation:angle,
+        color
+      });
+    };
+    let cursor = 0;
+    doorCuts.forEach(cut => {
+      if(cut.start > cursor) addWallPart(cursor, cut.start);
+      cursor = Math.max(cursor, cut.end);
+    });
+    if(cursor < len) addWallPart(cursor, len);
+    doorCuts.forEach(cut => {
+      const doorH = Number(cut.opening.h) || 2.1;
+      if(h - doorH > .08) addWallPart(cut.start, cut.end, h - doorH, doorH + (h - doorH) / 2);
+      addWallPart(cut.start, cut.end, .05, .025, 0x2f7d42);
+    });
+    wallOpenings.filter(opening => opening.kind === 'window').forEach(opening => {
+      const winW = Number(opening.w) || 1.2;
+      const winH = Number(opening.h) || 1.3;
+      const sill = Number(opening.sill) || .9;
+      const mid = smartClamp(opening.center, winW / 2, len - winW / 2);
+      smartModelAddBox(model.root, {
+        x:(Number(wall.x1) || 0) + ux * mid - centerX,
+        y:sill + winH / 2,
+        z:(Number(wall.y1) || 0) + uz * mid - centerZ,
+        w:winW,
+        h:winH,
+        d:.22,
+        rotation:angle,
+        color:smartSelected?.type === 'opening' && smartSelected.id === opening.id ? 0xffd60a : 0x7ebcff,
+        roughness:.18,
+        metalness:.05
+      });
     });
   });
 
@@ -3089,6 +3282,20 @@ function renderSmartPlan(data){
     </g>`;
   }).join('');
 
+  const openings = (data.openings || []).map(opening => {
+    const info = smartOpeningWallInfo(data, opening);
+    if(!info) return '';
+    const selected = smartSelected?.type === 'opening' && smartSelected.id === opening.id;
+    const x = planToSvg(opening.x), y = planToSvg(opening.y);
+    const width = Math.max(18, (Number(opening.w) || .8) * PLAN_SCALE);
+    const angle = info.angle * 180 / Math.PI;
+    const label = opening.kind === 'window' ? 'F' : 'P';
+    return `<g data-smart-type="opening" data-smart-id="${opening.id}" transform="translate(${x} ${y}) rotate(${angle})">
+      <rect class="plan-opening ${smartEsc(opening.kind)}${selected ? ' selected' : ''}" x="${-width/2}" y="-8" width="${width}" height="16" rx="3"/>
+      <text class="plan-label" x="${-5}" y="5">${label}</text>
+    </g>`;
+  }).join('');
+
   const furnishings = (data.furnishings || []).map(item => {
     const selected = smartSelected?.type === 'furniture' && smartSelected.id === item.id;
     const x = planToSvg(item.x), y = planToSvg(item.y), w = item.w * PLAN_SCALE, h = item.d * PLAN_SCALE;
@@ -3105,7 +3312,7 @@ function renderSmartPlan(data){
 
   const center = smartPlanSvgCenter(data);
   const rotation = smartPlanRotation(data);
-  svg.innerHTML = `${grid.join('')}<g transform="rotate(${rotation} ${center.x} ${center.y})">${perimeter}${rooms}${furnishings}${walls}${devices}${draft}</g>`;
+  svg.innerHTML = `${grid.join('')}<g transform="rotate(${rotation} ${center.x} ${center.y})">${perimeter}${rooms}${furnishings}${walls}${openings}${devices}${draft}</g>`;
 }
 
 function smartInput(label, field, value, type='text'){
@@ -3152,6 +3359,26 @@ function renderSmartInspector(){
       ${smartInput('Altezza','h',item.h,'number')}
       <div class="backend-hint">Lunghezza: ${smartFmt(smartLen(item))}m</div>
       <div class="backend-mini-actions"><button class="backend-mini-btn" onclick="deleteSmartSelected()">Elimina parete</button></div>`;
+    return;
+  }
+
+  if(smartSelected.type === 'opening'){
+    const data = loadSmartBackend();
+    const wallOptions = (data.walls || []).map(wall => `<option value="${smartEsc(wall.id)}" ${item.wallId === wall.id ? 'selected' : ''}>${smartEsc(wall.name || wall.id)}</option>`).join('');
+    box.innerHTML = `
+      ${smartInput('Nome','name',item.name)}
+      <div class="backend-field"><label>Tipo</label><select onchange="updateSmartSelected('kind', this.value)">
+        <option value="door" ${item.kind === 'door' ? 'selected' : ''}>Porta</option>
+        <option value="window" ${item.kind === 'window' ? 'selected' : ''}>Finestra</option>
+      </select></div>
+      <div class="backend-field"><label>Parete</label><select onchange="updateSmartSelected('wallId', this.value)">${wallOptions}</select></div>
+      ${smartInput('X','x',item.x,'number')}
+      ${smartInput('Y','y',item.y,'number')}
+      ${smartInput('Larghezza','w',item.w,'number')}
+      ${smartInput('Altezza','h',item.h,'number')}
+      ${smartInput('Davanzale','sill',item.sill || 0,'number')}
+      <div class="backend-hint">Porte e finestre si agganciano alla parete selezionata e vengono usate dal 3D per aprire o segnare i muri.</div>
+      <div class="backend-mini-actions"><button class="backend-mini-btn" onclick="deleteSmartSelected()">Elimina apertura</button></div>`;
     return;
   }
 
@@ -5069,14 +5296,16 @@ setupSmartActions();
   </div>
   <div class="panel-actions">
     <button class="panel-action" onclick="saveAndCloseSmartBackend()">Salva e chiudi</button>
-    <button class="panel-action" onclick="addSmartRoom()">Stanza</button>
+    <button class="panel-action" onclick="addSmartRoom()">Zona</button>
     <button class="panel-action" onclick="rotateSmartPlanRight()">Ruota 90°</button>
     <button class="panel-action" onclick="resetSmartBackend()">Reset</button>
   </div>
   <div class="backend-toolbar" id="backend-toolbar">
     <button class="backend-tool active" type="button" data-tool="select" onclick="setSmartTool('select')">Seleziona</button>
-    <button class="backend-tool" type="button" data-tool="room" onclick="setSmartTool('room')">Stanza</button>
     <button class="backend-tool" type="button" data-tool="wall" onclick="setSmartTool('wall')">Parete</button>
+    <button class="backend-tool" type="button" data-tool="door" onclick="setSmartTool('door')">Porta</button>
+    <button class="backend-tool" type="button" data-tool="window" onclick="setSmartTool('window')">Finestra</button>
+    <button class="backend-tool" type="button" data-tool="room" onclick="setSmartTool('room')">Zona</button>
     <button class="backend-tool" type="button" data-tool="device" onclick="setSmartTool('device')">Device</button>
     <button class="backend-tool" type="button" data-tool="furniture" onclick="setSmartTool('furniture')">Arredo</button>
   </div>
@@ -5115,7 +5344,7 @@ setupSmartActions();
         </div>
         <div class="backend-block">
           <div class="backend-block-title">Dati locali</div>
-          <div class="backend-hint">La planimetria resta modificabile senza API. Quote in metri, altezze in metri. Il render viene rigenerato solo su Salva e chiudi se la funzione Supabase e configurata.</div>
+          <div class="backend-hint">Disegna i muri con Parete, poi aggancia Porte e Finestre vicino alle linee. Le zone restano utili come etichette; il 3D e il render usano soprattutto muri, aperture e arredi.</div>
           <div class="backend-hint" id="smart-render-status" style="margin-top:10px">Render: immagine statica iniziale.</div>
         </div>
       </div>

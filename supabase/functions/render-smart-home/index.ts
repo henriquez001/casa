@@ -14,6 +14,7 @@ function fmt(value: unknown, fallback = 0){
 function buildPrompt(payload: any){
   const perimeterSource = payload?.perimeter || { name:'Perimetro casa', x:0, y:0, w:8, d:5.5, h:2.7 };
   const perimeter = `${perimeterSource.name || 'Perimetro casa'}: x ${fmt(perimeterSource.x)}, y ${fmt(perimeterSource.y)}, larghezza ${fmt(perimeterSource.w)}m, profondita ${fmt(perimeterSource.d)}m, altezza ${fmt(perimeterSource.h, 2.7)}m`;
+  const rotation = Number(payload?.planRotation || 0);
   const rooms = (payload?.rooms || []).map((room: any) =>
     `${room.name || 'Stanza'}: x ${fmt(room.x)}, y ${fmt(room.y)}, larghezza ${fmt(room.w)}m, profondita ${fmt(room.d)}m, altezza ${fmt(room.h, 2.7)}m, pavimento/materiale ${room.material || 'wood'}`
   ).join('\n');
@@ -35,6 +36,9 @@ ${rooms || 'nessuna stanza'}
 
 Perimetro generale:
 ${perimeter}
+
+Orientamento visuale:
+planimetria ruotata di ${rotation} gradi verso destra rispetto ai dati originali.
 
 Pareti:
 ${walls || 'nessuna parete'}

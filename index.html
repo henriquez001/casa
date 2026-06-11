@@ -2006,41 +2006,67 @@ const CAT_COLORS = {
 
 const SMART_BACKEND_KEY = 'casa_smart_backend_v1';
 const SMART_ASSET_DB = 'casa_smart_assets';
-const PLAN_SCALE = 70;
-const PLAN_OFFSET = 50;
+const PLAN_SCALE = 42;
+const PLAN_OFFSET = 42;
 let smartBackend = null;
 let smartTool = 'select';
-let smartSelected = { type:'room', id:'room-sala' };
+let smartSelected = { type:'room', id:'room-soggiorno' };
 let smartWallDraft = null;
 let smartCloudSyncTimer = null;
 
 function defaultSmartBackend(){
   return {
-    perimeter:{ id:'perimetro-casa', name:'Perimetro casa', x:1, y:1, w:7.25, d:5.45, h:2.7 },
+    sourcePlan:'piano-primo-2026-06-11',
+    planRotation:0,
+    perimeter:{ id:'perimetro-casa', name:'Perimetro casa', x:0, y:0, w:12.35, d:13.25, h:2.8 },
     rooms:[
-      { id:'room-sala', name:'Sala', x:1, y:1, w:4.2, d:3, h:2.7, material:'wood' },
-      { id:'room-cucina', name:'Cucina', x:1, y:4.25, w:2.4, d:2.2, h:2.7, material:'tile' },
-      { id:'room-camera', name:'Camera', x:5.55, y:4.25, w:2.7, d:2.2, h:2.7, material:'wood' }
+      { id:'room-soggiorno', name:'Soggiorno', x:.4, y:.35, w:5.41, d:3.9, h:2.8, material:'wood' },
+      { id:'room-cucina', name:'Cucina', x:.4, y:4.45, w:5.41, d:4.2, h:2.8, material:'tile' },
+      { id:'room-camera-grande-sx', name:'Camera grande', x:.4, y:8.85, w:5.41, d:4.14, h:2.8, material:'wood' },
+      { id:'room-disimpegno', name:'Disimpegno', x:6.05, y:3.05, w:1.3, d:6.58, h:2.8, material:'tile' },
+      { id:'room-dis', name:'Dis.', x:6.05, y:2.42, w:1.2, d:1.42, h:2.8, material:'tile' },
+      { id:'room-bagno-alto', name:'Bagno alto', x:7.25, y:.35, w:2.8, d:2.6, h:2.8, material:'tile' },
+      { id:'room-stanza', name:'Stanza', x:9.75, y:.35, w:2.51, d:3.9, h:2.8, material:'wood' },
+      { id:'room-camera-dx', name:'Camera', x:7.55, y:4.55, w:4.11, d:2.3, h:2.8, material:'wood' },
+      { id:'room-bagno-dx', name:'Bagno', x:7.55, y:7.1, w:4.11, d:1.8, h:2.8, material:'tile' },
+      { id:'room-camera-grande-dx', name:'Camera padronale', x:7.05, y:9.05, w:5.41, d:3.94, h:2.8, material:'wood' }
     ],
     walls:[
-      { id:'wall-nord', name:'Parete nord', x1:1, y1:1, x2:8.25, y2:1, h:2.7 },
-      { id:'wall-est', name:'Parete est', x1:8.25, y1:1, x2:8.25, y2:6.45, h:2.7 },
-      { id:'wall-sud', name:'Parete sud', x1:1, y1:6.45, x2:8.25, y2:6.45, h:2.7 },
-      { id:'wall-ovest', name:'Parete ovest', x1:1, y1:1, x2:1, y2:6.45, h:2.7 }
+      { id:'wall-nord', name:'Parete nord', x1:0, y1:0, x2:12.35, y2:0, h:2.8 },
+      { id:'wall-est', name:'Parete est', x1:12.35, y1:0, x2:12.35, y2:13.25, h:2.8 },
+      { id:'wall-sud', name:'Parete sud', x1:0, y1:13.25, x2:12.35, y2:13.25, h:2.8 },
+      { id:'wall-ovest', name:'Parete ovest', x1:0, y1:0, x2:0, y2:13.25, h:2.8 },
+      { id:'wall-sep-sogg-cucina', name:'Soggiorno/Cucina', x1:.4, y1:4.35, x2:3.95, y2:4.35, h:2.8 },
+      { id:'wall-sep-cucina-camera', name:'Cucina/Camera', x1:.4, y1:8.75, x2:5.85, y2:8.75, h:2.8 },
+      { id:'wall-corridoio-ovest', name:'Corridoio ovest', x1:5.95, y1:2.4, x2:5.95, y2:9.65, h:2.8 },
+      { id:'wall-corridoio-est', name:'Corridoio est', x1:7.35, y1:2.4, x2:7.35, y2:9.65, h:2.8 },
+      { id:'wall-bagni-camere', name:'Divisioni lato destro', x1:7.55, y1:4.35, x2:12.25, y2:4.35, h:2.8 },
+      { id:'wall-camera-bagno-dx', name:'Camera/Bagno dx', x1:7.55, y1:6.95, x2:12.25, y2:6.95, h:2.8 },
+      { id:'wall-bagno-camera-dx', name:'Bagno/Camera dx', x1:7.55, y1:8.95, x2:12.25, y2:8.95, h:2.8 },
+      { id:'wall-bagno-stanza-alta', name:'Bagno/Stanza alto', x1:10.1, y1:.35, x2:10.1, y2:2.95, h:2.8 }
     ],
     devices:[
-      { id:'dev-luce-sala', name:'Luce sala', kind:'light', room:'Sala', x:3.1, y:2.5, entity:'' },
-      { id:'dev-presa-tv', name:'Presa TV', kind:'plug', room:'Sala', x:5.1, y:2.2, entity:'' }
+      { id:'dev-luce-soggiorno', name:'Luce soggiorno', kind:'light', room:'Soggiorno', x:3.1, y:2.2, entity:'' },
+      { id:'dev-luce-cucina', name:'Luce cucina', kind:'light', room:'Cucina', x:3.1, y:6.4, entity:'' },
+      { id:'dev-luce-disimpegno', name:'Luce disimpegno', kind:'light', room:'Disimpegno', x:6.7, y:6.3, entity:'' },
+      { id:'dev-luce-camera-sx', name:'Luce camera grande', kind:'light', room:'Camera grande', x:3.1, y:10.9, entity:'' },
+      { id:'dev-luce-camera-dx', name:'Luce camera', kind:'light', room:'Camera', x:9.6, y:5.7, entity:'' },
+      { id:'dev-luce-padronale', name:'Luce camera padronale', kind:'light', room:'Camera padronale', x:9.8, y:11, entity:'' }
     ],
     furnishings:[
-      { id:'fur-divano', name:'Divano', kind:'sofa', room:'Sala', x:1.55, y:1.65, w:1.9, d:.8, rotation:0, notes:'divano moderno grigio scuro in tessuto' },
-      { id:'fur-tappeto', name:'Tappeto', kind:'rug', room:'Sala', x:2.7, y:2.05, w:1.7, d:1.1, rotation:0, notes:'tappeto neutro sotto tavolino' },
-      { id:'fur-mobile-tv', name:'Mobile TV', kind:'cabinet', room:'Sala', x:4.7, y:1.45, w:.95, d:.35, rotation:90, notes:'mobile basso in legno con televisore' },
-      { id:'fur-pianta-sala', name:'Pianta sala', kind:'plant', room:'Sala', x:4.8, y:3.45, w:.45, d:.45, rotation:0, notes:'pianta verde in vaso' },
-      { id:'fur-cucina', name:'Cucina lineare', kind:'kitchen', room:'Cucina', x:1.2, y:4.45, w:.55, d:1.8, rotation:0, notes:'cucina lineare con basi, lavello e piano cottura' },
-      { id:'fur-tavolo', name:'Tavolo cucina', kind:'table', room:'Cucina', x:2.25, y:5.05, w:.85, d:.85, rotation:0, notes:'tavolo rotondo con sedie' },
-      { id:'fur-letto', name:'Letto', kind:'bed', room:'Camera', x:6.15, y:4.7, w:1.45, d:1.45, rotation:0, notes:'letto matrimoniale con tessili chiari' },
-      { id:'fur-armadio', name:'Armadio', kind:'wardrobe', room:'Camera', x:7.7, y:4.55, w:.35, d:1.25, rotation:0, notes:'armadio alto in legno' }
+      { id:'fur-divano-soggiorno', name:'Divano soggiorno', kind:'sofa', room:'Soggiorno', x:1.05, y:1.1, w:2.1, d:.85, rotation:0, notes:'divano moderno chiaro o grigio, zona relax soggiorno' },
+      { id:'fur-mobile-tv-soggiorno', name:'Mobile TV soggiorno', kind:'cabinet', room:'Soggiorno', x:4.75, y:1.1, w:.55, d:1.6, rotation:90, notes:'mobile basso con televisore lungo la parete destra' },
+      { id:'fur-tappeto-soggiorno', name:'Tappeto soggiorno', kind:'rug', room:'Soggiorno', x:2.2, y:2.05, w:1.8, d:1.15, rotation:0, notes:'tappeto neutro con tavolino basso' },
+      { id:'fur-cucina-lineare', name:'Cucina lineare', kind:'kitchen', room:'Cucina', x:.75, y:4.9, w:.7, d:3.1, rotation:0, notes:'cucina lineare attrezzata lungo la parete sinistra' },
+      { id:'fur-tavolo-cucina', name:'Tavolo cucina', kind:'table', room:'Cucina', x:2.6, y:5.85, w:1.35, d:.9, rotation:0, notes:'tavolo pranzo con sedie' },
+      { id:'fur-letto-camera-sx', name:'Letto camera grande', kind:'bed', room:'Camera grande', x:1.55, y:9.9, w:1.8, d:1.9, rotation:0, notes:'letto matrimoniale con comodini' },
+      { id:'fur-armadio-camera-sx', name:'Armadio camera grande', kind:'wardrobe', room:'Camera grande', x:4.95, y:9.25, w:.55, d:2.7, rotation:0, notes:'armadio alto lungo parete destra' },
+      { id:'fur-letto-stanza', name:'Letto stanza', kind:'bed', room:'Stanza', x:10.25, y:1.15, w:1.25, d:1.8, rotation:0, notes:'letto singolo o una piazza e mezza' },
+      { id:'fur-letto-camera-dx', name:'Letto camera', kind:'bed', room:'Camera', x:8.15, y:4.9, w:1.45, d:1.45, rotation:0, notes:'letto compatto con tessili chiari' },
+      { id:'fur-letto-padronale', name:'Letto camera padronale', kind:'bed', room:'Camera padronale', x:8.15, y:10.15, w:1.9, d:1.9, rotation:0, notes:'letto matrimoniale grande con tappeto' },
+      { id:'fur-armadio-padronale', name:'Armadio camera padronale', kind:'wardrobe', room:'Camera padronale', x:11.55, y:9.4, w:.55, d:2.8, rotation:0, notes:'armadio alto lungo parete destra' },
+      { id:'fur-sanitari-bagno-alto', name:'Arredo bagno alto', kind:'appliance', room:'Bagno alto', x:7.55, y:.75, w:.65, d:1.6, rotation:0, notes:'sanitari, lavabo e doccia in bagno' },
+      { id:'fur-sanitari-bagno-dx', name:'Arredo bagno', kind:'appliance', room:'Bagno', x:7.95, y:7.45, w:.65, d:1.05, rotation:0, notes:'sanitari e lavabo in bagno stretto' }
     ],
     assets:[]
   };
@@ -2068,6 +2094,30 @@ function smartPerimeterFromWalls(walls){
 
 function smartPerimeter(data){
   return data.perimeter || smartPerimeterFromWalls(data.walls) || defaultSmartBackend().perimeter;
+}
+
+function smartPlanRotation(data){
+  const rotation = Number(data?.planRotation || 0);
+  return ((Math.round(rotation / 90) * 90) % 360 + 360) % 360;
+}
+
+function smartPlanSvgCenter(data){
+  const p = smartPerimeter(data);
+  return {
+    x:planToSvg(p.x + p.w / 2),
+    y:planToSvg(p.y + p.d / 2)
+  };
+}
+
+function rotateSmartSvgPoint(point, deg, center){
+  const rad = deg * Math.PI / 180;
+  const cos = Math.cos(rad), sin = Math.sin(rad);
+  const dx = point.x - center.x;
+  const dy = point.y - center.y;
+  return {
+    x:center.x + dx * cos - dy * sin,
+    y:center.y + dx * sin + dy * cos
+  };
 }
 
 function clampSmartRect(item, data, wKey='w', dKey='d'){
@@ -2109,6 +2159,7 @@ function normalizeSmartBackend(data){
   data.devices = Array.isArray(data.devices) ? data.devices : defaults.devices;
   data.assets = Array.isArray(data.assets) ? data.assets : [];
   data.perimeter = data.perimeter || smartPerimeterFromWalls(data.walls) || defaults.perimeter;
+  data.planRotation = smartPlanRotation(data);
   data.furnishings = Array.isArray(data.furnishings) ? data.furnishings : defaults.furnishings;
 
   data.rooms.forEach(room => clampSmartRect(room, data));
@@ -2153,6 +2204,7 @@ function saveSmartBackend(show=true){
 function smartRenderPrompt(data){
   const p = smartPerimeter(data);
   const perimeter = `${p.name || 'Perimetro casa'}: x ${smartFmt(p.x)}, y ${smartFmt(p.y)}, larghezza ${smartFmt(p.w)}m, profondita ${smartFmt(p.d)}m, altezza ${smartFmt(p.h || 2.7)}m`;
+  const rotation = smartPlanRotation(data);
   const rooms = (data.rooms || []).map(room =>
     `${room.name || 'Stanza'}: x ${smartFmt(room.x || 0)}, y ${smartFmt(room.y || 0)}, larghezza ${smartFmt(room.w || 0)}m, profondita ${smartFmt(room.d || 0)}m, altezza ${smartFmt(room.h || 2.7)}m, materiale ${room.material || 'wood'}`
   ).join('\n');
@@ -2174,6 +2226,9 @@ ${rooms || 'nessuna stanza'}
 
 Perimetro generale:
 ${perimeter}
+
+Orientamento visuale:
+planimetria ruotata di ${rotation} gradi verso destra rispetto ai dati originali.
 
 Pareti:
 ${walls || 'nessuna parete'}
@@ -2301,6 +2356,14 @@ function setSmartTool(tool){
   renderSmartBackend();
 }
 
+function rotateSmartPlanRight(){
+  const data = loadSmartBackend();
+  data.planRotation = (smartPlanRotation(data) + 90) % 360;
+  saveSmartBackend(false);
+  renderSmartBackend();
+  showToast(`Planimetria ruotata ${data.planRotation}°`);
+}
+
 function smartId(prefix){
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,6)}`;
 }
@@ -2336,7 +2399,10 @@ function smartPlanPoint(e){
   pt.x = e.clientX;
   pt.y = e.clientY;
   const p = pt.matrixTransform(svg.getScreenCTM().inverse());
-  return { x:svgToPlan(p.x), y:svgToPlan(p.y) };
+  const data = loadSmartBackend();
+  const center = smartPlanSvgCenter(data);
+  const unrotated = rotateSmartSvgPoint(p, -smartPlanRotation(data), center);
+  return { x:svgToPlan(unrotated.x), y:svgToPlan(unrotated.y) };
 }
 
 function selectSmartItem(type, id){
@@ -2453,7 +2519,7 @@ function addSmartFurniture(kind='sofa'){
 function resetSmartBackend(){
   if(!confirm('Ripristinare la planimetria smart di esempio?')) return;
   smartBackend = defaultSmartBackend();
-  smartSelected = { type:'room', id:'room-sala' };
+  smartSelected = { type:'room', id:'room-soggiorno' };
   saveSmartBackend(false);
   renderSmartBackend();
   showToast('Backend smart ripristinato');
@@ -2555,11 +2621,16 @@ function renderSmartPlan(data){
   const svg = document.getElementById('smart-plan-svg');
   if(!svg) return;
   data = normalizeSmartBackend(data);
-  const grid = [];
-  for(let x=0; x<=900; x+=35) grid.push(`<line x1="${x}" y1="0" x2="${x}" y2="520" stroke="rgba(0,0,0,.08)" stroke-width="1"/>`);
-  for(let y=0; y<=520; y+=35) grid.push(`<line x1="0" y1="${y}" x2="900" y2="${y}" stroke="rgba(0,0,0,.08)" stroke-width="1"/>`);
-
   const p = smartPerimeter(data);
+  const planW = PLAN_OFFSET * 2 + (p.x + p.w) * PLAN_SCALE;
+  const planH = PLAN_OFFSET * 2 + (p.y + p.d) * PLAN_SCALE;
+  const view = Math.max(620, Math.ceil(Math.max(planW, planH)));
+  svg.setAttribute('viewBox', `0 0 ${view} ${view}`);
+
+  const grid = [];
+  for(let x=0; x<=view; x+=35) grid.push(`<line x1="${x}" y1="0" x2="${x}" y2="${view}" stroke="rgba(0,0,0,.08)" stroke-width="1"/>`);
+  for(let y=0; y<=view; y+=35) grid.push(`<line x1="0" y1="${y}" x2="${view}" y2="${y}" stroke="rgba(0,0,0,.08)" stroke-width="1"/>`);
+
   const perimeter = `<rect class="plan-perimeter" x="${planToSvg(p.x)}" y="${planToSvg(p.y)}" width="${p.w * PLAN_SCALE}" height="${p.d * PLAN_SCALE}" rx="2"/>`;
 
   const rooms = data.rooms.map(room => {
@@ -2606,7 +2677,9 @@ function renderSmartPlan(data){
     ? `<circle cx="${planToSvg(smartWallDraft.x)}" cy="${planToSvg(smartWallDraft.y)}" r="8" fill="#ff3b30"/>`
     : '';
 
-  svg.innerHTML = `${grid.join('')}${perimeter}${rooms}${furnishings}${walls}${devices}${draft}`;
+  const center = smartPlanSvgCenter(data);
+  const rotation = smartPlanRotation(data);
+  svg.innerHTML = `${grid.join('')}<g transform="rotate(${rotation} ${center.x} ${center.y})">${perimeter}${rooms}${furnishings}${walls}${devices}${draft}</g>`;
 }
 
 function smartInput(label, field, value, type='text'){
@@ -4569,6 +4642,7 @@ setupSmartActions();
   <div class="panel-actions">
     <button class="panel-action" onclick="saveAndCloseSmartBackend()">Salva e chiudi</button>
     <button class="panel-action" onclick="addSmartRoom()">Stanza</button>
+    <button class="panel-action" onclick="rotateSmartPlanRight()">Ruota 90°</button>
     <button class="panel-action" onclick="resetSmartBackend()">Reset</button>
   </div>
   <div class="backend-toolbar" id="backend-toolbar">
@@ -4581,7 +4655,7 @@ setupSmartActions();
   <div class="panel-body">
     <div class="backend-layout">
       <div class="plan-wrap">
-        <svg class="plan-svg" id="smart-plan-svg" viewBox="0 0 900 520" role="img" aria-label="Editor planimetria smart home" onclick="handleSmartPlanClick(event)"></svg>
+        <svg class="plan-svg" id="smart-plan-svg" viewBox="0 0 640 640" role="img" aria-label="Editor planimetria smart home" onclick="handleSmartPlanClick(event)"></svg>
       </div>
       <div class="backend-side">
         <div class="backend-block">

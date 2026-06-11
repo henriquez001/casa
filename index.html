@@ -2093,6 +2093,7 @@ const CAT_COLORS = {
 
 const SMART_BACKEND_KEY = 'casa_smart_backend_v1';
 const SMART_ASSET_DB = 'casa_smart_assets';
+const SMART_CLOUD_STAMP_KEY = 'casa_smart_cloud_updated_at';
 const SMART_RENDER_PROMPT_VERSION = 'geometry-v3';
 const PLAN_SCALE = 42;
 const PLAN_OFFSET = 42;
@@ -2101,6 +2102,9 @@ let smartTool = 'select';
 let smartSelected = { type:'room', id:'room-soggiorno' };
 let smartWallDraft = null;
 let smartCloudSyncTimer = null;
+let smartCloudPulling = false;
+let smartCloudWriting = false;
+let smartLocalDirtyUntil = 0;
 let smartModel3D = null;
 
 function defaultSmartBackend(){
@@ -2363,6 +2367,7 @@ function loadSmartBackend(){
 function saveSmartBackend(show=true){
   smartBackend = normalizeSmartBackend(loadSmartBackend());
   smartBackend.updatedAt = new Date().toISOString();
+  smartLocalDirtyUntil = Date.now() + 2500;
   localStorage.setItem(SMART_BACKEND_KEY, JSON.stringify(smartBackend));
   window.dispatchEvent(new CustomEvent('casa-smart-backend-updated', { detail:smartBackend }));
   if(sbKey) queueSmartBackendCloudSync(smartBackend, show);
@@ -2619,11 +2624,17 @@ function openSmartBackend(){
   document.body.classList.add('setup-backend-open');
   openPanel('panel-smart-backend');
   renderSmartBackend();
+  syncSmartBackendFromCloud({ force:true, silent:false });
 }
 
 function closeSmartBackend(){
   closePanel('panel-smart-backend');
   document.body.classList.remove('setup-backend-open');
+}
+
+async function refreshSmartBackendFromCloud(){
+  const changed = await syncSmartBackendFromCloud({ force:true, silent:true });
+  showToast(changed ? 'Backend smart sincronizzato' : 'Backend smart gia allineato');
 }
 
 function setSmartTool(tool){
@@ -3488,7 +3499,8 @@ function boot(){
   setInterval(controlloProattivo, 2 * 60 * 60 * 1000);
   // Carica archivio da Supabase (sovrascrive localStorage se cloud più aggiornato)
   setTimeout(syncFromCloud, 1500);
-  setTimeout(syncSmartBackendFromCloud, 1800);
+  setTimeout(() => syncSmartBackendFromCloud({ force:true, silent:true }), 1800);
+  setInterval(() => syncSmartBackendFromCloud({ silent:true }), 30000);
   // Mantieni lo schermo acceso
   requestWakeLock();
 }
@@ -4814,8 +4826,12 @@ async function syncToCloud(lista){
 // Claude riformula SOLO le note esistenti —
 // non aggiunge nulla che non sia già scritto.
 // ══════════════════════════════════════════════
-async function syncSmartBackendFromCloud(){
-  if(!sbKey) return;
+async function syncSmartBackendFromCloud(options={}){
+  if(!sbKey || smartCloudPulling) return false;
+  const force = !!options.force;
+  const silent = !!options.silent;
+  if(!force && (Date.now() < smartLocalDirtyUntil || smartCloudWriting)) return false;
+  smartCloudPulling = true;
   try{
     const res = await fetch(`${SB_SMART_URL}?id=eq.casa&select=id,payload,updated_at`, {
       headers: {
@@ -4833,22 +4849,35 @@ async function syncSmartBackendFromCloud(){
     if(!row || !row.payload) return;
 
     const local = loadSmartBackend();
-    const cloudTime = Date.parse(row.updated_at || row.payload.updatedAt || 0);
-    const localTime = Date.parse(local.updatedAt || 0);
-    if(cloudTime <= localTime) return;
+    const cloudStamp = row.updated_at || row.payload.updatedAt || '';
+    const knownCloudStamp = localStorage.getItem(SMART_CLOUD_STAMP_KEY) || '';
+    const cloudChanged = !!cloudStamp && cloudStamp !== knownCloudStamp;
+    if(!force && cloudStamp && !cloudChanged) return false;
 
-    smartBackend = row.payload;
+    const cloudTime = Date.parse(cloudStamp || 0);
+    const localTime = Date.parse(local.updatedAt || 0);
+    if(force && !cloudChanged && cloudTime <= localTime) return false;
+    if(!force && cloudTime <= localTime) return false;
+    if(force && Date.now() < smartLocalDirtyUntil) return false;
+
+    smartBackend = normalizeSmartBackend(row.payload);
     localStorage.setItem(SMART_BACKEND_KEY, JSON.stringify(smartBackend));
+    if(cloudStamp) localStorage.setItem(SMART_CLOUD_STAMP_KEY, cloudStamp);
     window.dispatchEvent(new CustomEvent('casa-smart-backend-updated', { detail:smartBackend }));
     renderSmartBackend();
-    showToast('Backend smart sincronizzato');
+    if(!silent) showToast('Backend smart sincronizzato');
+    return true;
   }catch(e){
     console.warn('Sync smart dal cloud fallita:', e);
+    return false;
+  }finally{
+    smartCloudPulling = false;
   }
 }
 
 async function syncSmartBackendToCloud(payload){
   if(!sbKey || !payload) return;
+  smartCloudWriting = true;
   try{
     const body = {
       id:'casa',
@@ -4868,9 +4897,13 @@ async function syncSmartBackendToCloud(payload){
     if(!res.ok){
       const err = await res.text();
       console.warn('Supabase smart write error:', res.status, err);
+    }else if(body.updated_at){
+      localStorage.setItem(SMART_CLOUD_STAMP_KEY, body.updated_at);
     }
   }catch(e){
     console.warn('Sync smart al cloud fallita:', e);
+  }finally{
+    smartCloudWriting = false;
   }
 }
 
@@ -5298,6 +5331,7 @@ setupSmartActions();
     <button class="panel-action" onclick="saveAndCloseSmartBackend()">Salva e chiudi</button>
     <button class="panel-action" onclick="addSmartRoom()">Zona</button>
     <button class="panel-action" onclick="rotateSmartPlanRight()">Ruota 90°</button>
+    <button class="panel-action" onclick="refreshSmartBackendFromCloud()">Sincronizza</button>
     <button class="panel-action" onclick="resetSmartBackend()">Reset</button>
   </div>
   <div class="backend-toolbar" id="backend-toolbar">

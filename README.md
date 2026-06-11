@@ -125,7 +125,7 @@ Il pulsante "Controlla attività ora" in Impostazioni forza il controllo immedia
 
 Le chiavi API (Claude, ElevenLabs, Supabase) sono salvate **solo in localStorage** sul dispositivo e non sono incluse nel repository. Vengono inviate solo ai rispettivi servizi quando l'app effettua una richiesta. Su un nuovo dispositivo vanno inserite una volta sola tramite il form di setup.
 
-Su Supabase è sincronizzato **solo l'archivio**. Evitare di pubblicare la anon key nel codice o nel README. La policy `anon ALL true` è comoda per uso personale ma permette a chiunque abbia URL progetto + anon key di leggere e modificare la tabella.
+Su Supabase sono sincronizzati **archivio** e **backend smart home**. Evitare di pubblicare la anon key nel codice o nel README. La policy `anon ALL true` è comoda per uso personale ma permette a chiunque abbia URL progetto + anon key di leggere e modificare le tabelle.
 
 ```
 localStorage keys:

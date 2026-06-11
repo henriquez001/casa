@@ -127,12 +127,17 @@ Deno.serve(async req => {
       },
       body: JSON.stringify({ id:renderBucket, name:renderBucket, public:true }),
     });
-    if(!bucketRes.ok && bucketRes.status !== 409){
+    if(!bucketRes.ok){
       const err = await bucketRes.text();
+      const duplicateBucket = bucketRes.status === 409 || /duplicate|already exists|resource already exists/i.test(err);
+      if(duplicateBucket){
+        console.info(`Storage bucket ${renderBucket} already exists`);
+      }else{
       return new Response(JSON.stringify({ error:`Storage bucket failed: ${err}` }), {
         status: bucketRes.status,
         headers: { ...corsHeaders, 'Content-Type':'application/json' },
       });
+      }
     }
 
     const bytes = Uint8Array.from(atob(imageBase64), ch => ch.charCodeAt(0));

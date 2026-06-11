@@ -2006,6 +2006,7 @@ const CAT_COLORS = {
 
 const SMART_BACKEND_KEY = 'casa_smart_backend_v1';
 const SMART_ASSET_DB = 'casa_smart_assets';
+const SMART_RENDER_PROMPT_VERSION = 'geometry-v2';
 const PLAN_SCALE = 42;
 const PLAN_OFFSET = 42;
 let smartBackend = null;
@@ -2321,6 +2322,7 @@ function smartRenderSignature(data){
   });
   const byId = (a,b) => String(a.id || a.name || '').localeCompare(String(b.id || b.name || ''));
   return JSON.stringify({
+    renderPromptVersion:SMART_RENDER_PROMPT_VERSION,
     sourcePlan:source.sourcePlan || '',
     planRotation:smartPlanRotation(source),
     perimeter:cleanRoom(source.perimeter || smartPerimeter(source)),

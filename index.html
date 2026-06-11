@@ -1372,6 +1372,12 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
   padding-bottom: 24px;
 }
 
+.backend-stage {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
 .plan-wrap {
   min-height: 360px;
   border: 1px solid rgba(0,0,0,.22);
@@ -1384,6 +1390,70 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
   width: 100%;
   min-height: 360px;
   touch-action: manipulation;
+}
+
+.model-wrap {
+  position: relative;
+  min-height: 320px;
+  aspect-ratio: 16 / 10;
+  border: 1px solid rgba(0,0,0,.22);
+  background: #15181d;
+  overflow: hidden;
+}
+
+.model-head {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  right: 12px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.model-title {
+  font-family: var(--mono);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.78);
+}
+
+.model-reset {
+  pointer-events: auto;
+  border: 0;
+  background: rgba(255,255,255,.9);
+  color: #111;
+  font-family: var(--mono);
+  font-size: .82rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 7px 9px;
+  cursor: pointer;
+}
+
+.model-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.model-fallback {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  font-family: var(--sep);
+  font-size: 1.1rem;
+  line-height: 1.35;
+  color: rgba(255,255,255,.68);
+  text-align: center;
 }
 
 .plan-room {
@@ -1538,7 +1608,8 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
 @media (max-width: 760px) {
   .backend-layout { grid-template-columns: 1fr; }
   .plan-wrap,
-  .plan-svg { min-height: 320px; }
+  .plan-svg,
+  .model-wrap { min-height: 320px; }
 }
 
 @media (orientation: landscape) and (max-height: 450px) {
@@ -1568,6 +1639,7 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
 .weather-bar { display: none; }
 
 </style>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 </head>
 <body>
 
@@ -2014,6 +2086,7 @@ let smartTool = 'select';
 let smartSelected = { type:'room', id:'room-soggiorno' };
 let smartWallDraft = null;
 let smartCloudSyncTimer = null;
+let smartModel3D = null;
 
 function defaultSmartBackend(){
   return {
@@ -2710,9 +2783,261 @@ function handleSmartFurnitureFiles(files){
   if(files.length) showToast('Arredi 3D aggiunti alla libreria');
 }
 
+function smartModelMaterialColor(kind, material){
+  if(kind === 'wall') return 0xf4f1e8;
+  if(kind === 'device') return 0x8ec5ff;
+  if(kind === 'sofa') return 0x6e7781;
+  if(kind === 'bed') return 0xd8d0c4;
+  if(kind === 'wardrobe' || kind === 'cabinet') return 0x8a6747;
+  if(kind === 'kitchen' || kind === 'appliance') return 0xc7cbd0;
+  if(kind === 'table' || kind === 'chair') return 0x9b6f46;
+  if(kind === 'plant') return 0x4b8a52;
+  if(kind === 'lamp') return 0xffd76a;
+  if(kind === 'rug') return 0x3d6b74;
+  return material === 'tile' ? 0xbeb7aa : 0x8a5f39;
+}
+
+function smartModelResetView(){
+  if(!smartModel3D) return;
+  smartModel3D.yaw = Math.PI * .23;
+  smartModel3D.pitch = .86;
+  smartModel3D.distance = smartModel3D.baseDistance || 18;
+  renderSmartModel3D(loadSmartBackend(), true);
+}
+
+function ensureSmartModel3D(){
+  const host = document.getElementById('smart-model-3d');
+  if(!host) return null;
+  if(!window.THREE){
+    host.innerHTML = '<div class="model-fallback">Preview 3D non disponibile.</div>';
+    return null;
+  }
+  if(smartModel3D && smartModel3D.host === host) return smartModel3D;
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x15181d);
+
+  const camera = new THREE.PerspectiveCamera(45, 1, .1, 200);
+  const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:false });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.domElement.className = 'model-canvas';
+
+  const root = new THREE.Group();
+  scene.add(root);
+
+  const ambient = new THREE.HemisphereLight(0xffffff, 0x2a2f36, 1.8);
+  scene.add(ambient);
+  const sun = new THREE.DirectionalLight(0xffffff, 2.4);
+  sun.position.set(8, 16, 10);
+  scene.add(sun);
+
+  host.querySelector('.model-canvas')?.remove();
+  host.appendChild(renderer.domElement);
+
+  smartModel3D = {
+    host,
+    scene,
+    camera,
+    renderer,
+    root,
+    yaw:Math.PI * .23,
+    pitch:.86,
+    distance:18,
+    baseDistance:18,
+    dragging:false,
+    lastX:0,
+    lastY:0
+  };
+
+  const canvas = renderer.domElement;
+  canvas.addEventListener('pointerdown', e => {
+    smartModel3D.dragging = true;
+    smartModel3D.lastX = e.clientX;
+    smartModel3D.lastY = e.clientY;
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener('pointermove', e => {
+    if(!smartModel3D.dragging) return;
+    const dx = e.clientX - smartModel3D.lastX;
+    const dy = e.clientY - smartModel3D.lastY;
+    smartModel3D.lastX = e.clientX;
+    smartModel3D.lastY = e.clientY;
+    smartModel3D.yaw -= dx * .008;
+    smartModel3D.pitch = smartClamp(smartModel3D.pitch + dy * .005, .35, 1.35);
+    updateSmartModelCamera();
+  });
+  canvas.addEventListener('pointerup', e => {
+    smartModel3D.dragging = false;
+    if(canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
+  });
+  canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    smartModel3D.distance = smartClamp(smartModel3D.distance + e.deltaY * .018, 5, 40);
+    updateSmartModelCamera();
+  }, { passive:false });
+
+  return smartModel3D;
+}
+
+function clearSmartModelRoot(root){
+  while(root.children.length){
+    const item = root.children.pop();
+    item.traverse?.(child => {
+      child.geometry?.dispose?.();
+      if(Array.isArray(child.material)) child.material.forEach(mat => mat.dispose?.());
+      else child.material?.dispose?.();
+    });
+  }
+}
+
+function smartModelAddBox(root, opts){
+  const geom = new THREE.BoxGeometry(opts.w, opts.h, opts.d);
+  const mat = new THREE.MeshStandardMaterial({
+    color: opts.color,
+    roughness: opts.roughness ?? .72,
+    metalness: opts.metalness ?? .04
+  });
+  const mesh = new THREE.Mesh(geom, mat);
+  mesh.position.set(opts.x, opts.y, opts.z);
+  mesh.rotation.y = opts.rotation || 0;
+  mesh.castShadow = false;
+  mesh.receiveShadow = true;
+  root.add(mesh);
+  return mesh;
+}
+
+function smartFurnitureHeight(kind){
+  return {
+    sofa:.72,
+    armchair:.72,
+    table:.75,
+    chair:.8,
+    bed:.55,
+    wardrobe:2.2,
+    cabinet:.85,
+    kitchen:.95,
+    lamp:1.45,
+    plant:1.2,
+    rug:.04,
+    appliance:1
+  }[kind] || .7;
+}
+
+function updateSmartModelCamera(){
+  const model = smartModel3D;
+  if(!model) return;
+  const t = model.target || new THREE.Vector3(0, .6, 0);
+  const horizontal = Math.cos(model.pitch) * model.distance;
+  model.camera.position.set(
+    t.x + Math.sin(model.yaw) * horizontal,
+    t.y + Math.sin(model.pitch) * model.distance,
+    t.z + Math.cos(model.yaw) * horizontal
+  );
+  model.camera.lookAt(t);
+  model.renderer.render(model.scene, model.camera);
+}
+
+function resizeSmartModel3D(){
+  if(!smartModel3D) return;
+  const rect = smartModel3D.host.getBoundingClientRect();
+  const w = Math.max(1, Math.floor(rect.width));
+  const h = Math.max(1, Math.floor(rect.height));
+  smartModel3D.camera.aspect = w / h;
+  smartModel3D.camera.updateProjectionMatrix();
+  smartModel3D.renderer.setSize(w, h, false);
+  updateSmartModelCamera();
+}
+
+function renderSmartModel3D(data, keepView=false){
+  const model = ensureSmartModel3D();
+  if(!model) return;
+  const rect = model.host.getBoundingClientRect();
+  if(rect.width < 2 || rect.height < 2) return;
+
+  data = normalizeSmartBackend(data);
+  const p = smartPerimeter(data);
+  const centerX = p.x + p.w / 2;
+  const centerZ = p.y + p.d / 2;
+  clearSmartModelRoot(model.root);
+
+  smartModelAddBox(model.root, {
+    x:0,
+    y:-.035,
+    z:0,
+    w:p.w + .8,
+    h:.07,
+    d:p.d + .8,
+    color:0x20262d
+  });
+
+  (data.rooms || []).forEach((room, index) => {
+    const selected = smartSelected?.type === 'room' && smartSelected.id === room.id;
+    smartModelAddBox(model.root, {
+      x:room.x + room.w / 2 - centerX,
+      y:.015 + index * .002,
+      z:room.y + room.d / 2 - centerZ,
+      w:Math.max(.05, room.w - .04),
+      h:.06,
+      d:Math.max(.05, room.d - .04),
+      color:selected ? 0xffd60a : smartModelMaterialColor('', room.material)
+    });
+  });
+
+  (data.walls || []).forEach(wall => {
+    const dx = (Number(wall.x2) || 0) - (Number(wall.x1) || 0);
+    const dz = (Number(wall.y2) || 0) - (Number(wall.y1) || 0);
+    const len = Math.max(.05, Math.hypot(dx, dz));
+    const h = Number(wall.h) || 2.8;
+    const selected = smartSelected?.type === 'wall' && smartSelected.id === wall.id;
+    smartModelAddBox(model.root, {
+      x:((Number(wall.x1) || 0) + (Number(wall.x2) || 0)) / 2 - centerX,
+      y:h / 2,
+      z:((Number(wall.y1) || 0) + (Number(wall.y2) || 0)) / 2 - centerZ,
+      w:len,
+      h,
+      d:.18,
+      rotation:-Math.atan2(dz, dx),
+      color:selected ? 0xff3b30 : smartModelMaterialColor('wall')
+    });
+  });
+
+  (data.furnishings || []).forEach(item => {
+    const h = smartFurnitureHeight(item.kind);
+    const selected = smartSelected?.type === 'furniture' && smartSelected.id === item.id;
+    smartModelAddBox(model.root, {
+      x:item.x + item.w / 2 - centerX,
+      y:h / 2 + .06,
+      z:item.y + item.d / 2 - centerZ,
+      w:Math.max(.08, item.w),
+      h,
+      d:Math.max(.08, item.d),
+      rotation:-(Number(item.rotation) || 0) * Math.PI / 180,
+      color:selected ? 0xffd60a : smartModelMaterialColor(item.kind)
+    });
+  });
+
+  (data.devices || []).forEach(dev => {
+    const geom = new THREE.SphereGeometry(.14, 18, 12);
+    const mat = new THREE.MeshStandardMaterial({
+      color:smartSelected?.type === 'device' && smartSelected.id === dev.id ? 0xffd60a : smartModelMaterialColor('device'),
+      roughness:.35
+    });
+    const mesh = new THREE.Mesh(geom, mat);
+    mesh.position.set((Number(dev.x) || 0) - centerX, 1.35, (Number(dev.y) || 0) - centerZ);
+    model.root.add(mesh);
+  });
+
+  model.target = new THREE.Vector3(0, .55, 0);
+  model.baseDistance = Math.max(p.w, p.d) * 1.35;
+  if(!keepView) model.distance = model.baseDistance;
+  resizeSmartModel3D();
+}
+
 function renderSmartBackend(){
   const data = loadSmartBackend();
   renderSmartPlan(data);
+  renderSmartModel3D(data);
   renderSmartInspector();
   renderSmartAssets(data);
   updateSmartRenderStatus();
@@ -3132,7 +3457,9 @@ document.addEventListener('keydown', e => {
 });
 
 window.addEventListener('resize', syncMenuGeometry);
+window.addEventListener('resize', resizeSmartModel3D);
 window.addEventListener('orientationchange', () => setTimeout(syncMenuGeometry, 120));
+window.addEventListener('orientationchange', () => setTimeout(resizeSmartModel3D, 160));
 syncMenuGeometry();
 
 
@@ -4755,8 +5082,16 @@ setupSmartActions();
   </div>
   <div class="panel-body">
     <div class="backend-layout">
-      <div class="plan-wrap">
-        <svg class="plan-svg" id="smart-plan-svg" viewBox="0 0 640 640" role="img" aria-label="Editor planimetria smart home" onclick="handleSmartPlanClick(event)"></svg>
+      <div class="backend-stage">
+        <div class="plan-wrap">
+          <svg class="plan-svg" id="smart-plan-svg" viewBox="0 0 640 640" role="img" aria-label="Editor planimetria smart home" onclick="handleSmartPlanClick(event)"></svg>
+        </div>
+        <div class="model-wrap" id="smart-model-3d">
+          <div class="model-head">
+            <div class="model-title">Volume 3D</div>
+            <button class="model-reset" type="button" onclick="smartModelResetView()">Reset vista</button>
+          </div>
+        </div>
       </div>
       <div class="backend-side">
         <div class="backend-block">

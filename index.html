@@ -1395,6 +1395,14 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
 
 .plan-room.selected { fill: rgba(255,214,10,.72); }
 
+.plan-perimeter {
+  fill: rgba(255,255,255,.18);
+  stroke: rgba(0,0,0,.78);
+  stroke-width: 3;
+  stroke-dasharray: 10 7;
+  pointer-events: none;
+}
+
 .plan-wall {
   stroke: #000;
   stroke-width: 7;
@@ -1412,6 +1420,18 @@ body.panel-open #home { transform: translateY(calc((var(--panel-h) + var(--panel
 }
 
 .plan-device.selected { fill: var(--yel); }
+
+.plan-furniture {
+  fill: rgba(0,0,0,.16);
+  stroke: rgba(0,0,0,.58);
+  stroke-width: 2;
+  cursor: pointer;
+}
+
+.plan-furniture.selected {
+  fill: rgba(255,214,10,.6);
+  stroke: #000;
+}
 
 .plan-label {
   font-family: var(--mono);
@@ -1996,6 +2016,7 @@ let smartCloudSyncTimer = null;
 
 function defaultSmartBackend(){
   return {
+    perimeter:{ id:'perimetro-casa', name:'Perimetro casa', x:1, y:1, w:7.25, d:5.45, h:2.7 },
     rooms:[
       { id:'room-sala', name:'Sala', x:1, y:1, w:4.2, d:3, h:2.7, material:'wood' },
       { id:'room-cucina', name:'Cucina', x:1, y:4.25, w:2.4, d:2.2, h:2.7, material:'tile' },
@@ -2011,8 +2032,102 @@ function defaultSmartBackend(){
       { id:'dev-luce-sala', name:'Luce sala', kind:'light', room:'Sala', x:3.1, y:2.5, entity:'' },
       { id:'dev-presa-tv', name:'Presa TV', kind:'plug', room:'Sala', x:5.1, y:2.2, entity:'' }
     ],
+    furnishings:[
+      { id:'fur-divano', name:'Divano', kind:'sofa', room:'Sala', x:1.55, y:1.65, w:1.9, d:.8, rotation:0, notes:'divano moderno grigio scuro in tessuto' },
+      { id:'fur-tappeto', name:'Tappeto', kind:'rug', room:'Sala', x:2.7, y:2.05, w:1.7, d:1.1, rotation:0, notes:'tappeto neutro sotto tavolino' },
+      { id:'fur-mobile-tv', name:'Mobile TV', kind:'cabinet', room:'Sala', x:4.7, y:1.45, w:.95, d:.35, rotation:90, notes:'mobile basso in legno con televisore' },
+      { id:'fur-pianta-sala', name:'Pianta sala', kind:'plant', room:'Sala', x:4.8, y:3.45, w:.45, d:.45, rotation:0, notes:'pianta verde in vaso' },
+      { id:'fur-cucina', name:'Cucina lineare', kind:'kitchen', room:'Cucina', x:1.2, y:4.45, w:.55, d:1.8, rotation:0, notes:'cucina lineare con basi, lavello e piano cottura' },
+      { id:'fur-tavolo', name:'Tavolo cucina', kind:'table', room:'Cucina', x:2.25, y:5.05, w:.85, d:.85, rotation:0, notes:'tavolo rotondo con sedie' },
+      { id:'fur-letto', name:'Letto', kind:'bed', room:'Camera', x:6.15, y:4.7, w:1.45, d:1.45, rotation:0, notes:'letto matrimoniale con tessili chiari' },
+      { id:'fur-armadio', name:'Armadio', kind:'wardrobe', room:'Camera', x:7.7, y:4.55, w:.35, d:1.25, rotation:0, notes:'armadio alto in legno' }
+    ],
     assets:[]
   };
+}
+
+function smartClamp(n, min, max){
+  return Math.min(max, Math.max(min, Number(n) || 0));
+}
+
+function smartRound(n){
+  return Math.round((Number(n) || 0) * 10) / 10;
+}
+
+function smartPerimeterFromWalls(walls){
+  const xs = [], ys = [];
+  (walls || []).forEach(wall => {
+    xs.push(Number(wall.x1) || 0, Number(wall.x2) || 0);
+    ys.push(Number(wall.y1) || 0, Number(wall.y2) || 0);
+  });
+  if(!xs.length) return null;
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  return { id:'perimetro-casa', name:'Perimetro casa', x:minX, y:minY, w:Math.max(.5, maxX - minX), d:Math.max(.5, maxY - minY), h:2.7 };
+}
+
+function smartPerimeter(data){
+  return data.perimeter || smartPerimeterFromWalls(data.walls) || defaultSmartBackend().perimeter;
+}
+
+function clampSmartRect(item, data, wKey='w', dKey='d'){
+  const p = smartPerimeter(data);
+  const minSize = item.kind === 'plant' ? .3 : .4;
+  item[wKey] = smartRound(smartClamp(item[wKey] || minSize, minSize, Math.max(minSize, p.w)));
+  item[dKey] = smartRound(smartClamp(item[dKey] || minSize, minSize, Math.max(minSize, p.d)));
+  item.x = smartRound(smartClamp(item.x, p.x, p.x + p.w - item[wKey]));
+  item.y = smartRound(smartClamp(item.y, p.y, p.y + p.d - item[dKey]));
+  return item;
+}
+
+function clampSmartPoint(item, data){
+  const p = smartPerimeter(data);
+  item.x = smartRound(smartClamp(item.x, p.x, p.x + p.w));
+  item.y = smartRound(smartClamp(item.y, p.y, p.y + p.d));
+  return item;
+}
+
+function clampSmartWall(wall, data){
+  const p = smartPerimeter(data);
+  wall.x1 = smartRound(smartClamp(wall.x1, p.x, p.x + p.w));
+  wall.y1 = smartRound(smartClamp(wall.y1, p.y, p.y + p.d));
+  wall.x2 = smartRound(smartClamp(wall.x2, p.x, p.x + p.w));
+  wall.y2 = smartRound(smartClamp(wall.y2, p.y, p.y + p.d));
+  return wall;
+}
+
+function smartRoomAtPoint(data, x, y){
+  return (data.rooms || []).find(room =>
+    x >= room.x && x <= room.x + room.w && y >= room.y && y <= room.y + room.d
+  );
+}
+
+function normalizeSmartBackend(data){
+  const defaults = defaultSmartBackend();
+  data.rooms = Array.isArray(data.rooms) ? data.rooms : defaults.rooms;
+  data.walls = Array.isArray(data.walls) ? data.walls : defaults.walls;
+  data.devices = Array.isArray(data.devices) ? data.devices : defaults.devices;
+  data.assets = Array.isArray(data.assets) ? data.assets : [];
+  data.perimeter = data.perimeter || smartPerimeterFromWalls(data.walls) || defaults.perimeter;
+  data.furnishings = Array.isArray(data.furnishings) ? data.furnishings : defaults.furnishings;
+
+  data.rooms.forEach(room => clampSmartRect(room, data));
+  data.walls.forEach(wall => clampSmartWall(wall, data));
+  data.devices.forEach(device => {
+    clampSmartPoint(device, data);
+    if(!device.room){
+      const room = smartRoomAtPoint(data, device.x, device.y);
+      if(room) device.room = room.name;
+    }
+  });
+  data.furnishings.forEach(item => {
+    clampSmartRect(item, data);
+    if(!item.room){
+      const room = smartRoomAtPoint(data, item.x + item.w / 2, item.y + item.d / 2);
+      if(room) item.room = room.name;
+    }
+  });
+  return data;
 }
 
 function loadSmartBackend(){
@@ -2022,11 +2137,12 @@ function loadSmartBackend(){
   }catch(e){
     smartBackend = defaultSmartBackend();
   }
+  smartBackend = normalizeSmartBackend(smartBackend);
   return smartBackend;
 }
 
 function saveSmartBackend(show=true){
-  loadSmartBackend();
+  smartBackend = normalizeSmartBackend(loadSmartBackend());
   smartBackend.updatedAt = new Date().toISOString();
   localStorage.setItem(SMART_BACKEND_KEY, JSON.stringify(smartBackend));
   window.dispatchEvent(new CustomEvent('casa-smart-backend-updated', { detail:smartBackend }));
@@ -2035,6 +2151,8 @@ function saveSmartBackend(show=true){
 }
 
 function smartRenderPrompt(data){
+  const p = smartPerimeter(data);
+  const perimeter = `${p.name || 'Perimetro casa'}: x ${smartFmt(p.x)}, y ${smartFmt(p.y)}, larghezza ${smartFmt(p.w)}m, profondita ${smartFmt(p.d)}m, altezza ${smartFmt(p.h || 2.7)}m`;
   const rooms = (data.rooms || []).map(room =>
     `${room.name || 'Stanza'}: x ${smartFmt(room.x || 0)}, y ${smartFmt(room.y || 0)}, larghezza ${smartFmt(room.w || 0)}m, profondita ${smartFmt(room.d || 0)}m, altezza ${smartFmt(room.h || 2.7)}m, materiale ${room.material || 'wood'}`
   ).join('\n');
@@ -2044,6 +2162,9 @@ function smartRenderPrompt(data){
   const devices = (data.devices || []).map(device =>
     `${device.name || 'Device'} (${device.kind || 'device'}) in ${device.room || 'stanza non assegnata'} a x ${smartFmt(device.x || 0)}, y ${smartFmt(device.y || 0)}`
   ).join('\n');
+  const furnishings = (data.furnishings || []).map(item =>
+    `${item.name || 'Arredo'}: classe ${item.kind || 'furniture'}, stanza ${item.room || 'non assegnata'}, x ${smartFmt(item.x || 0)}, y ${smartFmt(item.y || 0)}, larghezza ${smartFmt(item.w || 0)}m, profondita ${smartFmt(item.d || 0)}m, rotazione ${smartFmt(item.rotation || 0)} gradi, dettagli: ${item.notes || 'nessun dettaglio'}`
+  ).join('\n');
   const assets = (data.assets || []).map(asset => `${asset.name} (${asset.type})`).join(', ') || 'nessun file 3D caricato';
 
   return `Crea un render fotorealistico architettonico in vista perfettamente dall'alto, camera ortografica verticale, di una casa smart moderna basata su questa planimetria.
@@ -2051,15 +2172,21 @@ function smartRenderPrompt(data){
 Stanze:
 ${rooms || 'nessuna stanza'}
 
+Perimetro generale:
+${perimeter}
+
 Pareti:
 ${walls || 'nessuna parete'}
 
 Dispositivi smart:
 ${devices || 'nessun dispositivo'}
 
+Placeholder arredi:
+${furnishings || 'nessun arredo placeholder'}
+
 Arredi caricati dall'utente: ${assets}.
 
-Inventare con gusto i dettagli mancanti: divani, tappeti, letto, cucina, tavolo, sedie, texture, illuminazione, piante e complementi, mantenendo proporzioni e posizione delle stanze. Deve sembrare un vero render 3D premium, non una planimetria disegnata. Niente testo, niente icone, niente marker, niente persone, niente watermark.`;
+Usa perimetro, stanze e placeholder come vincoli principali: non spostare ambienti o arredi fuori dal perimetro e mantieni relazioni spaziali coerenti. Inventare con gusto solo i dettagli mancanti: texture, colori, piccoli complementi, illuminazione e materiali. Deve sembrare un vero render 3D premium, non una planimetria disegnata. Niente testo, niente icone, niente marker, niente persone, niente watermark.`;
 }
 
 function updateSmartRenderStatus(){
@@ -2185,6 +2312,23 @@ function smartFmt(n){ return Number(n).toFixed(1).replace('.0',''); }
 function smartEsc(v){
   return String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
+function smartFurnitureLabel(kind){
+  return {
+    sofa:'Divano',
+    armchair:'Poltrona',
+    table:'Tavolo',
+    chair:'Sedia',
+    bed:'Letto',
+    wardrobe:'Armadio',
+    cabinet:'Mobile',
+    kitchen:'Cucina',
+    lamp:'Lampada',
+    plant:'Pianta',
+    rug:'Tappeto',
+    appliance:'Elettrodomestico',
+    decor:'Decorazione'
+  }[kind] || 'Arredo';
+}
 
 function smartPlanPoint(e){
   const svg = document.getElementById('smart-plan-svg');
@@ -2203,7 +2347,10 @@ function selectSmartItem(type, id){
 function selectedSmartItem(){
   const data = loadSmartBackend();
   if(!smartSelected) return null;
-  const list = smartSelected.type === 'room' ? data.rooms : smartSelected.type === 'wall' ? data.walls : data.devices;
+  const list = smartSelected.type === 'room' ? data.rooms
+    : smartSelected.type === 'wall' ? data.walls
+    : smartSelected.type === 'furniture' ? data.furnishings
+    : data.devices;
   return list.find(item => item.id === smartSelected.id) || null;
 }
 
@@ -2219,6 +2366,7 @@ function handleSmartPlanClick(e){
 
   if(smartTool === 'room'){
     const room = { id:smartId('room'), name:'Nuova stanza', x:p.x, y:p.y, w:3, d:2.4, h:2.7, material:'wood' };
+    clampSmartRect(room, data);
     data.rooms.push(room);
     smartSelected = { type:'room', id:room.id };
     setSmartTool('select');
@@ -2229,6 +2377,9 @@ function handleSmartPlanClick(e){
 
   if(smartTool === 'device'){
     const device = { id:smartId('dev'), name:'Nuovo device', kind:'light', room:'', x:p.x, y:p.y, entity:'' };
+    clampSmartPoint(device, data);
+    const room = smartRoomAtPoint(data, device.x, device.y);
+    if(room) device.room = room.name;
     data.devices.push(device);
     smartSelected = { type:'device', id:device.id };
     setSmartTool('select');
@@ -2237,13 +2388,27 @@ function handleSmartPlanClick(e){
     return;
   }
 
+  if(smartTool === 'furniture'){
+    const room = smartRoomAtPoint(data, p.x, p.y);
+    const item = { id:smartId('fur'), name:'Nuovo arredo', kind:'sofa', room:room?.name || '', x:p.x, y:p.y, w:1.2, d:.7, rotation:0, notes:'placeholder arredo per il render' };
+    clampSmartRect(item, data);
+    data.furnishings.push(item);
+    smartSelected = { type:'furniture', id:item.id };
+    setSmartTool('select');
+    saveSmartBackend(false);
+    renderSmartBackend();
+    return;
+  }
+
   if(smartTool === 'wall'){
     if(!smartWallDraft){
-      smartWallDraft = p;
+      smartWallDraft = clampSmartPoint({ ...p }, data);
       renderSmartBackend();
       return;
     }
-    const wall = { id:smartId('wall'), name:'Nuova parete', x1:smartWallDraft.x, y1:smartWallDraft.y, x2:p.x, y2:p.y, h:2.7 };
+    const end = clampSmartPoint({ ...p }, data);
+    const wall = { id:smartId('wall'), name:'Nuova parete', x1:smartWallDraft.x, y1:smartWallDraft.y, x2:end.x, y2:end.y, h:2.7 };
+    clampSmartWall(wall, data);
     data.walls.push(wall);
     smartWallDraft = null;
     smartSelected = { type:'wall', id:wall.id };
@@ -2256,8 +2421,31 @@ function handleSmartPlanClick(e){
 function addSmartRoom(){
   loadSmartBackend();
   const room = { id:smartId('room'), name:'Nuova stanza', x:2, y:2, w:3, d:2.4, h:2.7, material:'wood' };
+  clampSmartRect(room, smartBackend);
   smartBackend.rooms.push(room);
   smartSelected = { type:'room', id:room.id };
+  saveSmartBackend(false);
+  renderSmartBackend();
+}
+
+function addSmartFurniture(kind='sofa'){
+  const data = loadSmartBackend();
+  const p = smartPerimeter(data);
+  const item = {
+    id:smartId('fur'),
+    name:smartFurnitureLabel(kind),
+    kind,
+    room:data.rooms[0]?.name || '',
+    x:p.x + .5,
+    y:p.y + .5,
+    w:kind === 'plant' || kind === 'lamp' ? .45 : 1.2,
+    d:kind === 'plant' || kind === 'lamp' ? .45 : .75,
+    rotation:0,
+    notes:`placeholder ${smartFurnitureLabel(kind).toLowerCase()} per il render`
+  };
+  clampSmartRect(item, data);
+  data.furnishings.push(item);
+  smartSelected = { type:'furniture', id:item.id };
   saveSmartBackend(false);
   renderSmartBackend();
 }
@@ -2274,7 +2462,10 @@ function resetSmartBackend(){
 function deleteSmartSelected(){
   const data = loadSmartBackend();
   if(!smartSelected) return;
-  const key = smartSelected.type === 'room' ? 'rooms' : smartSelected.type === 'wall' ? 'walls' : 'devices';
+  const key = smartSelected.type === 'room' ? 'rooms'
+    : smartSelected.type === 'wall' ? 'walls'
+    : smartSelected.type === 'furniture' ? 'furnishings'
+    : 'devices';
   data[key] = data[key].filter(item => item.id !== smartSelected.id);
   smartSelected = data.rooms[0] ? { type:'room', id:data.rooms[0].id } : null;
   saveSmartBackend(false);
@@ -2282,16 +2473,23 @@ function deleteSmartSelected(){
 }
 
 function updateSmartSelected(field, value){
+  const data = loadSmartBackend();
   const item = selectedSmartItem();
   if(!item) return;
-  if(['x','y','w','d','h','x1','y1','x2','y2'].includes(field)){
+  if(['x','y','w','d','h','x1','y1','x2','y2','rotation'].includes(field)){
     item[field] = Number(value) || 0;
   }else{
     item[field] = value;
   }
+  if(smartSelected.type === 'room' || smartSelected.type === 'furniture') clampSmartRect(item, data);
+  if(smartSelected.type === 'device') clampSmartPoint(item, data);
+  if(smartSelected.type === 'wall') clampSmartWall(item, data);
+  if((smartSelected.type === 'device' || smartSelected.type === 'furniture') && !item.room){
+    const room = smartRoomAtPoint(data, item.x, item.y);
+    if(room) item.room = room.name;
+  }
   saveSmartBackend(false);
-  renderSmartPlan(loadSmartBackend());
-  renderSmartAssets(loadSmartBackend());
+  renderSmartBackend();
 }
 
 function removeSmartAsset(id){
@@ -2356,9 +2554,13 @@ function renderSmartBackend(){
 function renderSmartPlan(data){
   const svg = document.getElementById('smart-plan-svg');
   if(!svg) return;
+  data = normalizeSmartBackend(data);
   const grid = [];
   for(let x=0; x<=900; x+=35) grid.push(`<line x1="${x}" y1="0" x2="${x}" y2="520" stroke="rgba(0,0,0,.08)" stroke-width="1"/>`);
   for(let y=0; y<=520; y+=35) grid.push(`<line x1="0" y1="${y}" x2="900" y2="${y}" stroke="rgba(0,0,0,.08)" stroke-width="1"/>`);
+
+  const p = smartPerimeter(data);
+  const perimeter = `<rect class="plan-perimeter" x="${planToSvg(p.x)}" y="${planToSvg(p.y)}" width="${p.w * PLAN_SCALE}" height="${p.d * PLAN_SCALE}" rx="2"/>`;
 
   const rooms = data.rooms.map(room => {
     const selected = smartSelected?.type === 'room' && smartSelected.id === room.id;
@@ -2390,11 +2592,21 @@ function renderSmartPlan(data){
     </g>`;
   }).join('');
 
+  const furnishings = (data.furnishings || []).map(item => {
+    const selected = smartSelected?.type === 'furniture' && smartSelected.id === item.id;
+    const x = planToSvg(item.x), y = planToSvg(item.y), w = item.w * PLAN_SCALE, h = item.d * PLAN_SCALE;
+    const cx = x + w / 2, cy = y + h / 2;
+    return `<g data-smart-type="furniture" data-smart-id="${item.id}" transform="rotate(${Number(item.rotation) || 0} ${cx} ${cy})">
+      <rect class="plan-furniture${selected ? ' selected' : ''}" x="${x}" y="${y}" width="${w}" height="${h}" rx="4"/>
+      <text class="plan-label" x="${x + 7}" y="${y + 21}">${smartEsc(smartFurnitureLabel(item.kind))}</text>
+    </g>`;
+  }).join('');
+
   const draft = smartWallDraft
     ? `<circle cx="${planToSvg(smartWallDraft.x)}" cy="${planToSvg(smartWallDraft.y)}" r="8" fill="#ff3b30"/>`
     : '';
 
-  svg.innerHTML = `${grid.join('')}${rooms}${walls}${devices}${draft}`;
+  svg.innerHTML = `${grid.join('')}${perimeter}${rooms}${furnishings}${walls}${devices}${draft}`;
 }
 
 function smartInput(label, field, value, type='text'){
@@ -2445,6 +2657,36 @@ function renderSmartInspector(){
   }
 
   const roomOptions = loadSmartBackend().rooms.map(room => `<option value="${smartEsc(room.name)}" ${item.room === room.name ? 'selected' : ''}>${smartEsc(room.name)}</option>`).join('');
+  if(smartSelected.type === 'furniture'){
+    box.innerHTML = `
+      ${smartInput('Nome','name',item.name)}
+      <div class="backend-field"><label>Classe</label><select onchange="updateSmartSelected('kind', this.value)">
+        <option value="sofa" ${item.kind === 'sofa' ? 'selected' : ''}>Divano</option>
+        <option value="armchair" ${item.kind === 'armchair' ? 'selected' : ''}>Poltrona</option>
+        <option value="table" ${item.kind === 'table' ? 'selected' : ''}>Tavolo</option>
+        <option value="chair" ${item.kind === 'chair' ? 'selected' : ''}>Sedia</option>
+        <option value="bed" ${item.kind === 'bed' ? 'selected' : ''}>Letto</option>
+        <option value="wardrobe" ${item.kind === 'wardrobe' ? 'selected' : ''}>Armadio</option>
+        <option value="cabinet" ${item.kind === 'cabinet' ? 'selected' : ''}>Mobile</option>
+        <option value="kitchen" ${item.kind === 'kitchen' ? 'selected' : ''}>Cucina</option>
+        <option value="lamp" ${item.kind === 'lamp' ? 'selected' : ''}>Lampada</option>
+        <option value="plant" ${item.kind === 'plant' ? 'selected' : ''}>Pianta</option>
+        <option value="rug" ${item.kind === 'rug' ? 'selected' : ''}>Tappeto</option>
+        <option value="appliance" ${item.kind === 'appliance' ? 'selected' : ''}>Elettrodomestico</option>
+        <option value="decor" ${item.kind === 'decor' ? 'selected' : ''}>Decorazione</option>
+      </select></div>
+      <div class="backend-field"><label>Stanza</label><select onchange="updateSmartSelected('room', this.value)"><option value="">Non assegnato</option>${roomOptions}</select></div>
+      ${smartInput('X','x',item.x,'number')}
+      ${smartInput('Y','y',item.y,'number')}
+      ${smartInput('Larghezza','w',item.w,'number')}
+      ${smartInput('Profondita','d',item.d,'number')}
+      ${smartInput('Rotazione','rotation',item.rotation || 0,'number')}
+      ${smartInput('Note','notes',item.notes || '')}
+      <div class="backend-hint">Placeholder usato dall'AI per comporre il render fotorealistico.</div>
+      <div class="backend-mini-actions"><button class="backend-mini-btn" onclick="deleteSmartSelected()">Elimina arredo</button></div>`;
+    return;
+  }
+
   box.innerHTML = `
     ${smartInput('Nome','name',item.name)}
     <div class="backend-field"><label>Tipo</label><select onchange="updateSmartSelected('kind', this.value)">
@@ -4334,6 +4576,7 @@ setupSmartActions();
     <button class="backend-tool" type="button" data-tool="room" onclick="setSmartTool('room')">Stanza</button>
     <button class="backend-tool" type="button" data-tool="wall" onclick="setSmartTool('wall')">Parete</button>
     <button class="backend-tool" type="button" data-tool="device" onclick="setSmartTool('device')">Device</button>
+    <button class="backend-tool" type="button" data-tool="furniture" onclick="setSmartTool('furniture')">Arredo</button>
   </div>
   <div class="panel-body">
     <div class="backend-layout">
@@ -4347,6 +4590,16 @@ setupSmartActions();
         </div>
         <div class="backend-block">
           <div class="backend-block-title">Arredi e texture</div>
+          <div class="backend-mini-actions">
+            <button class="backend-mini-btn" onclick="addSmartFurniture('sofa')">Divano</button>
+            <button class="backend-mini-btn" onclick="addSmartFurniture('kitchen')">Cucina</button>
+            <button class="backend-mini-btn" onclick="addSmartFurniture('bed')">Letto</button>
+            <button class="backend-mini-btn" onclick="addSmartFurniture('plant')">Pianta</button>
+            <button class="backend-mini-btn" onclick="addSmartFurniture('lamp')">Lampada</button>
+            <button class="backend-mini-btn" onclick="addSmartFurniture('cabinet')">Mobile</button>
+            <button class="backend-mini-btn" onclick="addSmartFurniture('table')">Tavolo</button>
+            <button class="backend-mini-btn" onclick="addSmartFurniture('rug')">Tappeto</button>
+          </div>
           <input class="backend-file" id="smart-furniture-file" type="file" accept=".glb,.gltf,.obj,.fbx" multiple onchange="handleSmartFurnitureFiles(this.files);this.value=''">
           <div id="smart-assets-list" class="backend-hint" style="margin-top:10px"></div>
         </div>

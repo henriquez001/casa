@@ -12,6 +12,8 @@ function fmt(value: unknown, fallback = 0){
 }
 
 function buildPrompt(payload: any){
+  const perimeterSource = payload?.perimeter || { name:'Perimetro casa', x:0, y:0, w:8, d:5.5, h:2.7 };
+  const perimeter = `${perimeterSource.name || 'Perimetro casa'}: x ${fmt(perimeterSource.x)}, y ${fmt(perimeterSource.y)}, larghezza ${fmt(perimeterSource.w)}m, profondita ${fmt(perimeterSource.d)}m, altezza ${fmt(perimeterSource.h, 2.7)}m`;
   const rooms = (payload?.rooms || []).map((room: any) =>
     `${room.name || 'Stanza'}: x ${fmt(room.x)}, y ${fmt(room.y)}, larghezza ${fmt(room.w)}m, profondita ${fmt(room.d)}m, altezza ${fmt(room.h, 2.7)}m, pavimento/materiale ${room.material || 'wood'}`
   ).join('\n');
@@ -21,6 +23,9 @@ function buildPrompt(payload: any){
   const devices = (payload?.devices || []).map((device: any) =>
     `${device.name || 'Device'} (${device.kind || 'device'}) in ${device.room || 'stanza non assegnata'} a x ${fmt(device.x)}, y ${fmt(device.y)}`
   ).join('\n');
+  const furnishings = (payload?.furnishings || []).map((item: any) =>
+    `${item.name || 'Arredo'}: classe ${item.kind || 'furniture'}, stanza ${item.room || 'non assegnata'}, x ${fmt(item.x)}, y ${fmt(item.y)}, larghezza ${fmt(item.w)}m, profondita ${fmt(item.d)}m, rotazione ${fmt(item.rotation)} gradi, dettagli: ${item.notes || 'nessun dettaglio'}`
+  ).join('\n');
   const assets = (payload?.assets || []).map((asset: any) => `${asset.name} (${asset.type})`).join(', ') || 'nessun file 3D caricato';
 
   return `Crea un render fotorealistico architettonico in vista perfettamente dall'alto, camera ortografica verticale, di una casa smart moderna basata su questa planimetria.
@@ -28,15 +33,21 @@ function buildPrompt(payload: any){
 Stanze:
 ${rooms || 'nessuna stanza'}
 
+Perimetro generale:
+${perimeter}
+
 Pareti:
 ${walls || 'nessuna parete'}
 
 Dispositivi smart:
 ${devices || 'nessun dispositivo'}
 
+Placeholder arredi:
+${furnishings || 'nessun arredo placeholder'}
+
 Arredi caricati dall'utente: ${assets}.
 
-Inventare con gusto i dettagli mancanti: divani, tappeti, letto, cucina, tavolo, sedie, texture, illuminazione, piante e complementi, mantenendo proporzioni e posizione delle stanze. Deve sembrare un vero render 3D premium, non una planimetria disegnata. Niente testo, niente icone, niente marker, niente persone, niente watermark.`;
+Usa perimetro, stanze e placeholder come vincoli principali: non spostare ambienti o arredi fuori dal perimetro e mantieni relazioni spaziali coerenti. Inventare con gusto solo i dettagli mancanti: texture, colori, piccoli complementi, illuminazione e materiali. Deve sembrare un vero render 3D premium, non una planimetria disegnata. Niente testo, niente icone, niente marker, niente persone, niente watermark.`;
 }
 
 Deno.serve(async req => {

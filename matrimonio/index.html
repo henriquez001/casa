@@ -11,6 +11,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
+<meta name="app-version" content="20261025182729">
 <title>Conti del Matrimonio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -161,11 +162,11 @@ table.scen td,table.scen th{padding:10px 12px;text-align:right;border-top:1px so
 table.scen th:first-child,table.scen td:first-child{text-align:left}
 table.scen thead th{border-top:0;color:var(--muted);font-weight:600;font-size:13px}
 .confirm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
-@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}.btn:active,.x:active,.item-main:active,.tab:active{transform:none}}
-</style>
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}.btn:active,.x:active,.ite
 </head>
 <body>
-
+m-main:active,.tab:active{transform:none}}
+</style>
 
 <div class="wrap" id="app"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"><span id="toastText"></span><button id="toastBtn" type="button" hidden>Annulla</button></div>
@@ -849,6 +850,65 @@ document.body.insertAdjacentHTML('beforeend', '<div id="dl"></div>');
 const renderDL = () => { $('#dl').innerHTML = datalists(); };
 const _render = render; render = function(){ _render(); renderDL(); };
 render();
+})();
+</script>
+
+<div id="ptr" aria-hidden="true"><div class="ptr-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v13M6 12l6 6 6-6"/></svg></div><span id="ptrTxt">Trascina per aggiornare</span></div>
+<div id="upd" class="upd" role="status" hidden><span>È disponibile una nuova versione</span><button type="button" id="updBtn">Aggiorna</button></div>
+<style>
+html,body{overscroll-behavior-y:none}
+#ptr{position:fixed;left:0;right:0;top:0;z-index:40;display:grid;justify-items:center;gap:6px;padding-top:calc(env(safe-area-inset-top,0px) + 8px);transform:translateY(-110%);pointer-events:none;color:var(--accent);font-size:13px;font-weight:600;will-change:transform}
+#ptr.back{transition:transform .4s cubic-bezier(.2,.9,.25,1)}
+.ptr-dot{width:36px;height:36px;border-radius:18px;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;box-shadow:0 2px 8px rgba(43,28,22,.12)}
+.ptr-dot svg{width:18px;height:18px;transition:transform .2s ease-out}
+#ptr.ready .ptr-dot svg{transform:rotate(180deg)}
+#ptr.busy .ptr-dot svg{animation:ptrspin .8s linear infinite}
+@keyframes ptrspin{to{transform:rotate(360deg)}}
+.upd{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translateX(-50%);z-index:41;display:flex;align-items:center;gap:8px;background:var(--accent);color:var(--accent-fg);border-radius:14px;padding:6px 6px 6px 14px;font-size:15px;max-width:calc(100% - 32px);box-shadow:0 4px 16px rgba(43,28,22,.2)}
+.upd button{font:inherit;font-weight:700;border:0;border-radius:10px;background:var(--accent-fg);color:var(--accent);min-height:40px;padding:0 14px;cursor:pointer}
+@media (prefers-reduced-motion: reduce){#ptr.back{transition:none}.ptr-dot svg{transition:none}#ptr.busy .ptr-dot svg{animation:none}}
+</style>
+<script>
+(() => {
+  'use strict';
+  const VERSION = document.querySelector('meta[name="app-version"]').content;
+  const fresh = () => { const u = new URL(location.href); u.search = '?v=' + Date.now(); u.hash = location.hash; location.replace(u.toString()); };
+  // Controllo automatico all'apertura e al ritorno sull'app
+  async function check(){
+    try { const r = await fetch('./?check=' + Date.now(), {cache:'no-store'}); if (!r.ok) return;
+      const t = await r.text(); const m = t.match(/name="app-version" content="([^"]+)"/);
+      if (m && m[1] !== VERSION) document.getElementById('upd').hidden = false; } catch (e) {}
+  }
+  document.getElementById('updBtn').addEventListener('click', fresh);
+  check(); document.addEventListener('visibilitychange', () => { if (!document.hidden) check(); });
+
+  // Trascina verso il basso per aggiornare
+  const ptr = document.getElementById('ptr'), txt = document.getElementById('ptrTxt');
+  const H = 76; // soglia in px
+  const rubber = (x, d = 220, c = 0.55) => (x * d * c) / (d + c * x);
+  let y0 = null, x0 = 0, dy = 0, active = false, decided = false;
+  const set = v => { ptr.style.transform = 'translateY(calc(-110% + ' + v + 'px))'; };
+  window.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1 || window.scrollY > 0 || ptr.classList.contains('busy')) { y0 = null; return; }
+    const el = e.target; if (el.closest && el.closest('input,textarea,select,[type=range]')) { y0 = null; return; }
+    y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; dy = 0; active = false; decided = false;
+  }, {passive:true});
+  window.addEventListener('touchmove', e => {
+    if (y0 == null) return;
+    const t = e.touches[0]; const d = t.clientY - y0, dx = Math.abs(t.clientX - x0);
+    if (!decided) { if (Math.abs(d) < 10 && dx < 10) return; decided = true; if (d <= 0 || dx > Math.abs(d) || window.scrollY > 0) { y0 = null; return; } active = true; ptr.classList.remove('back'); }
+    if (!active) return;
+    e.preventDefault();
+    dy = Math.max(0, d); const v = rubber(dy); set(v + 60);
+    const ready = v >= H * 0.75; ptr.classList.toggle('ready', ready); txt.textContent = ready ? 'Rilascia per aggiornare' : 'Trascina per aggiornare';
+  }, {passive:false});
+  const end = () => {
+    if (!active) { y0 = null; return; }
+    active = false; y0 = null; ptr.classList.add('back');
+    if (ptr.classList.contains('ready')) { ptr.classList.remove('ready'); ptr.classList.add('busy'); txt.textContent = 'Aggiornamento…'; set(60 + H * 0.75); setTimeout(fresh, 250); }
+    else ptr.style.transform = '';
+  };
+  window.addEventListener('touchend', end); window.addEventListener('touchcancel', end);
 })();
 </script>
 

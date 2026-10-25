@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="app-version" content="20261025182729">
+<meta name="app-version" content="20261025192454">
 <title>Conti del Matrimonio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -445,6 +445,8 @@ function vRiepilogo(){
   </div>
   <p class="note">Calcolato su ${c.adulti} adulti, ${c.bambini} bambini e ${c.tavoli} tavoli ${c.fromList ? 'dalla lista ospiti (esclusi i “no”)' : 'stimati'}${S().sposiInclusi ? ', sposi compresi' : ''}.</p>
 
+  ${vPareggio(T)}
+
   <h2>Dove vanno i soldi</h2>
   <div class="card pad"><div class="bars">${cats.map(x => `<div class="bar-row"><div class="lbl"><span>${esc(x.cat.nome)}</span><span class="num"><b>${fmt(x.t)}</b> <span class="muted">${T.sub ? Math.round(x.t / T.sub * 100) : 0}%</span></span></div><div class="bar-track"><i style="width:${x.t / max * 100}%"></i></div></div>`).join('') || '<div class="muted">Nessuna spesa ancora.</div>'}</div></div>
 
@@ -469,6 +471,65 @@ function vRiepilogo(){
   <p class="note">I prezzi di partenza sono stime indicative: sostituiscili con i preventivi reali nella scheda Spese.</p>`;
 }
 
+function vPareggio(T){
+  const sp = S().sposiInclusi ? 2 : 0;
+  const ext = Math.max(0, T.c.adulti - sp);              // adulti invitati, sposi esclusi
+  const fissi = T.contributi + num(S().listaNozze);       // entrate che non dipendono dagli ospiti
+  const B = num(S().bustaMedia);
+  const at = x => totals(counts(x + sp));                  // x = adulti invitati
+  // costo di un adulto in più (con la sua quota di bambini, tavoli e imprevisti)
+  const base = Math.max(10, ext);
+  const marg = (at(base + 20).tot - at(base).tot) / 20;
+  const m = B - marg;                                       // quanto "rende" o "costa" ogni invitato
+  const gap = T.netto;                                      // > 0: manca; < 0: avanza
+  let be = null; for (let x = 1; x <= 600; x++) { if (at(x).netto <= 0) { be = x; break; } }
+  const bNeed = ext ? Math.max(0, (T.tot - fissi) / ext) : 0;
+  // grafico
+  const X0 = 20, X1 = 300, pts = []; for (let x = X0; x <= X1; x += 10) { const t = at(x); pts.push({x, s:t.tot, e:t.entrate}); }
+  const maxY = Math.max(...pts.map(p => Math.max(p.s, p.e)), 1);
+  const step = [5000, 10000, 20000, 25000, 50000].find(v => maxY / v <= 5) || 100000; const top = Math.ceil(maxY / step) * step;
+  const W = 600, Hh = 250, L = 56, Rr = 16, Tt = 14, Bb = 34;
+  const sx = x => L + (x - X0) / (X1 - X0) * (W - L - Rr), sy = v => Tt + (1 - v / top) * (Hh - Tt - Bb);
+  const path = k => pts.map((p, i) => (i ? 'L' : 'M') + sx(p.x).toFixed(1) + ' ' + sy(p[k]).toFixed(1)).join(' ');
+  const yt = []; for (let v = 0; v <= top; v += step) yt.push(v);
+  const kfmt = v => v >= 1000 ? (v / 1000).toLocaleString('it-IT') + 'k €' : v + ' €';
+  const cx = Math.min(X1, Math.max(X0, ext));
+  const svg = `<svg viewBox="0 0 ${W} ${Hh}" width="100%" role="img" aria-label="Spese ed entrate al variare degli adulti invitati" style="display:block;font-family:var(--font-ui)">
+    ${yt.map(v => `<line x1="${L}" x2="${W - Rr}" y1="${sy(v)}" y2="${sy(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L - 8}" y="${sy(v) + 4}" text-anchor="end" font-size="12" fill="var(--muted)">${kfmt(v)}</text>`).join('')}
+    ${[50, 100, 150, 200, 250, 300].map(x => `<text x="${sx(x)}" y="${Hh - 12}" text-anchor="middle" font-size="12" fill="var(--muted)">${x}</text>`).join('')}
+    ${be && be >= X0 && be <= X1 ? `<line x1="${sx(be)}" x2="${sx(be)}" y1="${Tt}" y2="${Hh - Bb}" stroke="var(--olive)" stroke-width="1.5" stroke-dasharray="4 4"/>` : ''}
+    <path d="${path('s')}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linejoin="round"/>
+    <path d="${path('e')}" fill="none" stroke="var(--olive)" stroke-width="3" stroke-linejoin="round"/>
+    ${ext >= X0 && ext <= X1 ? `<circle cx="${sx(cx)}" cy="${sy(T.tot)}" r="5.5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/><circle cx="${sx(cx)}" cy="${sy(T.entrate)}" r="5.5" fill="var(--olive)" stroke="var(--surface)" stroke-width="2"/>` : ''}
+  </svg>`;
+  const ok = gap <= 0;
+  const leve = [];
+  if (!ok) {
+    leve.push(`<li><b>Busta media di ${fmt(bNeed)}</b> per adulto invece di ${fmt(B)}, con gli ospiti di oggi.</li>`);
+    if (be) leve.push(`<li><b>${be} adulti invitati</b> invece di ${ext}: ogni invitato in più porta ${fmt(m)} in più di quanto costa.</li>`);
+    else leve.push(`<li><b>Più ospiti non bastano</b>: ogni adulto in più costa circa ${fmt(marg)} e la busta media ne porta ${fmt(B)}, quindi ogni invitato aumenta il buco di ${fmt(-m)}.</li>`);
+    leve.push(`<li><b>Tagliare ${fmt(gap)}</b> di spese, per esempio togliendo voci dalla scheda Spese.</li>`);
+    leve.push(`<li><b>Contributi in più per ${fmt(gap)}</b> da famiglie o lista nozze (Altro › Entrate).</li>`);
+  }
+  return `<h2>Pareggio: come far quadrare i conti</h2>
+  <div class="card pad" style="display:grid;gap:14px">
+    <div class="row" style="align-items:flex-start"><div class="grow"><div class="eyebrow">${ok ? 'I conti tornano' : 'Per pareggiare mancano'}</div><div class="display num" style="font-size:40px;color:var(--${ok ? 'good' : 'bad'})">${fmt(Math.abs(gap))}</div><div class="small muted">${ok ? 'Le entrate previste coprono tutte le spese e avanza questa cifra.' : 'Differenza tra le spese previste e le entrate previste.'}</div></div></div>
+    <div class="small" style="display:grid;gap:6px">
+      <div class="row"><span class="grow">Spese previste, imprevisti inclusi</span><b class="num">${fmt(T.tot)}</b></div>
+      <div class="row"><span class="grow">Buste: ${ext} adulti × ${fmt(B)}</span><b class="num">− ${fmt(T.buste)}</b></div>
+      <div class="row"><span class="grow">Contributi e lista nozze</span><b class="num">− ${fmt(fissi)}</b></div>
+      <div class="row" style="border-top:1px solid var(--line);padding-top:6px"><span class="grow">${ok ? 'Avanzo' : 'Restano a vostro carico'}</span><b class="num">${fmt(Math.abs(gap))}</b></div>
+    </div>
+    <div class="small" style="background:var(--bg);border-radius:10px;padding:12px 14px;display:grid;gap:4px">
+      <b>Quanto vale ogni invitato</b>
+      <span>Un adulto in più costa circa <b class="num">${fmt(marg)}</b> (cena, bar, torta, bomboniera, quota del tavolo e imprevisti) e porta in media <b class="num">${fmt(B)}</b> di busta. ${m >= 0 ? `Ogni invitato quindi copre ${fmt(m)} delle spese fisse come location, foto e abiti.` : `Ogni invitato quindi costa ${fmt(-m)} più di quanto porta: aggiungere ospiti allarga il buco.`}</span>
+    </div>
+    <div class="scroll">${svg}</div>
+    <div class="row small" style="flex-wrap:wrap;gap:14px"><span><i style="display:inline-block;width:14px;height:3px;background:var(--accent);vertical-align:middle;margin-right:6px"></i>Spese</span><span><i style="display:inline-block;width:14px;height:3px;background:var(--olive);vertical-align:middle;margin-right:6px"></i>Entrate</span><span class="muted">Adulti invitati, sposi esclusi${be && be <= X1 ? ' · tratteggio: pareggio a ' + be : ''}</span></div>
+    ${ok ? '' : `<div><b>Per far quadrare i conti basta una di queste strade</b> (o un mix):<ul style="margin:8px 0 0;padding-left:20px;display:grid;gap:6px">${leve.join('')}</ul></div>`}
+    <label class="f" for="bustaP">Busta media per adulto (€): cambiala per vedere l'effetto<input id="bustaP" type="number" inputmode="decimal" min="0" step="10" data-s="bustaMedia" value="${esc(S().bustaMedia)}"></label>
+  </div>`;
+}
 function scenOut(scenA, T){
   const Ts = totals(counts(scenA)); T = T || totals();
   return `<div class="row" style="margin-top:10px"><span class="grow muted">Con <b class="num" style="color:var(--fg)">${scenA}</b> adulti e ${Ts.c.bambini} bambini</span><b class="num display" style="font-size:28px">${fmt(Ts.tot)}</b></div>

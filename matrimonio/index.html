@@ -1,0 +1,829 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Matrimonio">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F8F1E7">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Conti del Matrimonio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;1,6..96,500&display=swap">
+<style>
+/* Layout: una colonna da app (max 760px), titolo grande per scheda, tab bar fissa in basso su materiale traslucido. Firma: i numeri importanti in Bodoni corsivo, come su una partecipazione, e una fascia di colori d'autunno sulla card principale. Palette volutamente solo chiara, come richiesto. */
+:root{
+  color-scheme:light;
+  --bg:#F8F1E7; --surface:#FFFCF7; --fg:#2B1C16; --muted:#6C584C; --line:#E8D9C6;
+  --accent:#7A2B2E; --accent-fg:#FFFCF7; --accent-soft:#F3E2DA;
+  --copper:#A8521F; --ochre:#C8902E; --olive:#5E6E36;
+  --good:#4E6630; --warn:#8F5208; --bad:#A3302A; --bad-soft:#F6E0DA; --warn-soft:#F7E8D1; --good-soft:#E8EEDC;
+  --bar:rgba(255,252,247,.82);
+  --font-ui:-apple-system,BlinkMacSystemFont,"Segoe UI Variable Text","Segoe UI",system-ui,Roboto,"Helvetica Neue",Arial,sans-serif;
+  --font-display:"Bodoni Moda","Didot","Bodoni 72",Georgia,"Times New Roman",serif;
+  --r:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+[hidden]{display:none!important}
+img{max-width:100%}
+:root{padding-top:env(safe-area-inset-top,0px)}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-ui);font-size:17px;line-height:1.4;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:8px calc(110px + env(safe-area-inset-bottom,0px))}
+h1{font-size:34px;line-height:1.1;letter-spacing:-.02em;font-weight:700;margin:20px 0 4px;text-wrap:balance}
+h2{font-size:20px;letter-spacing:-.01em;font-weight:650;margin:28px 0 10px;text-wrap:balance}
+.sub{color:var(--muted);font-size:15px;margin:0 0 16px}
+.num{font-variant-numeric:tabular-nums}
+.card{background:var(--surface);border-radius:var(--r);border:1px solid var(--line)}
+.pad{padding:16px}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.row{display:flex;align-items:center;gap:12px}
+.grow{flex:1;min-width:0}
+.hidden{display:none}
+
+/* Hero */
+.hero{padding:24px 18px 20px;display:grid;gap:14px;position:relative;overflow:hidden;background:linear-gradient(180deg,#FBEFE3 0%,var(--surface) 70%)}
+.hero::before{content:"";position:absolute;inset:0 0 auto;height:5px;background:linear-gradient(90deg,var(--accent) 0 25%,var(--copper) 25% 50%,var(--ochre) 50% 75%,var(--olive) 75% 100%)}
+.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.display{font-family:var(--font-display);font-style:italic;font-weight:500;letter-spacing:-.01em;line-height:1}
+.hero .total{font-size:52px}
+.hero .days{font-size:20px;color:var(--copper)}
+.hero .total{color:var(--accent)}
+.bar-row:nth-child(4n+2) .bar-track i{background:var(--copper)}
+.bar-row:nth-child(4n+3) .bar-track i{background:var(--ochre)}
+.bar-row:nth-child(4n+4) .bar-track i{background:var(--olive)}
+h1{color:var(--accent)}
+.meter{height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--accent);border-radius:5px;transition:width .35s cubic-bezier(.2,.8,.2,1)}
+.meter.over i{background:var(--bad)}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border-radius:var(--r);overflow:hidden;border:1px solid var(--line)}
+.stat{background:var(--surface);padding:14px 16px;min-width:0}
+.stat b{display:block;font-size:20px;font-weight:650;margin-top:2px}
+@media (min-width:620px){.stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* Bars */
+.bars{display:grid;gap:12px}
+.bar-row{display:grid;gap:5px}
+.bar-row .lbl{display:flex;justify-content:space-between;gap:10px;font-size:15px}
+.bar-track{height:8px;border-radius:4px;background:var(--accent-soft);overflow:hidden}
+.bar-track i{display:block;height:100%;background:var(--accent);border-radius:4px}
+
+/* Lists */
+.list{display:grid}
+.item{border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.item-head{display:flex;align-items:center;gap:8px;min-height:56px;padding:6px 4px 6px 16px}
+.item-main{flex:1;min-width:0;background:none;border:0;color:inherit;font:inherit;text-align:left;padding:6px 0;cursor:pointer;display:flex;align-items:center;gap:10px}
+.item-main .t{flex:1;min-width:0}
+.item-main .t span{display:block;overflow-wrap:anywhere}
+.item-main .meta{font-size:13px;color:var(--muted)}
+.amount{font-weight:600;white-space:nowrap}
+.x{flex:none;width:44px;height:44px;display:grid;place-items:center;border:0;background:none;color:var(--muted);border-radius:22px;cursor:pointer}
+.x:hover{background:var(--bad-soft);color:var(--bad)}
+.x svg{width:16px;height:16px}
+.chev{width:12px;height:12px;flex:none;color:var(--muted);transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+.open > .item-head .chev,.open > .cat-head .chev{transform:rotate(90deg)}
+.editor{padding:4px 16px 18px;display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.editor .full{grid-column:1/-1}
+@media (max-width:460px){.editor{grid-template-columns:minmax(0,1fr)}}
+label.f{display:grid;gap:4px;font-size:13px;color:var(--muted);font-weight:500;min-width:0}
+input,select,textarea{font:inherit;font-size:16px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;width:100%;min-width:0}
+textarea{min-height:88px;resize:vertical}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+input[type=checkbox]{width:24px;height:24px;min-height:0;accent-color:var(--accent);margin:0}
+input[type=range]{padding:0;border:0;background:none;accent-color:var(--accent)}
+
+/* Category */
+.cat{margin-bottom:12px;overflow:hidden}
+.cat-head{display:flex;align-items:center;gap:8px;padding:6px 4px 6px 16px;min-height:60px}
+.cat-head .item-main .t span:first-child{font-weight:650}
+.cat-body{border-top:1px solid var(--line)}
+.cat-foot{padding:8px 12px 12px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap}
+
+/* Buttons */
+.btn{font:inherit;font-size:16px;font-weight:600;min-height:44px;padding:10px 16px;border-radius:12px;border:0;cursor:pointer;background:var(--accent-soft);color:var(--accent);display:inline-flex;align-items:center;gap:8px;transition:transform .1s ease-out}
+.btn.primary{background:var(--accent);color:var(--accent-fg)}
+.btn.plain{background:none;padding-inline:10px}
+.btn.danger{background:var(--bad-soft);color:var(--bad)}
+.btn:active,.x:active,.item-main:active,.tab:active{transform:scale(.97)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Pills */
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:3px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.pill.good{background:var(--good-soft);color:var(--good)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.mute{background:var(--line);color:var(--muted)}
+
+/* Segmented */
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--line);border-radius:10px;padding:2px;margin:6px 0 16px}
+.seg button{font:inherit;font-size:14px;font-weight:600;min-height:36px;border:0;border-radius:8px;background:none;color:var(--fg);cursor:pointer}
+.seg button[aria-selected=true]{background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+
+/* Tab bar */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--bar);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+.tabbar nav{max-width:760px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
+.tab{font:inherit;border:0;background:none;color:var(--muted);display:grid;justify-items:center;gap:2px;padding:7px 2px 6px;min-height:50px;cursor:pointer;font-size:11px;font-weight:600}
+.tab svg{width:24px;height:24px}
+.tab[aria-selected=true]{color:var(--accent)}
+@media (prefers-reduced-transparency: reduce){.tabbar,.toast{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--surface)}}
+@media (prefers-contrast: more){.tabbar{background:var(--surface);border-top:2px solid var(--fg)}.card{border-color:var(--muted)}}
+
+/* Toast */
+.toast{position:fixed;left:50%;bottom:calc(72px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(12px);opacity:0;pointer-events:none;z-index:30;background:var(--fg);color:var(--bg);border-radius:14px;padding:6px 6px 6px 16px;display:flex;align-items:center;gap:8px;max-width:calc(100% - 32px);transition:opacity .2s ease-out,transform .3s cubic-bezier(.2,.8,.2,1);font-size:15px}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+.toast button{font:inherit;font-weight:700;border:0;background:none;color:var(--bg);min-height:40px;padding:0 12px;cursor:pointer;text-decoration:underline}
+
+.empty{padding:28px 18px;text-align:center;color:var(--muted)}
+.empty b{display:block;color:var(--fg);font-size:17px;margin-bottom:4px}
+.counts{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.tables{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+.tables .card ul{margin:0;padding:0 16px 14px;list-style:none;display:grid;gap:4px;font-size:15px}
+.note{font-size:13px;color:var(--muted);margin:10px 4px 0}
+.sync{font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+.sync i{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.sync.ok i{background:var(--good)} .sync.err i{background:var(--bad)}
+.task{display:flex;align-items:center;gap:12px;min-height:52px;padding:4px 4px 4px 16px;border-top:1px solid var(--line)}
+.task:first-child{border-top:0}
+.task.done .grow{color:var(--muted);text-decoration:line-through}
+.task label{display:flex;align-items:center;gap:12px;flex:1;min-width:0;cursor:pointer;padding:8px 0}
+.preview{margin-top:12px}
+.preview textarea{min-height:180px;font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-size:13px}
+.scroll{overflow-x:auto}
+table.scen{width:100%;border-collapse:collapse;font-size:15px}
+table.scen td,table.scen th{padding:10px 12px;text-align:right;border-top:1px solid var(--line);white-space:nowrap}
+table.scen th:first-child,table.scen td:first-child{text-align:left}
+table.scen thead th{border-top:0;color:var(--muted);font-weight:600;font-size:13px}
+.confirm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}.btn:active,.x:active,.item-main:active,.tab:active{transform:none}}
+</style>
+</head>
+<body>
+
+
+<div class="wrap" id="app"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"><span id="toastText"></span><button id="toastBtn" type="button" hidden>Annulla</button></div>
+<div class="tabbar"><nav role="tablist" aria-label="Sezioni" id="tabs"></nav></div>
+
+<script>
+(() => {
+'use strict';
+/* ---------- utility ---------- */
+const $ = s => document.querySelector(s);
+const uid = () => Math.random().toString(36).slice(2, 9);
+const eur = new Intl.NumberFormat('it-IT', {style:'currency', currency:'EUR', maximumFractionDigits:0});
+const eur2 = new Intl.NumberFormat('it-IT', {style:'currency', currency:'EUR', maximumFractionDigits:2});
+const fmt = n => eur.format(Math.round(n || 0));
+const num = v => { const n = parseFloat(String(v).replace(',', '.')); return isFinite(n) ? n : 0; };
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clone = o => JSON.parse(JSON.stringify(o));
+const ICON_X = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>';
+const CHEV = '<svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 2.5L8 6l-3.5 3.5"/></svg>';
+
+/* ---------- dati predefiniti ---------- */
+const MODES = {fisso:'Costo fisso', adulto:'Per adulto', bambino:'Per bambino', ospite:'Per ospite', tavolo:'Per tavolo'};
+const STATI = {da:'Da cercare', rich:'Preventivo richiesto', ric:'Preventivo ricevuto', scelto:'Scelto', firmato:'Contratto firmato', saldato:'Saldato'};
+const STATO_PILL = {da:'mute', rich:'warn', ric:'warn', scelto:'', firmato:'good', saldato:'good'};
+
+function I(id, nome, mode, stima, qty){ return {id, nome, mode, stima, qty: qty || 1, prev:'', fornitore:'', contatto:'', stato:'da', pagato:0, scadenza:'', paga:'coppia', note:''}; }
+function defaultCats(){ return [
+  {id:'c-rito', nome:'Rito e documenti', items:[
+    I('i-pubbl','Pubblicazioni e marche da bollo','fisso',40),
+    I('i-comune','Diritti del Comune (rito civile o sede esterna)','fisso',300),
+    I('i-parr','Offerta alla parrocchia','fisso',300),
+    I('i-corso','Corso prematrimoniale','fisso',50),
+    I('i-libretti','Libretti della cerimonia','fisso',80)]},
+  {id:'c-ricev', nome:'Location e ricevimento', items:[
+    I('i-loc','Affitto location','fisso',2500),
+    I('i-menuA','Menu adulti','adulto',110),
+    I('i-menuB','Menu bambini','bambino',45),
+    I('i-forn','Pasti fornitori (fotografo, musica…)','fisso',40,6),
+    I('i-bar','Open bar','adulto',15),
+    I('i-torta','Torta nuziale','ospite',6),
+    I('i-taglio','Diritto di taglio torta','ospite',3),
+    I('i-confett','Confettata','fisso',400),
+    I('i-mance','Mance allo staff','fisso',200)]},
+  {id:'c-abiti', nome:'Abiti e bellezza', items:[
+    I('i-abito1','Abito sposa','fisso',2500),
+    I('i-ritocchi','Ritocchi sartoriali','fisso',200),
+    I('i-acc1','Scarpe, velo e accessori sposa','fisso',500),
+    I('i-abito2','Abito sposo','fisso',1200),
+    I('i-acc2','Scarpe e accessori sposo','fisso',300),
+    I('i-trucco','Trucco e parrucco (con prova)','fisso',450),
+    I('i-barb','Barbiere','fisso',60)]},
+  {id:'c-foto', nome:'Foto e video', items:[
+    I('i-fot','Fotografo','fisso',2500),
+    I('i-vid','Videomaker','fisso',2000),
+    I('i-album','Album','fisso',500),
+    I('i-drone','Riprese con drone','fisso',300)]},
+  {id:'c-musica', nome:'Musica', items:[
+    I('i-mcer','Musica per la cerimonia','fisso',400),
+    I('i-band','Band o DJ per il ricevimento','fisso',1500),
+    I('i-siae','SIAE','fisso',250),
+    I('i-audio','Impianto audio e luci','fisso',300)]},
+  {id:'c-fiori', nome:'Fiori e allestimenti', items:[
+    I('i-bouq','Bouquet','fisso',180),
+    I('i-bott','Bottoniere','fisso',60),
+    I('i-fchiesa','Fiori per il rito','fisso',600),
+    I('i-centro','Centrotavola','tavolo',70),
+    I('i-allest','Allestimento location','fisso',800),
+    I('i-tabl','Tableau de mariage','fisso',150)]},
+  {id:'c-carta', nome:'Partecipazioni e stampa', items:[
+    I('i-save','Save the date','fisso',80),
+    I('i-part','Partecipazioni (con buste)','fisso',4.5,60),
+    I('i-segn','Segnaposto','ospite',1.5),
+    I('i-menu','Menu stampati','tavolo',15),
+    I('i-franc','Francobolli e spedizioni','fisso',60)]},
+  {id:'c-bomb', nome:'Bomboniere', items:[
+    I('i-bomb','Bomboniere','ospite',12),
+    I('i-sacch','Sacchetti di confetti','ospite',3)]},
+  {id:'c-fedi', nome:'Fedi e gioielli', items:[
+    I('i-fedi','Fedi','fisso',1200),
+    I('i-incis','Incisione','fisso',50)]},
+  {id:'c-trasp', nome:'Trasporti e ospitalità', items:[
+    I('i-auto','Auto degli sposi','fisso',400),
+    I('i-nav','Navetta ospiti','fisso',600),
+    I('i-allogg','Alloggio ospiti da fuori','fisso',0),
+    I('i-suite','Notte di nozze','fisso',250),
+    I('i-welcome','Welcome bag','ospite',0)]},
+  {id:'c-serv', nome:'Servizi', items:[
+    I('i-wp','Wedding planner','fisso',2500),
+    I('i-anim','Animazione bambini','fisso',300),
+    I('i-ass','Assicurazione matrimonio','fisso',150)]},
+  {id:'c-viaggio', nome:'Viaggio di nozze', items:[
+    I('i-volo','Voli','fisso',2000),
+    I('i-hotel','Alloggi','fisso',2500),
+    I('i-extra','Escursioni ed extra','fisso',800)]}
+];}
+function defaultTasks(){
+  const F = {
+    '12 mesi o più':['Fissare budget e data','Scegliere il tipo di rito','Prima bozza della lista ospiti','Prenotare la location','Valutare un wedding planner'],
+    '9–12 mesi':['Prenotare fotografo e videomaker','Prenotare la musica','Scegliere il catering','Iniziare a cercare gli abiti'],
+    '6–9 mesi':['Ordinare l\'abito','Prenotare il fiorista','Scegliere i testimoni','Prenotare il viaggio di nozze','Inviare i save the date'],
+    '4–6 mesi':['Ordinare le partecipazioni','Fare il corso prematrimoniale','Prenotare trucco e parrucco','Scegliere le fedi','Prenotare i trasporti','Ordinare le bomboniere'],
+    '2–3 mesi':['Spedire le partecipazioni','Richiedere documenti e pubblicazioni','Degustazione del menu','Prova trucco e parrucco','Scegliere la musica della cerimonia'],
+    'Ultimo mese':['Raccogliere le conferme','Preparare tableau e segnaposto','Comunicare i numeri definitivi al catering','Ultime prove degli abiti','Inviare la scaletta ai fornitori'],
+    'Ultima settimana':['Preparare le buste per saldi e mance','Consegnare i materiali alla location','Ritirare gli abiti']
+  };
+  const out = []; Object.entries(F).forEach(([fase, list]) => list.forEach(t => out.push({id:uid(), fase, testo:t, fatto:false}))); return out;
+}
+function defaultState(){ return {
+  settings:{nomeA:'Leo', nomeB:'', data:'', budget:30000, imprevisti:10, stimaAdulti:100, stimaBambini:8, usaLista:true, sposiInclusi:true, perTavolo:10, bustaMedia:120, listaNozze:0},
+  entrate:[], cats:defaultCats(), guests:[], tasks:defaultTasks()
+};}
+
+/* ---------- stato e salvataggio ---------- */
+const LS = 'conti-matrimonio-v1';
+let state = defaultState();
+let hasLocal = false;
+try { const raw = localStorage.getItem(LS); if (raw) { state = Object.assign(defaultState(), JSON.parse(raw)); hasLocal = true; } } catch (e) {}
+state.settings = Object.assign(defaultState().settings, state.settings);
+
+const DOCS = {base:['settings','entrate'], spese:['cats'], ospiti:['guests'], checklist:['tasks']};
+let db = null, syncState = 'local';
+const lastJson = {}, inflight = {}, again = {}, timers = {};
+const sliceJson = k => { const o = {}; DOCS[k].forEach(f => o[f] = state[f]); return JSON.stringify(o); };
+function saveLocal(){ try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {} }
+function save(k){ saveLocal(); if (!db) return; clearTimeout(timers[k]); timers[k] = setTimeout(() => { timers[k] = null; flush(k); }, 700); }
+async function flush(k){
+  if (inflight[k]) { again[k] = true; return; }
+  const j = sliceJson(k); if (j === lastJson[k]) return;
+  inflight[k] = true;
+  try { await db.doc('planner/' + k).set({json:j}); lastJson[k] = j; setSync('ok'); }
+  catch (e) {
+    setSync('err');
+    if (e && e.code === 'unavailable') setTimeout(() => flush(k), 1200 + Math.random() * 1500);
+    else if (e && e.code === 'quota_exceeded') toast('Spazio di salvataggio pieno: esporta un backup da Altro › Impostazioni');
+  } finally { inflight[k] = false; if (again[k]) { again[k] = false; flush(k); } }
+}
+function setSync(s){ syncState = s; const el = $('#sync'); if (el) { el.className = 'sync ' + s; el.lastElementChild.textContent = syncLabel(); } }
+const syncLabel = () => ({local:'Salvato in questo browser', ok:'Salvato e sincronizzato', err:'Sincronizzazione non riuscita, salvato qui'})[syncState];
+
+(async () => {
+  if (!window.claude || !window.claude.use) return;
+  try { db = await window.claude.use('db'); } catch (e) { db = null; }
+  if (!db) return;
+  setSync('ok');
+  Object.keys(DOCS).forEach(k => {
+    db.doc('planner/' + k).onSnapshot(snap => {
+      if (!snap.exists) { if (hasLocal) flush(k); return; }
+      const d = snap.data(); const j = d && d.json; if (!j || j === lastJson[k]) return;
+      if (timers[k] || inflight[k]) return; // modifiche locali in arrivo: vincono loro
+      try { const o = JSON.parse(j); DOCS[k].forEach(f => { if (o[f] !== undefined) state[f] = o[f]; }); } catch (e) { return; }
+      if (k === 'base') state.settings = Object.assign(defaultState().settings, state.settings);
+      lastJson[k] = j; saveLocal();
+      if (!isEditing()) render(); else pendingRender = true;
+    }, () => setSync('err'));
+  });
+})();
+let pendingRender = false;
+const isEditing = () => { const a = document.activeElement; return a && /INPUT|TEXTAREA|SELECT/.test(a.tagName); };
+document.addEventListener('focusout', () => setTimeout(() => { if (pendingRender && !isEditing()) { pendingRender = false; render(); } }, 0));
+
+let downloadsP = (window.claude && window.claude.use) ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
+
+/* ---------- calcoli ---------- */
+const S = () => state.settings;
+const nome = w => w === 'A' ? (S().nomeA || 'Sposo/a 1') : (S().nomeB || 'Sposo/a 2');
+const PAGA = () => ({coppia:'Coppia', famA:'Famiglia di ' + nome('A'), famB:'Famiglia di ' + nome('B'), altro:'Altro'});
+
+function counts(adultOverride){
+  let adulti, bambini, neonati = 0, fromList = false;
+  const g = state.guests.filter(x => x.rsvp !== 'no');
+  if (S().usaLista && state.guests.length) {
+    fromList = true;
+    adulti = g.filter(x => x.tipo === 'adulto').length + (S().sposiInclusi ? 2 : 0);
+    bambini = g.filter(x => x.tipo === 'bambino').length;
+    neonati = g.filter(x => x.tipo === 'neonato').length;
+  } else {
+    adulti = num(S().stimaAdulti) + (S().sposiInclusi ? 2 : 0);
+    bambini = num(S().stimaBambini);
+  }
+  if (adultOverride != null) { const ratio = adulti ? bambini / adulti : 0; adulti = adultOverride; bambini = Math.round(adultOverride * ratio); }
+  const ospiti = adulti + bambini;
+  const tavoli = Math.ceil(ospiti / Math.max(1, num(S().perTavolo) || 10));
+  return {adulti, bambini, neonati, ospiti, tavoli, fromList};
+}
+function unitOf(it){ return it.prev !== '' && it.prev != null ? num(it.prev) : num(it.stima); }
+function mult(it, c){ return ({fisso:1, adulto:c.adulti, bambino:c.bambini, ospite:c.ospiti, tavolo:c.tavoli})[it.mode] * (num(it.qty) || 1); }
+function cost(it, c){ return unitOf(it) * mult(it, c); }
+function totals(c){
+  c = c || counts();
+  let sub = 0, pagato = 0, residuo = 0; const perCat = [], perPaga = {};
+  state.cats.forEach(cat => {
+    let t = 0;
+    cat.items.forEach(it => { const v = cost(it, c); t += v; pagato += num(it.pagato); residuo += Math.max(0, v - num(it.pagato)); perPaga[it.paga] = (perPaga[it.paga] || 0) + v; });
+    sub += t; perCat.push({cat, t});
+  });
+  const imp = sub * num(S().imprevisti) / 100;
+  const ospitiEsterni = Math.max(0, c.adulti - (S().sposiInclusi ? 2 : 0));
+  const buste = num(S().bustaMedia) * ospitiEsterni;
+  const contributi = state.entrate.reduce((a, e) => a + num(e.importo), 0);
+  const entrate = buste + contributi + num(S().listaNozze);
+  return {sub, imp, tot: sub + imp, pagato, residuo, perCat, perPaga, buste, contributi, entrate, netto: sub + imp - entrate, c};
+}
+function multLabel(it, c){
+  const u = eur2.format(unitOf(it));
+  const q = num(it.qty) || 1;
+  switch (it.mode) {
+    case 'adulto': return u + ' × ' + c.adulti + ' adulti' + (q > 1 ? ' × ' + q : '');
+    case 'bambino': return u + ' × ' + c.bambini + ' bambini' + (q > 1 ? ' × ' + q : '');
+    case 'ospite': return u + ' × ' + c.ospiti + ' ospiti' + (q > 1 ? ' × ' + q : '');
+    case 'tavolo': return u + ' × ' + c.tavoli + ' tavoli' + (q > 1 ? ' × ' + q : '');
+    default: return q > 1 ? u + ' × ' + q : '';
+  }
+}
+
+/* ---------- UI state ---------- */
+const TABS = [
+  {id:'riepilogo', label:'Riepilogo', icon:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'},
+  {id:'spese', label:'Spese', icon:'<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 10h18M7 15h4"/>'},
+  {id:'ospiti', label:'Ospiti', icon:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M16 14.2c2.9.3 5 2.7 5 5.8"/>'},
+  {id:'scadenze', label:'Scadenze', icon:'<rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/>'},
+  {id:'altro', label:'Altro', icon:'<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>'}
+];
+const ui = {tab:'riepilogo', openCats:new Set(), openItem:null, openGuest:null, guestSeg:'lista', altroSeg:'entrate', q:'', scen:null, preview:null, confirmReset:false, bulk:false};
+const h0 = location.hash.slice(1); if (TABS.some(t => t.id === h0)) ui.tab = h0;
+
+function renderTabs(){
+  $('#tabs').innerHTML = TABS.map(t => `<button class="tab" role="tab" type="button" data-tab="${t.id}" aria-selected="${ui.tab === t.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${t.icon}</svg>${t.label}</button>`).join('');
+}
+function render(){
+  const a = document.activeElement; const fid = a && a.id; let selS = null, selE = null;
+  try { if (fid && a.selectionStart != null) { selS = a.selectionStart; selE = a.selectionEnd; } } catch (e) {}
+  renderTabs();
+  const v = {riepilogo:vRiepilogo, spese:vSpese, ospiti:vOspiti, scadenze:vScadenze, altro:vAltro}[ui.tab];
+  $('#app').innerHTML = v();
+  if (fid) { const el = document.getElementById(fid); if (el) { el.focus({preventScroll:true}); try { if (selS != null) el.setSelectionRange(selS, selE); } catch (e) {} } }
+}
+
+/* ---------- viste ---------- */
+function syncBadge(){ return `<span class="sync ${syncState}" id="sync"><i></i><span>${syncLabel()}</span></span>`; }
+function daysLeft(){ if (!S().data) return null; const d = new Date(S().data + 'T12:00:00'); const n = new Date(); n.setHours(12,0,0,0); return Math.round((d - n) / 864e5); }
+
+function vRiepilogo(){
+  const T = totals(); const c = T.c; const b = num(S().budget);
+  const pct = b ? Math.min(100, T.tot / b * 100) : 0; const over = b && T.tot > b;
+  const dl = daysLeft();
+  const titolo = S().nomeB ? esc(nome('A')) + ' &amp; ' + esc(nome('B')) : 'Il nostro matrimonio';
+  const dataTxt = S().data ? new Date(S().data + 'T12:00:00').toLocaleDateString('it-IT', {weekday:'long', day:'numeric', month:'long', year:'numeric'}) : '';
+  const cats = T.perCat.filter(x => x.t > 0).sort((a, b) => b.t - a.t); const max = cats.length ? cats[0].t : 1;
+  const scenA = ui.scen ?? c.adulti; const Ts = totals(counts(scenA));
+  const sopra = [];
+  state.cats.forEach(cat => cat.items.forEach(it => { if (it.prev !== '' && it.prev != null && num(it.prev) > num(it.stima)) sopra.push({it, d:(num(it.prev) - num(it.stima)) * mult(it, c)}); }));
+  sopra.sort((a, b) => b.d - a.d);
+  const P = PAGA();
+  return `
+  <h1>${titolo}</h1>
+  <p class="sub">${dataTxt ? esc(dataTxt) + ' · ' : ''}${syncBadge()}</p>
+  <section class="card hero" aria-label="Totale previsto">
+    ${dl != null ? `<div class="days display num">${dl > 0 ? 'Mancano ' + dl + ' giorni' : dl === 0 ? 'È oggi' : 'Sposati da ' + (-dl) + ' giorni'}</div>` : ''}
+    <div><div class="eyebrow">Totale previsto, imprevisti inclusi</div><div class="total display num">${fmt(T.tot)}</div></div>
+    <div><div class="meter ${over ? 'over' : ''}" role="img" aria-label="${Math.round(b ? T.tot / b * 100 : 0)}% del budget"><i style="width:${pct}%"></i></div>
+    <div class="row small" style="margin-top:6px"><span class="grow muted">Budget ${fmt(b)}</span><b class="num" style="color:var(--${over ? 'bad' : 'good'})">${over ? 'Sfori di ' + fmt(T.tot - b) : 'Restano ' + fmt(b - T.tot)}</b></div></div>
+  </section>
+  <div class="stats" style="margin-top:12px">
+    <div class="stat"><span class="small muted">Già pagato</span><b class="num">${fmt(T.pagato)}</b></div>
+    <div class="stat"><span class="small muted">Ancora da pagare</span><b class="num">${fmt(T.residuo)}</b></div>
+    <div class="stat"><span class="small muted">Imprevisti (${num(S().imprevisti)}%)</span><b class="num">${fmt(T.imp)}</b></div>
+    <div class="stat"><span class="small muted">Costo per ospite</span><b class="num">${fmt(c.ospiti ? T.tot / c.ospiti : 0)}</b></div>
+    <div class="stat"><span class="small muted">Entrate previste</span><b class="num">${fmt(T.entrate)}</b></div>
+    <div class="stat"><span class="small muted">A vostro carico</span><b class="num">${fmt(T.netto)}</b></div>
+  </div>
+  <p class="note">Calcolato su ${c.adulti} adulti, ${c.bambini} bambini e ${c.tavoli} tavoli ${c.fromList ? 'dalla lista ospiti (esclusi i “no”)' : 'stimati'}${S().sposiInclusi ? ', sposi compresi' : ''}.</p>
+
+  <h2>Dove vanno i soldi</h2>
+  <div class="card pad"><div class="bars">${cats.map(x => `<div class="bar-row"><div class="lbl"><span>${esc(x.cat.nome)}</span><span class="num"><b>${fmt(x.t)}</b> <span class="muted">${T.sub ? Math.round(x.t / T.sub * 100) : 0}%</span></span></div><div class="bar-track"><i style="width:${x.t / max * 100}%"></i></div></div>`).join('') || '<div class="muted">Nessuna spesa ancora.</div>'}</div></div>
+
+  <h2>E se gli ospiti cambiano?</h2>
+  <div class="card pad">
+    <label class="f" for="scen">Sposta per cambiare il numero di adulti</label>
+    <input type="range" id="scen" min="20" max="300" step="1" value="${scenA}" data-act="scen">
+    <div id="scenOut">${scenOut(scenA, T)}</div>
+    <div class="scroll" style="margin-top:12px"><table class="scen num"><thead><tr><th>Adulti</th><th>Totale</th><th>Per ospite</th><th>Sul budget</th></tr></thead><tbody>
+    ${[60, 80, 100, 120, 150, 200].map(n => { const t = totals(counts(n)); return `<tr><td>${n}</td><td>${fmt(t.tot)}</td><td>${fmt(t.tot / t.c.ospiti)}</td><td style="color:var(--${b && t.tot > b ? 'bad' : 'good'})">${b ? (t.tot > b ? '+' : '−') + fmt(Math.abs(t.tot - b)) : '–'}</td></tr>`; }).join('')}
+    </tbody></table></div>
+  </div>
+
+  <h2>Chi paga cosa</h2>
+  <div class="card list">${Object.keys(P).filter(k => T.perPaga[k]).map(k => `<div class="item"><div class="item-head" style="padding-right:16px"><span class="grow">${esc(P[k])}</span><b class="num">${fmt(T.perPaga[k])}</b></div></div>`).join('') || '<div class="empty">Nessuna spesa assegnata.</div>'}</div>
+  <p class="note">Gli imprevisti non sono assegnati: dividetevi ${fmt(T.imp)} come preferite.</p>
+
+  ${sopra.length ? `<h2>Preventivi sopra la stima</h2><div class="card list">${sopra.slice(0, 6).map(x => `<div class="item"><div class="item-head" style="padding-right:16px"><span class="grow">${esc(x.it.nome)}</span><span class="pill bad num">+${fmt(x.d)}</span></div></div>`).join('')}</div>` : ''}
+
+  <div class="btns" style="margin-top:24px"><button class="btn" type="button" data-act="exp-budget">Esporta il budget (CSV)</button></div>
+  ${previewBox('budget')}
+  <p class="note">I prezzi di partenza sono stime indicative: sostituiscili con i preventivi reali nella scheda Spese.</p>`;
+}
+
+function scenOut(scenA, T){
+  const Ts = totals(counts(scenA)); T = T || totals();
+  return `<div class="row" style="margin-top:10px"><span class="grow muted">Con <b class="num" style="color:var(--fg)">${scenA}</b> adulti e ${Ts.c.bambini} bambini</span><b class="num display" style="font-size:28px">${fmt(Ts.tot)}</b></div>
+    <div class="small" style="color:var(--${Ts.tot > T.tot ? 'bad' : 'good'})">${Math.round(Ts.tot) === Math.round(T.tot) ? 'Uguale a oggi' : (Ts.tot > T.tot ? '+' : '−') + fmt(Math.abs(Ts.tot - T.tot)) + ' rispetto a oggi'}</div>`;
+}
+function vSpese(){
+  const T = totals(); const c = T.c;
+  return `
+  <h1>Spese</h1>
+  <p class="sub">${state.cats.reduce((a, k) => a + k.items.length, 0)} voci · subtotale <b class="num">${fmt(T.sub)}</b> + imprevisti ${fmt(T.imp)}</p>
+  ${state.cats.map(cat => {
+    const t = cat.items.reduce((a, it) => a + cost(it, c), 0); const open = ui.openCats.has(cat.id);
+    const paid = cat.items.reduce((a, it) => a + num(it.pagato), 0);
+    return `<section class="card cat ${open ? 'open' : ''}">
+      <div class="cat-head">
+        <button class="item-main" type="button" data-act="cat" data-id="${cat.id}" aria-expanded="${open}">${CHEV}<span class="t"><span>${esc(cat.nome)}</span><span class="meta">${cat.items.length} voci${paid ? ' · pagato ' + fmt(paid) : ''}</span></span><span class="amount num">${fmt(t)}</span></button>
+        <button class="x" type="button" data-act="del-cat" data-id="${cat.id}" aria-label="Rimuovi la categoria ${esc(cat.nome)}">${ICON_X}</button>
+      </div>
+      ${open ? `<div class="cat-body"><div class="list">${cat.items.map(it => itemRow(cat, it, c)).join('') || '<div class="empty">Nessuna voce in questa categoria.</div>'}</div>
+      <div class="cat-foot"><button class="btn plain" type="button" data-act="add-item" data-id="${cat.id}">+ Aggiungi voce</button><label class="f grow" for="rc-${cat.id}" style="min-width:180px">Nome della categoria<input id="rc-${cat.id}" data-rencat="${cat.id}" value="${esc(cat.nome)}"></label></div></div>` : ''}
+    </section>`;
+  }).join('')}
+  <div class="btns" style="margin-top:8px"><button class="btn" type="button" data-act="add-cat">+ Nuova categoria</button></div>
+  ${missingDefaults() ? `<p class="note">Hai rimosso ${missingDefaults()} voci predefinite. <button class="btn plain" type="button" data-act="restore" style="min-height:36px;padding:4px 6px">Ripristinale</button></p>` : ''}`;
+}
+function itemRow(cat, it, c){
+  const open = ui.openItem === it.id; const v = cost(it, c); const ml = multLabel(it, c);
+  const res = Math.max(0, v - num(it.pagato));
+  const P = PAGA();
+  const meta = [ml, it.fornitore ? esc(it.fornitore) : ''].filter(Boolean).join(' · ');
+  return `<div class="item ${open ? 'open' : ''}">
+    <div class="item-head">
+      <button class="item-main" type="button" data-act="item" data-id="${it.id}" aria-expanded="${open}">${CHEV}<span class="t"><span>${esc(it.nome)}</span><span class="meta">${meta || MODES[it.mode]}</span></span><span style="text-align:right"><span class="amount num" style="display:block">${fmt(v)}</span><span class="pill ${STATO_PILL[it.stato]}">${STATI[it.stato]}</span></span></button>
+      <button class="x" type="button" data-act="del-item" data-cat="${cat.id}" data-id="${it.id}" aria-label="Rimuovi ${esc(it.nome)}">${ICON_X}</button>
+    </div>
+    ${open ? `<div class="editor">
+      <label class="f full" for="n-${it.id}">Nome<input id="n-${it.id}" data-f="nome" data-item="${it.id}" value="${esc(it.nome)}"></label>
+      <label class="f" for="m-${it.id}">Calcolo<select id="m-${it.id}" data-f="mode" data-item="${it.id}">${Object.entries(MODES).map(([k, l]) => `<option value="${k}" ${k === it.mode ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+      <label class="f" for="q-${it.id}">Quantità<input id="q-${it.id}" data-f="qty" data-item="${it.id}" type="number" inputmode="decimal" min="1" step="1" value="${esc(it.qty)}"></label>
+      <label class="f" for="s-${it.id}">Prezzo stimato (€${it.mode === 'fisso' ? '' : ' cad.'})<input id="s-${it.id}" data-f="stima" data-item="${it.id}" type="number" inputmode="decimal" min="0" step="any" value="${esc(it.stima)}"></label>
+      <label class="f" for="p-${it.id}">Preventivo (€${it.mode === 'fisso' ? '' : ' cad.'})<input id="p-${it.id}" data-f="prev" data-item="${it.id}" type="number" inputmode="decimal" min="0" step="any" placeholder="Usa la stima" value="${esc(it.prev)}"></label>
+      <label class="f" for="st-${it.id}">Stato<select id="st-${it.id}" data-f="stato" data-item="${it.id}">${Object.entries(STATI).map(([k, l]) => `<option value="${k}" ${k === it.stato ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+      <label class="f" for="py-${it.id}">Chi paga<select id="py-${it.id}" data-f="paga" data-item="${it.id}">${Object.entries(P).map(([k, l]) => `<option value="${k}" ${k === it.paga ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></label>
+      <label class="f" for="pg-${it.id}">Già pagato (€)<input id="pg-${it.id}" data-f="pagato" data-item="${it.id}" type="number" inputmode="decimal" min="0" step="any" value="${esc(it.pagato)}"></label>
+      <label class="f" for="sc-${it.id}">Scadenza del saldo<input id="sc-${it.id}" data-f="scadenza" data-item="${it.id}" type="date" value="${esc(it.scadenza)}"></label>
+      <label class="f" for="fo-${it.id}">Fornitore<input id="fo-${it.id}" data-f="fornitore" data-item="${it.id}" value="${esc(it.fornitore)}"></label>
+      <label class="f" for="co-${it.id}">Contatto<input id="co-${it.id}" data-f="contatto" data-item="${it.id}" value="${esc(it.contatto)}" placeholder="Telefono o email"></label>
+      <label class="f full" for="no-${it.id}">Note<textarea id="no-${it.id}" data-f="note" data-item="${it.id}" placeholder="Cosa è incluso, extra, orari…">${esc(it.note)}</textarea></label>
+      <div class="full small muted num">Totale voce ${fmt(v)} · pagato ${fmt(it.pagato)} · resta ${fmt(res)}</div>
+    </div>` : ''}
+  </div>`;
+}
+function missingDefaults(){
+  let n = 0; const have = new Set(); state.cats.forEach(c => c.items.forEach(i => have.add(i.id)));
+  defaultCats().forEach(c => c.items.forEach(i => { if (!have.has(i.id)) n++; })); return n;
+}
+
+function vOspiti(){
+  const g = state.guests; const c = counts();
+  const conf = g.filter(x => x.rsvp === 'si').length, att = g.filter(x => x.rsvp === 'attesa').length, no = g.filter(x => x.rsvp === 'no').length;
+  const seg = `<div class="seg" role="tablist" aria-label="Vista ospiti">${[['lista','Lista'],['tavoli','Tavoli'],['esporta','Esporta']].map(([k, l]) => `<button type="button" role="tab" data-act="gseg" data-id="${k}" aria-selected="${ui.guestSeg === k}">${l}</button>`).join('')}</div>`;
+  let body = '';
+  if (ui.guestSeg === 'lista') {
+    const q = ui.q.trim().toLowerCase();
+    const list = q ? g.filter(x => [x.nome, x.nucleo, x.gruppo, x.allergie].join(' ').toLowerCase().includes(q)) : g;
+    body = `
+    <div class="counts"><span class="pill">${c.adulti} adulti${S().sposiInclusi ? ' (sposi inclusi)' : ''}</span><span class="pill">${c.bambini} bambini</span>${c.neonati ? `<span class="pill">${c.neonati} neonati</span>` : ''}<span class="pill good">${conf} sì</span><span class="pill warn">${att} in attesa</span><span class="pill bad">${no} no</span></div>
+    <div class="row" style="margin-bottom:12px"><input id="gq" type="search" placeholder="Cerca per nome, nucleo, gruppo" data-act="q" value="${esc(ui.q)}" aria-label="Cerca ospiti"></div>
+    <div class="btns" style="margin-bottom:12px"><button class="btn primary" type="button" data-act="add-guest">+ Aggiungi ospite</button><button class="btn" type="button" data-act="bulk">${ui.bulk ? 'Chiudi' : 'Incolla una lista'}</button></div>
+    ${ui.bulk ? `<div class="card pad" style="margin-bottom:12px;display:grid;gap:10px"><label class="f" for="bulkTxt">Un ospite per riga. Per raggrupparli in un nucleo, separa i nomi con una virgola: «Mario Rossi, Anna Bianchi».<textarea id="bulkTxt" placeholder="Mario Rossi, Anna Bianchi&#10;Zia Teresa&#10;Luca Verdi"></textarea></label><div class="btns"><button class="btn primary" type="button" data-act="bulk-add">Aggiungi alla lista</button></div></div>` : ''}
+    ${g.length ? `<div class="card list">${list.map(guestRow).join('') || '<div class="empty">Nessun ospite corrisponde alla ricerca.</div>'}</div>` :
+      `<div class="card empty"><b>La lista è vuota</b>Aggiungi gli ospiti uno alla volta o incolla un elenco. Finché la lista è vuota, i costi usano la stima di ${num(S().stimaAdulti)} adulti e ${num(S().stimaBambini)} bambini (la cambi in Altro › Impostazioni).</div>`}
+    <p class="note">Il «nucleo» raggruppa chi riceve la stessa partecipazione, per esempio «Famiglia Rossi». Gli ospiti con risposta «no» non entrano nei costi.</p>`;
+  } else if (ui.guestSeg === 'tavoli') {
+    const by = {}; g.filter(x => x.rsvp !== 'no').forEach(x => { const k = x.tavolo || ''; (by[k] = by[k] || []).push(x); });
+    const keys = Object.keys(by).filter(k => k).sort((a, b) => a.localeCompare(b, 'it', {numeric:true}));
+    const per = num(S().perTavolo) || 10;
+    body = `<p class="sub">Assegna il tavolo dalla scheda di ogni ospite. Capienza indicativa: ${per} posti (la cambi in Impostazioni).</p>
+    ${keys.length || by[''] ? `<div class="tables">${keys.map(k => `<div class="card"><div class="row pad" style="padding-bottom:8px"><b class="grow">Tavolo ${esc(k)}</b><span class="pill ${by[k].length > per ? 'bad' : ''}">${by[k].length}/${per}</span></div><ul>${by[k].map(x => `<li>${esc(x.nome)}${x.allergie ? ' <span class="pill warn">' + esc(x.allergie) + '</span>' : ''}</li>`).join('')}</ul></div>`).join('')}
+    ${by[''] ? `<div class="card"><div class="row pad" style="padding-bottom:8px"><b class="grow">Senza tavolo</b><span class="pill mute">${by[''].length}</span></div><ul>${by[''].map(x => `<li>${esc(x.nome)}</li>`).join('')}</ul></div>` : ''}</div>` : '<div class="card empty"><b>Nessun ospite</b>Aggiungi ospiti nella vista Lista per comporre i tavoli.</div>'}`;
+  } else {
+    const nuclei = groupNuclei().length;
+    body = `<p class="sub">Ogni file si apre in Excel o si usa in Word con la stampa unione.</p>
+    <div class="card list">
+      ${expRow('exp-guests','Lista ospiti completa','CSV con tutti i campi, ' + g.length + ' righe')}
+      ${expRow('exp-merge','Stampa unione partecipazioni','CSV, una riga per nucleo (' + nuclei + ' partecipazioni), con nomi e indirizzo')}
+      ${expRow('exp-labels','Etichette indirizzi','Testo pronto da stampare sulle buste')}
+      ${expRow('exp-tables','Tableau de mariage','Elenco ospiti per tavolo')}
+      ${expRow('exp-catering','Conteggi per il catering','Menu adulti e bambini, intolleranze e allergie')}
+      ${expRow('exp-rsvp','Chi deve ancora rispondere','Elenco con contatti, da usare per i solleciti')}
+    </div>
+    ${previewBox('guests')}`;
+  }
+  return `<h1>Ospiti</h1><p class="sub">${g.length} in lista${S().usaLista ? '' : ' · i costi usano la stima, non la lista'}</p>${seg}${body}`;
+}
+function expRow(act, t, d){ return `<div class="item"><div class="item-head" style="padding-right:12px"><span class="grow"><span style="display:block">${t}</span><span class="small muted">${d}</span></span><button class="btn" type="button" data-act="${act}">Esporta</button></div></div>`; }
+function guestRow(x){
+  const open = ui.openGuest === x.id;
+  const rp = {si:['good','Sì'], no:['bad','No'], attesa:['warn','In attesa']}[x.rsvp];
+  const meta = [x.nucleo, x.gruppo, x.tipo !== 'adulto' ? x.tipo : '', x.tavolo ? 'tavolo ' + x.tavolo : ''].filter(Boolean).map(esc).join(' · ');
+  return `<div class="item ${open ? 'open' : ''}">
+    <div class="item-head">
+      <button class="item-main" type="button" data-act="guest" data-id="${x.id}" aria-expanded="${open}">${CHEV}<span class="t"><span>${esc(x.nome) || '<span class="muted">Senza nome</span>'}</span><span class="meta">${meta || 'Tocca per aggiungere i dettagli'}</span></span><span class="pill ${rp[0]}">${rp[1]}</span></button>
+      <button class="x" type="button" data-act="del-guest" data-id="${x.id}" aria-label="Rimuovi ${esc(x.nome)}">${ICON_X}</button>
+    </div>
+    ${open ? `<div class="editor">
+      <label class="f full" for="gn-${x.id}">Nome e cognome<input id="gn-${x.id}" data-g="nome" data-id="${x.id}" value="${esc(x.nome)}" autocomplete="off"></label>
+      <label class="f" for="gnu-${x.id}">Nucleo (partecipazione)<input id="gnu-${x.id}" data-g="nucleo" data-id="${x.id}" value="${esc(x.nucleo)}" placeholder="Famiglia Rossi" list="nuclei"></label>
+      <label class="f" for="gg-${x.id}">Gruppo<input id="gg-${x.id}" data-g="gruppo" data-id="${x.id}" value="${esc(x.gruppo)}" placeholder="Parenti, amici, colleghi…" list="gruppi"></label>
+      <label class="f" for="gl-${x.id}">Invitato da<select id="gl-${x.id}" data-g="lato" data-id="${x.id}">${[['A', nome('A')], ['B', nome('B')], ['entrambi', 'Entrambi']].map(([k, l]) => `<option value="${k}" ${x.lato === k ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></label>
+      <label class="f" for="gt-${x.id}">Età<select id="gt-${x.id}" data-g="tipo" data-id="${x.id}">${[['adulto','Adulto'],['bambino','Bambino'],['neonato','Neonato (non paga)']].map(([k, l]) => `<option value="${k}" ${x.tipo === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+      <label class="f" for="gr-${x.id}">Risposta<select id="gr-${x.id}" data-g="rsvp" data-id="${x.id}">${[['attesa','In attesa'],['si','Sì, viene'],['no','No, non viene']].map(([k, l]) => `<option value="${k}" ${x.rsvp === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+      <label class="f" for="gta-${x.id}">Tavolo<input id="gta-${x.id}" data-g="tavolo" data-id="${x.id}" value="${esc(x.tavolo)}" placeholder="1, 2, Sposi…"></label>
+      <label class="f full" for="gi-${x.id}">Indirizzo<input id="gi-${x.id}" data-g="indirizzo" data-id="${x.id}" value="${esc(x.indirizzo)}" placeholder="Via, numero, CAP, città"></label>
+      <label class="f" for="gc-${x.id}">Telefono o email<input id="gc-${x.id}" data-g="contatto" data-id="${x.id}" value="${esc(x.contatto)}"></label>
+      <label class="f" for="ga-${x.id}">Allergie e intolleranze<input id="ga-${x.id}" data-g="allergie" data-id="${x.id}" value="${esc(x.allergie)}" placeholder="Celiachia, vegetariano…"></label>
+    </div>` : ''}
+  </div>`;
+}
+function datalists(){
+  const nu = [...new Set(state.guests.map(g => g.nucleo).filter(Boolean))], gr = [...new Set(['Parenti', 'Amici', 'Colleghi', ...state.guests.map(g => g.gruppo).filter(Boolean)])];
+  return `<datalist id="nuclei">${nu.map(n => `<option value="${esc(n)}">`).join('')}</datalist><datalist id="gruppi">${gr.map(n => `<option value="${esc(n)}">`).join('')}</datalist>`;
+}
+
+function vScadenze(){
+  const c = counts(); const today = new Date().toISOString().slice(0, 10);
+  const in30 = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
+  const rows = [];
+  state.cats.forEach(cat => cat.items.forEach(it => { const v = cost(it, c); const r = v - num(it.pagato); if (r > 0.5 && v > 0) rows.push({cat, it, v, r}); }));
+  rows.sort((a, b) => (a.it.scadenza || '9999') .localeCompare(b.it.scadenza || '9999') || b.r - a.r);
+  const dated = rows.filter(x => x.it.scadenza), undated = rows.filter(x => !x.it.scadenza);
+  const late = dated.filter(x => x.it.scadenza < today), soon = dated.filter(x => x.it.scadenza >= today && x.it.scadenza <= in30);
+  const sum = a => a.reduce((s, x) => s + x.r, 0);
+  const P = PAGA();
+  const perP = {}; rows.forEach(x => perP[x.it.paga] = (perP[x.it.paga] || 0) + x.r);
+  const row = x => { const d = x.it.scadenza; const cls = !d ? 'mute' : d < today ? 'bad' : d <= in30 ? 'warn' : '';
+    const dTxt = d ? new Date(d + 'T12:00:00').toLocaleDateString('it-IT', {day:'numeric', month:'short', year:'numeric'}) : 'Senza data';
+    return `<div class="item"><div class="item-head" style="padding-right:4px"><button class="item-main" type="button" data-act="goto-item" data-cat="${x.cat.id}" data-id="${x.it.id}"><span class="t"><span>${esc(x.it.nome)}</span><span class="meta">${esc(x.cat.nome)} · ${esc(P[x.it.paga])}${num(x.it.pagato) ? ' · pagato ' + fmt(x.it.pagato) : ''}</span></span><span style="text-align:right"><span class="amount num" style="display:block">${fmt(x.r)}</span><span class="pill ${cls}">${d && d < today ? 'Scaduta · ' : ''}${dTxt}</span></span></button><button class="btn plain small" type="button" data-act="paid" data-id="${x.it.id}" aria-label="Segna ${esc(x.it.nome)} come saldato">Saldato</button></div></div>`; };
+  return `<h1>Scadenze</h1><p class="sub">Restano da pagare <b class="num">${fmt(sum(rows))}</b>${late.length ? ` · <span style="color:var(--bad)">${late.length} scadute</span>` : ''}</p>
+  <div class="stats"><div class="stat"><span class="small muted">Scadute</span><b class="num" style="color:var(--${late.length ? 'bad' : 'fg'})">${fmt(sum(late))}</b></div><div class="stat"><span class="small muted">Entro 30 giorni</span><b class="num">${fmt(sum(soon))}</b></div><div class="stat"><span class="small muted">Senza data</span><b class="num">${fmt(sum(undated))}</b></div></div>
+  <h2>Pagamenti in ordine di scadenza</h2>
+  ${rows.length ? `<div class="card list">${rows.map(row).join('')}</div>` : '<div class="card empty"><b>Tutto saldato</b>Non ci sono pagamenti in sospeso.</div>'}
+  <p class="note">Imposta la data del saldo e l'importo già versato aprendo la voce nella scheda Spese. «Saldato» registra l'intero importo come pagato.</p>
+  ${Object.keys(perP).length ? `<h2>Da pagare per persona</h2><div class="card list">${Object.keys(perP).map(k => `<div class="item"><div class="item-head" style="padding-right:16px"><span class="grow">${esc(P[k])}</span><b class="num">${fmt(perP[k])}</b></div></div>`).join('')}</div>` : ''}
+  <div class="btns" style="margin-top:20px"><button class="btn" type="button" data-act="exp-pay">Esporta le scadenze (CSV)</button></div>
+  ${previewBox('pay')}`;
+}
+
+function vAltro(){
+  const seg = `<div class="seg" role="tablist" aria-label="Altro">${[['entrate','Entrate'],['checklist','Checklist'],['impostazioni','Impostazioni']].map(([k, l]) => `<button type="button" role="tab" data-act="aseg" data-id="${k}" aria-selected="${ui.altroSeg === k}">${l}</button>`).join('')}</div>`;
+  let body = '';
+  const T = totals();
+  if (ui.altroSeg === 'entrate') {
+    const est = Math.max(0, T.c.adulti - (S().sposiInclusi ? 2 : 0));
+    body = `<p class="sub">Quanto rientra, per capire la spesa reale a vostro carico.</p>
+    <div class="stats"><div class="stat"><span class="small muted">Totale entrate</span><b class="num">${fmt(T.entrate)}</b></div><div class="stat"><span class="small muted">Spesa totale</span><b class="num">${fmt(T.tot)}</b></div><div class="stat"><span class="small muted">A vostro carico</span><b class="num">${fmt(T.netto)}</b></div></div>
+    <h2>Buste regalo</h2>
+    <div class="card pad" style="display:grid;gap:12px">
+      <label class="f" for="busta">Busta media per adulto invitato (€)<input id="busta" type="number" inputmode="decimal" min="0" data-s="bustaMedia" value="${esc(S().bustaMedia)}"></label>
+      <div class="row small"><span class="grow muted">${est} adulti invitati × ${fmt(S().bustaMedia)}</span><b class="num">${fmt(T.buste)}</b></div>
+    </div>
+    <h2>Lista nozze</h2>
+    <div class="card pad"><label class="f" for="lnozze">Importo previsto (€)<input id="lnozze" type="number" inputmode="decimal" min="0" data-s="listaNozze" value="${esc(S().listaNozze)}"></label></div>
+    <h2>Contributi delle famiglie e altri</h2>
+    <div class="card list">${state.entrate.map(e => `<div class="item"><div class="item-head" style="gap:8px;padding-left:12px">
+      <input id="en-${e.id}" data-e="nome" data-id="${e.id}" value="${esc(e.nome)}" placeholder="Da chi" aria-label="Da chi" style="flex:2">
+      <input id="ei-${e.id}" data-e="importo" data-id="${e.id}" type="number" inputmode="decimal" min="0" value="${esc(e.importo)}" placeholder="€" aria-label="Importo" style="flex:1">
+      <button class="x" type="button" data-act="del-entrata" data-id="${e.id}" aria-label="Rimuovi contributo">${ICON_X}</button></div></div>`).join('') || '<div class="empty">Nessun contributo inserito.</div>'}
+      <div class="cat-foot"><button class="btn plain" type="button" data-act="add-entrata">+ Aggiungi contributo</button></div></div>`;
+  } else if (ui.altroSeg === 'checklist') {
+    const fasi = [...new Set(state.tasks.map(t => t.fase))]; const done = state.tasks.filter(t => t.fatto).length;
+    body = `<p class="sub">${done} di ${state.tasks.length} completate</p>
+    <div class="meter" role="img" aria-label="${done} di ${state.tasks.length} attività completate" style="margin-bottom:8px"><i style="width:${state.tasks.length ? done / state.tasks.length * 100 : 0}%"></i></div>
+    ${fasi.map(f => `<h2>${esc(f)}</h2><div class="card">${state.tasks.filter(t => t.fase === f).map(t => `<div class="task ${t.fatto ? 'done' : ''}"><label for="t-${t.id}"><input type="checkbox" id="t-${t.id}" data-act="task" data-id="${t.id}" ${t.fatto ? 'checked' : ''}><span class="grow">${esc(t.testo)}</span></label><button class="x" type="button" data-act="del-task" data-id="${t.id}" aria-label="Rimuovi ${esc(t.testo)}">${ICON_X}</button></div>`).join('')}</div>`).join('')}
+    <h2>Nuova attività</h2>
+    <div class="card pad" style="display:grid;gap:10px">
+      <label class="f" for="ntxt">Cosa fare<input id="ntxt" placeholder="Es. Scegliere il fotografo per la prova"></label>
+      <label class="f" for="nfase">Quando<select id="nfase">${fasi.map(f => `<option>${esc(f)}</option>`).join('')}</select></label>
+      <div class="btns"><button class="btn primary" type="button" data-act="add-task">Aggiungi</button></div>
+    </div>`;
+  } else {
+    const s = S();
+    body = `<div class="card pad editor" style="padding:16px">
+      <label class="f" for="sa">Primo sposo/a<input id="sa" data-s="nomeA" value="${esc(s.nomeA)}"></label>
+      <label class="f" for="sb">Secondo sposo/a<input id="sb" data-s="nomeB" value="${esc(s.nomeB)}" placeholder="Nome"></label>
+      <label class="f" for="sd">Data del matrimonio<input id="sd" type="date" data-s="data" value="${esc(s.data)}"></label>
+      <label class="f" for="sbu">Budget totale (€)<input id="sbu" type="number" inputmode="decimal" min="0" step="500" data-s="budget" value="${esc(s.budget)}"></label>
+      <label class="f" for="si">Margine imprevisti (%)<input id="si" type="number" inputmode="decimal" min="0" max="50" data-s="imprevisti" value="${esc(s.imprevisti)}"></label>
+      <label class="f" for="spt">Posti per tavolo<input id="spt" type="number" inputmode="numeric" min="2" max="30" data-s="perTavolo" value="${esc(s.perTavolo)}"></label>
+    </div>
+    <h2>Numero di ospiti per i costi</h2>
+    <div class="card">
+      <label class="task" for="sul" style="cursor:pointer"><span class="grow">Calcola dalla lista ospiti<span class="small muted" style="display:block">Se è vuota, usa la stima qui sotto</span></span><input type="checkbox" id="sul" data-s="usaLista" ${s.usaLista ? 'checked' : ''}></label>
+      <label class="task" for="ssi" style="cursor:pointer"><span class="grow">Conta anche gli sposi a tavola<span class="small muted" style="display:block">Aggiunge 2 coperti adulti</span></span><input type="checkbox" id="ssi" data-s="sposiInclusi" ${s.sposiInclusi ? 'checked' : ''}></label>
+      <div class="editor" style="padding-top:12px">
+        <label class="f" for="ssa">Adulti stimati (esclusi gli sposi)<input id="ssa" type="number" inputmode="numeric" min="0" data-s="stimaAdulti" value="${esc(s.stimaAdulti)}"></label>
+        <label class="f" for="ssb">Bambini stimati<input id="ssb" type="number" inputmode="numeric" min="0" data-s="stimaBambini" value="${esc(s.stimaBambini)}"></label>
+      </div>
+    </div>
+    <h2>Backup</h2>
+    <div class="card pad" style="display:grid;gap:12px">
+      <p class="small muted" style="margin:0">${syncBadge()}</p>
+      <div class="btns"><button class="btn" type="button" data-act="exp-json">Esporta backup</button><label class="btn" for="imp" style="cursor:pointer">Importa backup<input id="imp" type="file" accept=".json,application/json" data-act="imp" hidden></label></div>
+      ${missingDefaults() ? `<div class="btns"><button class="btn" type="button" data-act="restore">Ripristina ${missingDefaults()} voci di spesa rimosse</button></div>` : ''}
+      <div>${ui.confirmReset ? `<div class="confirm"><span class="small">Cancello spese, ospiti, entrate e checklist?</span><button class="btn danger" type="button" data-act="reset-yes">Cancella tutto</button><button class="btn plain" type="button" data-act="reset-no">Annulla</button></div>` : `<button class="btn danger" type="button" data-act="reset">Ricomincia da zero</button>`}</div>
+    </div>
+    ${previewBox('json')}`;
+  }
+  return `<h1>Altro</h1>${seg}${body}`;
+}
+
+/* ---------- esportazioni ---------- */
+const csvCell = v => { const s = String(v ?? ''); return /[;"\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+const csv = rows => '﻿' + rows.map(r => r.map(csvCell).join(';')).join('\r\n');
+const it2 = n => (Math.round((n || 0) * 100) / 100).toFixed(2).replace('.', ',');
+function groupNuclei(){
+  const m = new Map();
+  state.guests.forEach(g => { const k = (g.nucleo || '').trim() || ('__' + g.id); if (!m.has(k)) m.set(k, {nome:(g.nucleo || '').trim() || g.nome, membri:[], indirizzo:''}); const n = m.get(k); n.membri.push(g); if (!n.indirizzo && g.indirizzo) n.indirizzo = g.indirizzo; });
+  return [...m.values()];
+}
+const LATO = x => x === 'entrambi' ? 'Entrambi' : nome(x);
+const TIPO = {adulto:'Adulto', bambino:'Bambino', neonato:'Neonato'}, RSVP = {si:'Sì', no:'No', attesa:'In attesa'};
+function exporter(act){
+  const c = counts(); const P = PAGA();
+  switch (act) {
+    case 'exp-budget': {
+      const rows = [['Categoria','Voce','Calcolo','Prezzo stimato','Preventivo','Quantità','Moltiplicatore','Totale','Pagato','Residuo','Stato','Chi paga','Scadenza','Fornitore','Contatto','Note']];
+      state.cats.forEach(cat => cat.items.forEach(it => { const v = cost(it, c); rows.push([cat.nome, it.nome, MODES[it.mode], it2(num(it.stima)), it.prev === '' ? '' : it2(num(it.prev)), it.qty, ({fisso:1, adulto:c.adulti, bambino:c.bambini, ospite:c.ospiti, tavolo:c.tavoli})[it.mode], it2(v), it2(num(it.pagato)), it2(Math.max(0, v - num(it.pagato))), STATI[it.stato], P[it.paga], it.scadenza, it.fornitore, it.contatto, it.note]); }));
+      const T = totals(c); rows.push([]); rows.push(['','Subtotale','','','','','',it2(T.sub)]); rows.push(['','Imprevisti ' + num(S().imprevisti) + '%','','','','','',it2(T.imp)]); rows.push(['','Totale','','','','','',it2(T.tot)]);
+      return {key:'budget', name:'budget-matrimonio.csv', text:csv(rows), mime:'text/csv'};
+    }
+    case 'exp-guests': return {key:'guests', name:'ospiti-matrimonio.csv', mime:'text/csv', text:csv([['Nome','Nucleo','Gruppo','Invitato da','Età','Risposta','Tavolo','Indirizzo','Contatto','Allergie e intolleranze'], ...state.guests.map(g => [g.nome, g.nucleo, g.gruppo, LATO(g.lato), TIPO[g.tipo], RSVP[g.rsvp], g.tavolo, g.indirizzo, g.contatto, g.allergie])])};
+    case 'exp-merge': {
+      const rows = [['Destinatario','Nomi','Numero persone','Indirizzo','Saluto']];
+      groupNuclei().forEach(n => { const names = n.membri.map(m => m.nome); const saluto = names.length === 1 ? 'Caro/a ' + names[0].split(' ')[0] : 'Cari ' + names.map(x => x.split(' ')[0]).join(', ').replace(/, ([^,]*)$/, ' e $1'); rows.push([n.nome, names.join(', '), names.length, n.indirizzo, saluto]); });
+      return {key:'guests', name:'stampa-unione-partecipazioni.csv', text:csv(rows), mime:'text/csv'};
+    }
+    case 'exp-labels': {
+      const t = groupNuclei().map(n => [n.nome, ...(n.indirizzo ? n.indirizzo.split(',').map(s => s.trim()) : ['(indirizzo mancante)'])].join('\n')).join('\n\n');
+      return {key:'guests', name:'etichette-indirizzi.txt', text:t, mime:'text/plain'};
+    }
+    case 'exp-tables': {
+      const by = {}; state.guests.filter(g => g.rsvp !== 'no').forEach(g => { const k = g.tavolo || 'Senza tavolo'; (by[k] = by[k] || []).push(g.nome); });
+      const t = Object.keys(by).sort((a, b) => a.localeCompare(b, 'it', {numeric:true})).map(k => (k === 'Senza tavolo' ? k : 'Tavolo ' + k) + ' (' + by[k].length + ')\n' + by[k].map(n => '  ' + n).join('\n')).join('\n\n');
+      return {key:'guests', name:'tableau-de-mariage.txt', text:t || 'Nessun ospite.', mime:'text/plain'};
+    }
+    case 'exp-catering': {
+      const al = state.guests.filter(g => g.rsvp !== 'no' && g.allergie);
+      const t = `Conteggi per il catering\n\nAdulti: ${c.adulti}${S().sposiInclusi ? ' (sposi inclusi)' : ''}\nBambini: ${c.bambini}\nNeonati: ${c.neonati}\nTavoli: ${c.tavoli}\nPasti fornitori: vedi accordi\n\nAllergie e intolleranze (${al.length})\n` + (al.map(g => `- ${g.nome}${g.tavolo ? ' (tavolo ' + g.tavolo + ')' : ''}: ${g.allergie}`).join('\n') || '- nessuna segnalata');
+      return {key:'guests', name:'conteggi-catering.txt', text:t, mime:'text/plain'};
+    }
+    case 'exp-rsvp': {
+      const w = state.guests.filter(g => g.rsvp === 'attesa');
+      return {key:'guests', name:'da-sollecitare.txt', mime:'text/plain', text:'Ancora in attesa di risposta (' + w.length + ')\n\n' + (w.map(g => `- ${g.nome}${g.contatto ? ' · ' + g.contatto : ''}`).join('\n') || 'Nessuno.')};
+    }
+    case 'exp-pay': {
+      const rows = [['Scadenza','Voce','Categoria','Totale','Pagato','Da pagare','Chi paga','Fornitore','Contatto']];
+      state.cats.forEach(cat => cat.items.forEach(it => { const v = cost(it, c); const r = v - num(it.pagato); if (r > 0.5) rows.push([it.scadenza, it.nome, cat.nome, it2(v), it2(num(it.pagato)), it2(r), P[it.paga], it.fornitore, it.contatto]); }));
+      const head = rows.shift(); rows.sort((a, b) => (a[0] || '9999').localeCompare(b[0] || '9999')); rows.unshift(head);
+      return {key:'pay', name:'scadenze-pagamenti.csv', text:csv(rows), mime:'text/csv'};
+    }
+    case 'exp-json': return {key:'json', name:'backup-matrimonio.json', text:JSON.stringify(state, null, 2), mime:'application/json'};
+  }
+}
+async function offer(f){
+  ui.preview = f;
+  const dl = await downloadsP;
+  if (dl) {
+    try { await dl.save({filename:f.name, data:new Blob([f.text], {type:f.mime + ';charset=utf-8'})}); toast('File pronto: ' + f.name); ui.preview = null; render(); return; }
+    catch (e) { if (e && e.code === 'declined') { ui.preview = null; return; } }
+  }
+  if (!window.claude) {
+    try { const url = URL.createObjectURL(new Blob([f.text], {type:f.mime + ';charset=utf-8'})); const a = document.createElement('a'); a.href = url; a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000); ui.preview = null; toast('File scaricato: ' + f.name); render(); return; } catch (e) {}
+  }
+  render();
+}
+function previewBox(key){
+  const p = ui.preview; if (!p || p.key !== key) return '';
+  return `<div class="card pad preview"><div class="row" style="margin-bottom:8px"><b class="grow">${esc(p.name)}</b><button class="btn" type="button" data-act="copy">Copia</button><button class="x" type="button" data-act="close-prev" aria-label="Chiudi anteprima">${ICON_X}</button></div><textarea id="prevTxt" readonly aria-label="Contenuto del file">${esc(p.text.replace(/^﻿/, ''))}</textarea><p class="note" style="margin:8px 0 0">Il download non è disponibile qui: copia il testo e incollalo in un file ${esc(p.name.split('.').pop().toUpperCase())}.</p></div>`;
+}
+
+/* ---------- toast con annulla ---------- */
+let toastT = null, undoFn = null;
+function toast(msg, undo){
+  $('#toastText').textContent = msg; undoFn = undo || null; $('#toastBtn').hidden = !undo;
+  $('#toast').classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => { $('#toast').classList.remove('show'); undoFn = null; }, undo ? 6000 : 3000);
+}
+$('#toastBtn').addEventListener('click', () => { if (undoFn) { undoFn(); undoFn = null; } $('#toast').classList.remove('show'); });
+
+/* ---------- eventi ---------- */
+const findItem = id => { for (const c of state.cats) { const i = c.items.findIndex(x => x.id === id); if (i > -1) return {cat:c, idx:i, it:c.items[i]}; } return null; };
+const NUMF = new Set(['stima','pagato','qty','budget','imprevisti','stimaAdulti','stimaBambini','perTavolo','bustaMedia','listaNozze','importo']);
+
+document.addEventListener('click', e => {
+  const tab = e.target.closest('[data-tab]');
+  if (tab) { ui.tab = tab.dataset.tab; ui.preview = null; try { history.replaceState(null, '', '#' + ui.tab); } catch (_) {} render(); window.scrollTo(0, 0); return; }
+  const b = e.target.closest('[data-act]'); if (!b || b.tagName === 'INPUT') return;
+  const id = b.dataset.id, act = b.dataset.act;
+  switch (act) {
+    case 'cat': ui.openCats.has(id) ? ui.openCats.delete(id) : ui.openCats.add(id); render(); break;
+    case 'item': ui.openItem = ui.openItem === id ? null : id; render(); break;
+    case 'guest': ui.openGuest = ui.openGuest === id ? null : id; render(); break;
+    case 'del-cat': { const i = state.cats.findIndex(c => c.id === id); const old = state.cats[i]; state.cats.splice(i, 1); save('spese'); render(); toast('Categoria «' + old.nome + '» rimossa', () => { state.cats.splice(i, 0, old); save('spese'); render(); }); break; }
+    case 'del-item': { const f = findItem(id); f.cat.items.splice(f.idx, 1); save('spese'); render(); toast('«' + f.it.nome + '» rimossa', () => { f.cat.items.splice(f.idx, 0, f.it); save('spese'); render(); }); break; }
+    case 'add-item': { const cat = state.cats.find(c => c.id === id); const it = I('u-' + uid(), 'Nuova voce', 'fisso', 0); cat.items.push(it); ui.openItem = it.id; save('spese'); render(); const el = document.getElementById('n-' + it.id); if (el) { el.focus(); el.select(); } break; }
+    case 'add-cat': { const cat = {id:'u-' + uid(), nome:'Nuova categoria', items:[]}; state.cats.push(cat); ui.openCats.add(cat.id); save('spese'); render(); { const inp = document.getElementById('rc-' + cat.id); if (inp) { inp.focus(); inp.select(); } } break; }
+    case 'restore': { const def = defaultCats(); const have = new Set(); state.cats.forEach(c => c.items.forEach(i => have.add(i.id)));
+      def.forEach(dc => { let cat = state.cats.find(c => c.id === dc.id); const miss = dc.items.filter(i => !have.has(i.id)); if (!miss.length) return; if (!cat) { cat = {id:dc.id, nome:dc.nome, items:[]}; state.cats.push(cat); } miss.forEach(i => cat.items.push(i)); });
+      save('spese'); render(); toast('Voci predefinite ripristinate'); break; }
+    case 'scen': break;
+    case 'gseg': ui.guestSeg = id; ui.preview = null; render(); break;
+    case 'aseg': ui.altroSeg = id; ui.preview = null; render(); break;
+    case 'add-guest': { const g = {id:uid(), nome:'', nucleo:'', gruppo:'', lato:'entrambi', tipo:'adulto', rsvp:'attesa', indirizzo:'', contatto:'', allergie:'', tavolo:''}; state.guests.unshift(g); ui.openGuest = g.id; ui.q = ''; save('ospiti'); render(); const el = document.getElementById('gn-' + g.id); if (el) el.focus(); break; }
+    case 'bulk': ui.bulk = !ui.bulk; render(); if (ui.bulk) $('#bulkTxt').focus(); break;
+    case 'bulk-add': { const lines = $('#bulkTxt').value.split(/\r?\n/).map(s => s.trim()).filter(Boolean); let n = 0;
+      lines.forEach(l => { const names = l.split(',').map(s => s.trim()).filter(Boolean); const nucleo = names.length > 1 ? 'Famiglia ' + (names[0].split(' ').slice(-1)[0]) : '';
+        names.forEach(nm => { state.guests.push({id:uid(), nome:nm, nucleo, gruppo:'', lato:'entrambi', tipo:'adulto', rsvp:'attesa', indirizzo:'', contatto:'', allergie:'', tavolo:''}); n++; }); });
+      ui.bulk = false; save('ospiti'); render(); toast(n + (n === 1 ? ' ospite aggiunto' : ' ospiti aggiunti')); break; }
+    case 'del-guest': { const i = state.guests.findIndex(g => g.id === id); const old = state.guests[i]; state.guests.splice(i, 1); save('ospiti'); render(); toast((old.nome || 'Ospite') + ' rimosso', () => { state.guests.splice(i, 0, old); save('ospiti'); render(); }); break; }
+    case 'goto-item': { ui.tab = 'spese'; ui.openCats.add(b.dataset.cat); ui.openItem = id; render(); const el = document.getElementById('sc-' + id); if (el) { el.scrollIntoView({block:'center'}); el.focus({preventScroll:true}); } break; }
+    case 'paid': { const f = findItem(id); const prevPaid = f.it.pagato, prevStato = f.it.stato; f.it.pagato = Math.round(cost(f.it, counts()) * 100) / 100; f.it.stato = 'saldato'; save('spese'); render(); toast('«' + f.it.nome + '» saldato', () => { f.it.pagato = prevPaid; f.it.stato = prevStato; save('spese'); render(); }); break; }
+    case 'add-entrata': state.entrate.push({id:uid(), nome:'', importo:''}); save('base'); render(); { const el = document.getElementById('en-' + state.entrate[state.entrate.length - 1].id); if (el) el.focus(); } break;
+    case 'del-entrata': { const i = state.entrate.findIndex(x => x.id === id); const old = state.entrate[i]; state.entrate.splice(i, 1); save('base'); render(); toast('Contributo rimosso', () => { state.entrate.splice(i, 0, old); save('base'); render(); }); break; }
+    case 'del-task': { const i = state.tasks.findIndex(x => x.id === id); const old = state.tasks[i]; state.tasks.splice(i, 1); save('checklist'); render(); toast('Attività rimossa', () => { state.tasks.splice(i, 0, old); save('checklist'); render(); }); break; }
+    case 'add-task': { const t = $('#ntxt').value.trim(); if (!t) { $('#ntxt').focus(); return; } const fase = $('#nfase').value; let idx = -1; state.tasks.forEach((x, i) => { if (x.fase === fase) idx = i; }); state.tasks.splice(idx + 1, 0, {id:uid(), fase, testo:t, fatto:false}); save('checklist'); render(); toast('Attività aggiunta'); break; }
+    case 'reset': ui.confirmReset = true; render(); break;
+    case 'reset-no': ui.confirmReset = false; render(); break;
+    case 'reset-yes': { const old = clone(state); state = defaultState(); ui.confirmReset = false; Object.keys(DOCS).forEach(save); render(); toast('Dati cancellati', () => { state = old; Object.keys(DOCS).forEach(save); render(); }); break; }
+    case 'copy': { const ta = $('#prevTxt'); const txt = ta.value; const ok = () => toast('Copiato negli appunti'); const fb = () => { ta.focus(); ta.select(); toast('Testo selezionato: copialo con Ctrl+C'); };
+      try { navigator.clipboard.writeText(txt).then(ok, fb); } catch (_) { fb(); } break; }
+    case 'close-prev': ui.preview = null; render(); break;
+    default: if (act && act.startsWith('exp-')) { const f = exporter(act); if (f) offer(f); }
+  }
+});
+
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.dataset.act === 'scen') { ui.scen = +t.value; const o = $('#scenOut'); if (o) o.innerHTML = scenOut(ui.scen); return; }
+  if (t.dataset.act === 'q') { ui.q = t.value; render(); return; }
+  if (t.dataset.item) { const f = findItem(t.dataset.item); if (!f) return; const k = t.dataset.f; f.it[k] = k === 'prev' ? (t.value === '' ? '' : num(t.value)) : NUMF.has(k) ? num(t.value) : t.value; save('spese'); return; }
+  if (t.dataset.g) { const g = state.guests.find(x => x.id === t.dataset.id); if (g) { g[t.dataset.g] = t.value; save('ospiti'); } return; }
+  if (t.dataset.e) { const x = state.entrate.find(y => y.id === t.dataset.id); if (x) { x[t.dataset.e] = t.dataset.e === 'importo' ? num(t.value) : t.value; save('base'); } return; }
+  if (t.dataset.s && t.type !== 'checkbox') { const k = t.dataset.s; state.settings[k] = NUMF.has(k) ? num(t.value) : t.value; save('base'); return; }
+  if (t.dataset.rencat) { const c = state.cats.find(x => x.id === t.dataset.rencat); if (c) { c.nome = t.value; save('spese'); } }
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.act === 'task') { const x = state.tasks.find(y => y.id === t.dataset.id); x.fatto = t.checked; save('checklist'); render(); return; }
+  if (t.dataset.s && t.type === 'checkbox') { state.settings[t.dataset.s] = t.checked; save('base'); render(); return; }
+  if (t.dataset.act === 'imp') { const file = t.files && t.files[0]; if (!file) return; const r = new FileReader();
+    r.onload = () => { try { const o = JSON.parse(r.result); if (!o || !Array.isArray(o.cats)) throw 0; const old = clone(state); state = Object.assign(defaultState(), o); state.settings = Object.assign(defaultState().settings, o.settings); Object.keys(DOCS).forEach(save); render(); toast('Backup importato', () => { state = old; Object.keys(DOCS).forEach(save); render(); }); } catch (_) { toast('Questo file non è un backup del matrimonio: scegli il file .json esportato da qui'); } };
+    r.readAsText(file); return; }
+  if (t.dataset.rencat || (t.matches('input,select,textarea') && (t.dataset.item || t.dataset.g || t.dataset.e || t.dataset.s))) setTimeout(render, 0);
+});
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.dataset && e.target.dataset.rencat) e.target.blur(); if (e.key === 'Enter' && e.target.id === 'ntxt') document.querySelector('[data-act="add-task"]').click(); });
+
+document.body.insertAdjacentHTML('beforeend', '<div id="dl"></div>');
+const renderDL = () => { $('#dl').innerHTML = datalists(); };
+const _render = render; render = function(){ _render(); renderDL(); };
+render();
+})();
+</script>
+
+</body>
+</html>

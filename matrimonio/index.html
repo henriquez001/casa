@@ -333,14 +333,20 @@ const S = () => state.settings;
 const nome = w => w === 'A' ? (S().nomeA || 'Sposo/a 1') : (S().nomeB || 'Sposo/a 2');
 const PAGA = () => ({coppia:'Coppia', famA:'Famiglia di ' + nome('A'), famB:'Famiglia di ' + nome('B'), altro:'Altro'});
 
+const isFam = g => g.kind === 'famiglia';
+function size(g){
+  if (isFam(g)) return {a:Math.max(0, num(g.adulti)), b:Math.max(0, num(g.bambini)), n:Math.max(0, num(g.neonati))};
+  return {a:g.tipo === 'adulto' ? 1 : 0, b:g.tipo === 'bambino' ? 1 : 0, n:g.tipo === 'neonato' ? 1 : 0};
+}
+const people = g => { const z = size(g); return z.a + z.b + z.n; };
+const sumPeople = list => list.reduce((t, g) => t + people(g), 0);
 function counts(adultOverride){
   let adulti, bambini, neonati = 0, fromList = false;
   const g = state.guests.filter(x => x.rsvp !== 'no');
   if (S().usaLista && state.guests.length) {
     fromList = true;
-    adulti = g.filter(x => x.tipo === 'adulto').length + (S().sposiInclusi ? 2 : 0);
-    bambini = g.filter(x => x.tipo === 'bambino').length;
-    neonati = g.filter(x => x.tipo === 'neonato').length;
+    adulti = (S().sposiInclusi ? 2 : 0); bambini = 0;
+    g.forEach(x => { const z = size(x); adulti += z.a; bambini += z.b; neonati += z.n; });
   } else {
     adulti = num(S().stimaAdulti) + (S().sposiInclusi ? 2 : 0);
     bambini = num(S().stimaBambini);
@@ -521,7 +527,8 @@ function missingDefaults(){
 
 function vOspiti(){
   const g = state.guests; const c = counts();
-  const conf = g.filter(x => x.rsvp === 'si').length, att = g.filter(x => x.rsvp === 'attesa').length, no = g.filter(x => x.rsvp === 'no').length;
+  const conf = sumPeople(g.filter(x => x.rsvp === 'si')), att = sumPeople(g.filter(x => x.rsvp === 'attesa')), no = sumPeople(g.filter(x => x.rsvp === 'no'));
+  const famN = g.filter(isFam).length, totP = sumPeople(g);
   const seg = `<div class="seg" role="tablist" aria-label="Vista ospiti">${[['lista','Lista'],['tavoli','Tavoli'],['esporta','Esporta']].map(([k, l]) => `<button type="button" role="tab" data-act="gseg" data-id="${k}" aria-selected="${ui.guestSeg === k}">${l}</button>`).join('')}</div>`;
   let body = '';
   if (ui.guestSeg === 'lista') {
@@ -530,23 +537,23 @@ function vOspiti(){
     body = `
     <div class="counts"><span class="pill">${c.adulti} adulti${S().sposiInclusi ? ' (sposi inclusi)' : ''}</span><span class="pill">${c.bambini} bambini</span>${c.neonati ? `<span class="pill">${c.neonati} neonati</span>` : ''}<span class="pill good">${conf} sì</span><span class="pill warn">${att} in attesa</span><span class="pill bad">${no} no</span></div>
     <div class="row" style="margin-bottom:12px"><input id="gq" type="search" placeholder="Cerca per nome, nucleo, gruppo" data-act="q" value="${esc(ui.q)}" aria-label="Cerca ospiti"></div>
-    <div class="btns" style="margin-bottom:12px"><button class="btn primary" type="button" data-act="add-guest">+ Aggiungi ospite</button><button class="btn" type="button" data-act="bulk">${ui.bulk ? 'Chiudi' : 'Incolla una lista'}</button></div>
-    ${ui.bulk ? `<div class="card pad" style="margin-bottom:12px;display:grid;gap:10px"><label class="f" for="bulkTxt">Un ospite per riga. Per raggrupparli in un nucleo, separa i nomi con una virgola: «Mario Rossi, Anna Bianchi».<textarea id="bulkTxt" placeholder="Mario Rossi, Anna Bianchi&#10;Zia Teresa&#10;Luca Verdi"></textarea></label><div class="btns"><button class="btn primary" type="button" data-act="bulk-add">Aggiungi alla lista</button></div></div>` : ''}
+    <div class="btns" style="margin-bottom:12px"><button class="btn primary" type="button" data-act="add-guest">+ Persona</button><button class="btn primary" type="button" data-act="add-fam">+ Famiglia</button><button class="btn" type="button" data-act="bulk">${ui.bulk ? 'Chiudi' : 'Incolla una lista'}</button></div>
+    ${ui.bulk ? `<div class="card pad" style="margin-bottom:12px;display:grid;gap:10px"><label class="f" for="bulkTxt">Una riga per ospite o per famiglia. Per una famiglia scrivi il cognome e i componenti: «Famiglia Rossi 4», oppure «Famiglia Rossi 3+1» per 3 adulti e 1 bambino. Per raggruppare persone singole in un nucleo, separa i nomi con una virgola.<textarea id="bulkTxt" placeholder="Famiglia Rossi 3+1&#10;Famiglia Bianchi 2&#10;Zia Teresa&#10;Luca Verdi, Sara Neri"></textarea></label><div class="btns"><button class="btn primary" type="button" data-act="bulk-add">Aggiungi alla lista</button></div></div>` : ''}
     ${g.length ? `<div class="card list">${list.map(guestRow).join('') || '<div class="empty">Nessun ospite corrisponde alla ricerca.</div>'}</div>` :
-      `<div class="card empty"><b>La lista è vuota</b>Aggiungi gli ospiti uno alla volta o incolla un elenco. Finché la lista è vuota, i costi usano la stima di ${num(S().stimaAdulti)} adulti e ${num(S().stimaBambini)} bambini (la cambi in Altro › Impostazioni).</div>`}
-    <p class="note">Il «nucleo» raggruppa chi riceve la stessa partecipazione, per esempio «Famiglia Rossi». Gli ospiti con risposta «no» non entrano nei costi.</p>`;
+      `<div class="card empty"><b>La lista è vuota</b>Aggiungi persone singole o famiglie intere, oppure incolla un elenco. Finché la lista è vuota, i costi usano la stima di ${num(S().stimaAdulti)} adulti e ${num(S().stimaBambini)} bambini (la cambi in Altro › Impostazioni).</div>`}
+    <p class="note">Una famiglia è una sola voce con il numero dei componenti e riceve una partecipazione. Per le persone singole, il «nucleo» raggruppa chi riceve la stessa partecipazione. Chi risponde «no» non entra nei costi.</p>`;
   } else if (ui.guestSeg === 'tavoli') {
     const by = {}; g.filter(x => x.rsvp !== 'no').forEach(x => { const k = x.tavolo || ''; (by[k] = by[k] || []).push(x); });
     const keys = Object.keys(by).filter(k => k).sort((a, b) => a.localeCompare(b, 'it', {numeric:true}));
     const per = num(S().perTavolo) || 10;
     body = `<p class="sub">Assegna il tavolo dalla scheda di ogni ospite. Capienza indicativa: ${per} posti (la cambi in Impostazioni).</p>
-    ${keys.length || by[''] ? `<div class="tables">${keys.map(k => `<div class="card"><div class="row pad" style="padding-bottom:8px"><b class="grow">Tavolo ${esc(k)}</b><span class="pill ${by[k].length > per ? 'bad' : ''}">${by[k].length}/${per}</span></div><ul>${by[k].map(x => `<li>${esc(x.nome)}${x.allergie ? ' <span class="pill warn">' + esc(x.allergie) + '</span>' : ''}</li>`).join('')}</ul></div>`).join('')}
-    ${by[''] ? `<div class="card"><div class="row pad" style="padding-bottom:8px"><b class="grow">Senza tavolo</b><span class="pill mute">${by[''].length}</span></div><ul>${by[''].map(x => `<li>${esc(x.nome)}</li>`).join('')}</ul></div>` : ''}</div>` : '<div class="card empty"><b>Nessun ospite</b>Aggiungi ospiti nella vista Lista per comporre i tavoli.</div>'}`;
+    ${keys.length || by[''] ? `<div class="tables">${keys.map(k => `<div class="card"><div class="row pad" style="padding-bottom:8px"><b class="grow">Tavolo ${esc(k)}</b><span class="pill ${sumPeople(by[k]) > per ? 'bad' : ''}">${sumPeople(by[k])}/${per}</span></div><ul>${by[k].map(x => `<li>${esc(x.nome)}${isFam(x) ? ' (' + people(x) + ')' : ''}${x.allergie ? ' <span class="pill warn">' + esc(x.allergie) + '</span>' : ''}</li>`).join('')}</ul></div>`).join('')}
+    ${by[''] ? `<div class="card"><div class="row pad" style="padding-bottom:8px"><b class="grow">Senza tavolo</b><span class="pill mute">${sumPeople(by[''])}</span></div><ul>${by[''].map(x => `<li>${esc(x.nome)}${isFam(x) ? ' (' + people(x) + ')' : ''}</li>`).join('')}</ul></div>` : ''}</div>` : '<div class="card empty"><b>Nessun ospite</b>Aggiungi ospiti nella vista Lista per comporre i tavoli.</div>'}`;
   } else {
     const nuclei = groupNuclei().length;
     body = `<p class="sub">Ogni file si apre in Excel o si usa in Word con la stampa unione.</p>
     <div class="card list">
-      ${expRow('exp-guests','Lista ospiti completa','CSV con tutti i campi, ' + g.length + ' righe')}
+      ${expRow('exp-guests','Lista ospiti completa','CSV con tutti i campi, ' + g.length + ' righe, ' + sumPeople(g) + ' persone')}
       ${expRow('exp-merge','Stampa unione partecipazioni','CSV, una riga per nucleo (' + nuclei + ' partecipazioni), con nomi e indirizzo')}
       ${expRow('exp-labels','Etichette indirizzi','Testo pronto da stampare sulle buste')}
       ${expRow('exp-tables','Tableau de mariage','Elenco ospiti per tavolo')}
@@ -555,24 +562,30 @@ function vOspiti(){
     </div>
     ${previewBox('guests')}`;
   }
-  return `<h1>Ospiti</h1><p class="sub">${g.length} in lista${S().usaLista ? '' : ' · i costi usano la stima, non la lista'}</p>${seg}${body}`;
+  return `<h1>Ospiti</h1><p class="sub">${totP} persone${famN ? ' in ' + g.length + ' voci, di cui ' + famN + (famN === 1 ? ' famiglia' : ' famiglie') : ''}${S().usaLista ? '' : ' · i costi usano la stima, non la lista'}</p>${seg}${body}`;
 }
 function expRow(act, t, d){ return `<div class="item"><div class="item-head" style="padding-right:12px"><span class="grow"><span style="display:block">${t}</span><span class="small muted">${d}</span></span><button class="btn" type="button" data-act="${act}">Esporta</button></div></div>`; }
 function guestRow(x){
   const open = ui.openGuest === x.id;
   const rp = {si:['good','Sì'], no:['bad','No'], attesa:['warn','In attesa']}[x.rsvp];
-  const meta = [x.nucleo, x.gruppo, x.tipo !== 'adulto' ? x.tipo : '', x.tavolo ? 'tavolo ' + x.tavolo : ''].filter(Boolean).map(esc).join(' · ');
+  const z = size(x);
+  const famTxt = isFam(x) ? people(x) + (people(x) === 1 ? ' persona' : ' persone') + ' (' + [z.a ? z.a + (z.a === 1 ? ' adulto' : ' adulti') : '', z.b ? z.b + (z.b === 1 ? ' bambino' : ' bambini') : '', z.n ? z.n + (z.n === 1 ? ' neonato' : ' neonati') : ''].filter(Boolean).join(', ') + ')' : '';
+  const meta = [famTxt, isFam(x) ? '' : x.nucleo, x.gruppo, !isFam(x) && x.tipo !== 'adulto' ? x.tipo : '', x.tavolo ? 'tavolo ' + x.tavolo : ''].filter(Boolean).map(esc).join(' · ');
   return `<div class="item ${open ? 'open' : ''}">
     <div class="item-head">
       <button class="item-main" type="button" data-act="guest" data-id="${x.id}" aria-expanded="${open}">${CHEV}<span class="t"><span>${esc(x.nome) || '<span class="muted">Senza nome</span>'}</span><span class="meta">${meta || 'Tocca per aggiungere i dettagli'}</span></span><span class="pill ${rp[0]}">${rp[1]}</span></button>
       <button class="x" type="button" data-act="del-guest" data-id="${x.id}" aria-label="Rimuovi ${esc(x.nome)}">${ICON_X}</button>
     </div>
     ${open ? `<div class="editor">
-      <label class="f full" for="gn-${x.id}">Nome e cognome<input id="gn-${x.id}" data-g="nome" data-id="${x.id}" value="${esc(x.nome)}" autocomplete="off"></label>
-      <label class="f" for="gnu-${x.id}">Nucleo (partecipazione)<input id="gnu-${x.id}" data-g="nucleo" data-id="${x.id}" value="${esc(x.nucleo)}" placeholder="Famiglia Rossi" list="nuclei"></label>
+      ${isFam(x) ? `<label class="f full" for="gn-${x.id}">Nome della famiglia<input id="gn-${x.id}" data-g="nome" data-id="${x.id}" value="${esc(x.nome)}" placeholder="Famiglia Rossi" autocomplete="off"></label>
+      <label class="f" for="gfa-${x.id}">Adulti<input id="gfa-${x.id}" data-g="adulti" data-id="${x.id}" type="number" inputmode="numeric" min="0" step="1" value="${esc(x.adulti)}"></label>
+      <label class="f" for="gfb-${x.id}">Bambini<input id="gfb-${x.id}" data-g="bambini" data-id="${x.id}" type="number" inputmode="numeric" min="0" step="1" value="${esc(x.bambini)}"></label>
+      <label class="f" for="gfn-${x.id}">Neonati (non pagano)<input id="gfn-${x.id}" data-g="neonati" data-id="${x.id}" type="number" inputmode="numeric" min="0" step="1" value="${esc(x.neonati)}"></label>
+      <label class="f" for="gfm-${x.id}">Nomi dei componenti (facoltativo)<input id="gfm-${x.id}" data-g="membri" data-id="${x.id}" value="${esc(x.membri || '')}" placeholder="Mario, Anna, Luca"></label>` : `<label class="f full" for="gn-${x.id}">Nome e cognome<input id="gn-${x.id}" data-g="nome" data-id="${x.id}" value="${esc(x.nome)}" autocomplete="off"></label>
+      <label class="f" for="gnu-${x.id}">Nucleo (partecipazione)<input id="gnu-${x.id}" data-g="nucleo" data-id="${x.id}" value="${esc(x.nucleo)}" placeholder="Famiglia Rossi" list="nuclei"></label>`}
       <label class="f" for="gg-${x.id}">Gruppo<input id="gg-${x.id}" data-g="gruppo" data-id="${x.id}" value="${esc(x.gruppo)}" placeholder="Parenti, amici, colleghi…" list="gruppi"></label>
       <label class="f" for="gl-${x.id}">Invitato da<select id="gl-${x.id}" data-g="lato" data-id="${x.id}">${[['A', nome('A')], ['B', nome('B')], ['entrambi', 'Entrambi']].map(([k, l]) => `<option value="${k}" ${x.lato === k ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></label>
-      <label class="f" for="gt-${x.id}">Età<select id="gt-${x.id}" data-g="tipo" data-id="${x.id}">${[['adulto','Adulto'],['bambino','Bambino'],['neonato','Neonato (non paga)']].map(([k, l]) => `<option value="${k}" ${x.tipo === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+      ${isFam(x) ? '' : `<label class="f" for="gt-${x.id}">Età<select id="gt-${x.id}" data-g="tipo" data-id="${x.id}">${[['adulto','Adulto'],['bambino','Bambino'],['neonato','Neonato (non paga)']].map(([k, l]) => `<option value="${k}" ${x.tipo === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>`}
       <label class="f" for="gr-${x.id}">Risposta<select id="gr-${x.id}" data-g="rsvp" data-id="${x.id}">${[['attesa','In attesa'],['si','Sì, viene'],['no','No, non viene']].map(([k, l]) => `<option value="${k}" ${x.rsvp === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
       <label class="f" for="gta-${x.id}">Tavolo<input id="gta-${x.id}" data-g="tavolo" data-id="${x.id}" value="${esc(x.tavolo)}" placeholder="1, 2, Sposi…"></label>
       <label class="f full" for="gi-${x.id}">Indirizzo<input id="gi-${x.id}" data-g="indirizzo" data-id="${x.id}" value="${esc(x.indirizzo)}" placeholder="Via, numero, CAP, città"></label>
@@ -680,7 +693,7 @@ const csv = rows => '﻿' + rows.map(r => r.map(csvCell).join(';')).join('\r\n')
 const it2 = n => (Math.round((n || 0) * 100) / 100).toFixed(2).replace('.', ',');
 function groupNuclei(){
   const m = new Map();
-  state.guests.forEach(g => { const k = (g.nucleo || '').trim() || ('__' + g.id); if (!m.has(k)) m.set(k, {nome:(g.nucleo || '').trim() || g.nome, membri:[], indirizzo:''}); const n = m.get(k); n.membri.push(g); if (!n.indirizzo && g.indirizzo) n.indirizzo = g.indirizzo; });
+  state.guests.forEach(g => { const k = isFam(g) ? ('__f' + g.id) : ((g.nucleo || '').trim() || ('__' + g.id)); if (!m.has(k)) m.set(k, {nome:isFam(g) ? g.nome : ((g.nucleo || '').trim() || g.nome), membri:[], indirizzo:'', fam:isFam(g) ? g : null}); const n = m.get(k); n.membri.push(g); if (!n.indirizzo && g.indirizzo) n.indirizzo = g.indirizzo; });
   return [...m.values()];
 }
 const LATO = x => x === 'entrambi' ? 'Entrambi' : nome(x);
@@ -694,10 +707,12 @@ function exporter(act){
       const T = totals(c); rows.push([]); rows.push(['','Subtotale','','','','','',it2(T.sub)]); rows.push(['','Imprevisti ' + num(S().imprevisti) + '%','','','','','',it2(T.imp)]); rows.push(['','Totale','','','','','',it2(T.tot)]);
       return {key:'budget', name:'budget-matrimonio.csv', text:csv(rows), mime:'text/csv'};
     }
-    case 'exp-guests': return {key:'guests', name:'ospiti-matrimonio.csv', mime:'text/csv', text:csv([['Nome','Nucleo','Gruppo','Invitato da','Età','Risposta','Tavolo','Indirizzo','Contatto','Allergie e intolleranze'], ...state.guests.map(g => [g.nome, g.nucleo, g.gruppo, LATO(g.lato), TIPO[g.tipo], RSVP[g.rsvp], g.tavolo, g.indirizzo, g.contatto, g.allergie])])};
+    case 'exp-guests': return {key:'guests', name:'ospiti-matrimonio.csv', mime:'text/csv', text:csv([['Nome','Tipo','Persone','Adulti','Bambini','Neonati','Componenti','Nucleo','Gruppo','Invitato da','Risposta','Tavolo','Indirizzo','Contatto','Allergie e intolleranze'], ...state.guests.map(g => { const z = size(g); return [g.nome, isFam(g) ? 'Famiglia' : TIPO[g.tipo], people(g), z.a, z.b, z.n, g.membri || '', isFam(g) ? g.nome : g.nucleo, g.gruppo, LATO(g.lato), RSVP[g.rsvp], g.tavolo, g.indirizzo, g.contatto, g.allergie]; })])};
     case 'exp-merge': {
       const rows = [['Destinatario','Nomi','Numero persone','Indirizzo','Saluto']];
-      groupNuclei().forEach(n => { const names = n.membri.map(m => m.nome); const saluto = names.length === 1 ? 'Caro/a ' + names[0].split(' ')[0] : 'Cari ' + names.map(x => x.split(' ')[0]).join(', ').replace(/, ([^,]*)$/, ' e $1'); rows.push([n.nome, names.join(', '), names.length, n.indirizzo, saluto]); });
+      groupNuclei().forEach(n => {
+        if (n.fam) { const f = n.fam; const fn = f.nome.replace(/^famiglia\s+/i, ''); rows.push([f.nome, f.membri || '', people(f), n.indirizzo, 'Cara famiglia ' + fn]); return; }
+        const names = n.membri.map(m => m.nome); const saluto = names.length === 1 ? 'Caro/a ' + names[0].split(' ')[0] : 'Cari ' + names.map(x => x.split(' ')[0]).join(', ').replace(/, ([^,]*)$/, ' e $1'); rows.push([n.nome, names.join(', '), names.length, n.indirizzo, saluto]); });
       return {key:'guests', name:'stampa-unione-partecipazioni.csv', text:csv(rows), mime:'text/csv'};
     }
     case 'exp-labels': {
@@ -705,8 +720,8 @@ function exporter(act){
       return {key:'guests', name:'etichette-indirizzi.txt', text:t, mime:'text/plain'};
     }
     case 'exp-tables': {
-      const by = {}; state.guests.filter(g => g.rsvp !== 'no').forEach(g => { const k = g.tavolo || 'Senza tavolo'; (by[k] = by[k] || []).push(g.nome); });
-      const t = Object.keys(by).sort((a, b) => a.localeCompare(b, 'it', {numeric:true})).map(k => (k === 'Senza tavolo' ? k : 'Tavolo ' + k) + ' (' + by[k].length + ')\n' + by[k].map(n => '  ' + n).join('\n')).join('\n\n');
+      const by = {}; state.guests.filter(g => g.rsvp !== 'no').forEach(g => { const k = g.tavolo || 'Senza tavolo'; (by[k] = by[k] || []).push(g); });
+      const t = Object.keys(by).sort((a, b) => a.localeCompare(b, 'it', {numeric:true})).map(k => (k === 'Senza tavolo' ? k : 'Tavolo ' + k) + ' (' + sumPeople(by[k]) + ')\n' + by[k].map(g => '  ' + g.nome + (isFam(g) ? ' (' + people(g) + (g.membri ? ': ' + g.membri : '') + ')' : '')).join('\n')).join('\n\n');
       return {key:'guests', name:'tableau-de-mariage.txt', text:t || 'Nessun ospite.', mime:'text/plain'};
     }
     case 'exp-catering': {
@@ -716,7 +731,7 @@ function exporter(act){
     }
     case 'exp-rsvp': {
       const w = state.guests.filter(g => g.rsvp === 'attesa');
-      return {key:'guests', name:'da-sollecitare.txt', mime:'text/plain', text:'Ancora in attesa di risposta (' + w.length + ')\n\n' + (w.map(g => `- ${g.nome}${g.contatto ? ' · ' + g.contatto : ''}`).join('\n') || 'Nessuno.')};
+      return {key:'guests', name:'da-sollecitare.txt', mime:'text/plain', text:'Ancora in attesa di risposta (' + w.length + ' voci, ' + sumPeople(w) + ' persone)\n\n' + (w.map(g => `- ${g.nome}${isFam(g) ? ' (' + people(g) + ')' : ''}${g.contatto ? ' · ' + g.contatto : ''}`).join('\n') || 'Nessuno.')};
     }
     case 'exp-pay': {
       const rows = [['Scadenza','Voce','Categoria','Totale','Pagato','Da pagare','Chi paga','Fornitore','Contatto']];
@@ -782,11 +797,14 @@ document.addEventListener('click', e => {
     case 'gseg': ui.guestSeg = id; ui.preview = null; render(); break;
     case 'aseg': ui.altroSeg = id; ui.preview = null; render(); break;
     case 'add-guest': { const g = {id:uid(), nome:'', nucleo:'', gruppo:'', lato:'entrambi', tipo:'adulto', rsvp:'attesa', indirizzo:'', contatto:'', allergie:'', tavolo:''}; state.guests.unshift(g); ui.openGuest = g.id; ui.q = ''; save('ospiti'); render(); const el = document.getElementById('gn-' + g.id); if (el) el.focus(); break; }
+    case 'add-fam': { const g = {id:uid(), kind:'famiglia', nome:'Famiglia ', adulti:2, bambini:0, neonati:0, membri:'', nucleo:'', gruppo:'', lato:'entrambi', tipo:'adulto', rsvp:'attesa', indirizzo:'', contatto:'', allergie:'', tavolo:''}; state.guests.unshift(g); ui.openGuest = g.id; ui.q = ''; save('ospiti'); render(); const el = document.getElementById('gn-' + g.id); if (el) { el.focus(); try { el.setSelectionRange(el.value.length, el.value.length); } catch (_) {} } break; }
     case 'bulk': ui.bulk = !ui.bulk; render(); if (ui.bulk) $('#bulkTxt').focus(); break;
     case 'bulk-add': { const lines = $('#bulkTxt').value.split(/\r?\n/).map(s => s.trim()).filter(Boolean); let n = 0;
-      lines.forEach(l => { const names = l.split(',').map(s => s.trim()).filter(Boolean); const nucleo = names.length > 1 ? 'Famiglia ' + (names[0].split(' ').slice(-1)[0]) : '';
+      lines.forEach(l => { const fm = l.match(/^(famiglia\s+.+?)\s+(\d+)(?:\s*\+\s*(\d+))?$/i);
+        if (fm) { state.guests.push({id:uid(), kind:'famiglia', nome:fm[1].replace(/^famiglia/i, 'Famiglia'), adulti:+fm[2], bambini:+(fm[3] || 0), neonati:0, membri:'', nucleo:'', gruppo:'', lato:'entrambi', tipo:'adulto', rsvp:'attesa', indirizzo:'', contatto:'', allergie:'', tavolo:''}); n++; return; }
+        const names = l.split(',').map(s => s.trim()).filter(Boolean); const nucleo = names.length > 1 ? 'Famiglia ' + (names[0].split(' ').slice(-1)[0]) : '';
         names.forEach(nm => { state.guests.push({id:uid(), nome:nm, nucleo, gruppo:'', lato:'entrambi', tipo:'adulto', rsvp:'attesa', indirizzo:'', contatto:'', allergie:'', tavolo:''}); n++; }); });
-      ui.bulk = false; save('ospiti'); render(); toast(n + (n === 1 ? ' ospite aggiunto' : ' ospiti aggiunti')); break; }
+      ui.bulk = false; save('ospiti'); render(); toast(n + (n === 1 ? ' voce aggiunta' : ' voci aggiunte')); break; }
     case 'del-guest': { const i = state.guests.findIndex(g => g.id === id); const old = state.guests[i]; state.guests.splice(i, 1); save('ospiti'); render(); toast((old.nome || 'Ospite') + ' rimosso', () => { state.guests.splice(i, 0, old); save('ospiti'); render(); }); break; }
     case 'goto-item': { ui.tab = 'spese'; ui.openCats.add(b.dataset.cat); ui.openItem = id; render(); const el = document.getElementById('sc-' + id); if (el) { el.scrollIntoView({block:'center'}); el.focus({preventScroll:true}); } break; }
     case 'paid': { const f = findItem(id); const prevPaid = f.it.pagato, prevStato = f.it.stato; f.it.pagato = Math.round(cost(f.it, counts()) * 100) / 100; f.it.stato = 'saldato'; save('spese'); render(); toast('«' + f.it.nome + '» saldato', () => { f.it.pagato = prevPaid; f.it.stato = prevStato; save('spese'); render(); }); break; }
@@ -811,7 +829,7 @@ document.addEventListener('input', e => {
   if (t.dataset.act === 'scen') { ui.scen = +t.value; const o = $('#scenOut'); if (o) o.innerHTML = scenOut(ui.scen); return; }
   if (t.dataset.act === 'q') { ui.q = t.value; render(); return; }
   if (t.dataset.item) { const f = findItem(t.dataset.item); if (!f) return; const k = t.dataset.f; f.it[k] = k === 'prev' ? (t.value === '' ? '' : num(t.value)) : NUMF.has(k) ? num(t.value) : t.value; save('spese'); return; }
-  if (t.dataset.g) { const g = state.guests.find(x => x.id === t.dataset.id); if (g) { g[t.dataset.g] = t.value; save('ospiti'); } return; }
+  if (t.dataset.g) { const g = state.guests.find(x => x.id === t.dataset.id); if (g) { const k = t.dataset.g; g[k] = ['adulti','bambini','neonati'].includes(k) ? Math.max(0, Math.round(num(t.value))) : t.value; save('ospiti'); } return; }
   if (t.dataset.e) { const x = state.entrate.find(y => y.id === t.dataset.id); if (x) { x[t.dataset.e] = t.dataset.e === 'importo' ? num(t.value) : t.value; save('base'); } return; }
   if (t.dataset.s && t.type !== 'checkbox') { const k = t.dataset.s; state.settings[k] = NUMF.has(k) ? num(t.value) : t.value; save('base'); return; }
   if (t.dataset.rencat) { const c = state.cats.find(x => x.id === t.dataset.rencat); if (c) { c.nome = t.value; save('spese'); } }

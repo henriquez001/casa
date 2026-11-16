@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="app-version" content="20261116094500">
+<meta name="app-version" content="20261116115000">
 <title>Conti del Matrimonio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -158,6 +158,17 @@ input[type=range]{padding:0;border:0;background:none;accent-color:var(--accent)}
 .sync{font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
 .sync i{width:7px;height:7px;border-radius:50%;background:var(--muted)}
 .sync.ok i{background:var(--good)} .sync.err i{background:var(--bad)}
+.sync.busy i{background:var(--ochre)} .sync.key i{background:var(--bad)}
+.ghc{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px;background:rgba(46,53,40,.32);opacity:0;transition:opacity .2s ease-out}
+.ghc.show{opacity:1}
+.ghc-box{width:min(100%,340px);background:var(--surface);color:var(--fg);border-radius:18px;padding:20px 16px 12px;box-shadow:0 12px 40px rgba(46,53,40,.25);transform:scale(.96);transition:transform .32s cubic-bezier(.2,.9,.25,1);text-align:center}
+.ghc.show .ghc-box{transform:scale(1)}
+.ghc-box h3{margin:0 0 6px;font-size:17px;font-weight:700}
+.ghc-box p{margin:0 0 16px;font-size:15px;color:var(--muted)}
+.ghc-box .btn{width:100%;justify-content:center;margin-top:8px}
+.ghc-box .btn.primary{font-weight:700}
+.gh-row{display:flex;flex-wrap:wrap;gap:8px} a.btn{text-decoration:none}
+@media (prefers-reduced-motion: reduce){.ghc,.ghc-box{transition:opacity .2s linear}.ghc-box,.ghc.show .ghc-box{transform:none}}
 .task{display:flex;align-items:center;gap:12px;min-height:52px;padding:4px 4px 4px 16px;border-top:1px solid var(--line)}
 .task:first-child{border-top:0}
 .task.done .grow{color:var(--muted);text-decoration:line-through}
@@ -176,6 +187,7 @@ table.scen thead th{border-top:0;color:var(--muted);font-weight:600;font-size:13
 <body>
 
 <div class="wrap" id="app"></div>
+<div class="ghc" id="ghc" role="alertdialog" aria-modal="true" aria-labelledby="ghcT" aria-describedby="ghcP" hidden><div class="ghc-box"><h3 id="ghcT"></h3><p id="ghcP"></p><button class="btn primary" type="button" id="ghcRemote">Usa i dati online</button><button class="btn" type="button" id="ghcLocal">Tieni quelli di questo dispositivo</button></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"><span id="toastText"></span><button id="toastBtn" type="button" hidden>Annulla</button></div>
 <div class="tabbar"><nav role="tablist" aria-label="Sezioni" id="tabs"></nav></div>
 
@@ -298,7 +310,7 @@ let db = null, syncState = 'local';
 const lastJson = {}, inflight = {}, again = {}, timers = {};
 const sliceJson = k => { const o = {}; DOCS[k].forEach(f => o[f] = state[f]); return JSON.stringify(o); };
 function saveLocal(){ try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {} }
-function save(k){ saveLocal(); if (!db) return; clearTimeout(timers[k]); timers[k] = setTimeout(() => { timers[k] = null; flush(k); }, 700); }
+function save(k){ saveLocal(); everSaved = true; ghTouch(); if (!db) return; clearTimeout(timers[k]); timers[k] = setTimeout(() => { timers[k] = null; flush(k); }, 700); }
 async function flush(k){
   if (inflight[k]) { again[k] = true; return; }
   const j = sliceJson(k); if (j === lastJson[k]) return;
@@ -311,7 +323,7 @@ async function flush(k){
   } finally { inflight[k] = false; if (again[k]) { again[k] = false; flush(k); } }
 }
 function setSync(s){ syncState = s; const el = $('#sync'); if (el) { el.className = 'sync ' + s; el.lastElementChild.textContent = syncLabel(); } }
-const syncLabel = () => ({local:'Salvato in questo browser', ok:'Salvato e sincronizzato', err:'Sincronizzazione non riuscita, salvato qui'})[syncState];
+const syncLabel = () => ({local:'Salvato solo su questo dispositivo', ok: db ? 'Salvato e sincronizzato' : 'Salvato online', busy:'Salvataggio online…', err: db ? 'Sincronizzazione non riuscita, salvato qui' : 'Archivio online non raggiungibile, salvato qui', key:'Chiave GitHub non valida o scaduta, salvato qui'})[syncState];
 
 (async () => {
   if (!window.claude || !window.claude.use) return;
@@ -331,6 +343,118 @@ const syncLabel = () => ({local:'Salvato in questo browser', ok:'Salvato e sincr
   });
 })();
 let pendingRender = false;
+
+/* ---------- salvataggio online su un archivio GitHub privato ---------- */
+// Fuori da Claude i dati vanno in un file JSON di un archivio GitHub privato:
+// iPhone e PC leggono e scrivono lo stesso file. La chiave resta solo su questo dispositivo.
+const GHK = 'conti-matrimonio-github', GH_FILE = 'dati-matrimonio.json';
+let gh = null; try { gh = JSON.parse(localStorage.getItem(GHK) || 'null'); } catch (e) {}
+let everSaved = hasLocal, ghTimer = null, ghBusy = false, ghAgain = false, ghRev = 0, ghWhen = null, ghConflict = null;
+const ghStore = () => { try { gh ? localStorage.setItem(GHK, JSON.stringify(gh)) : localStorage.removeItem(GHK); } catch (e) {} };
+const b64e = t => { const b = new TextEncoder().encode(t); let s = ''; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(s); };
+const b64d = t => new TextDecoder().decode(Uint8Array.from(atob(String(t).replace(/\s/g, '')), c => c.charCodeAt(0)));
+const ghDevice = () => /iPhone|iPad/.test(navigator.userAgent) ? 'iPhone' : /Android/.test(navigator.userAgent) ? 'Android' : 'PC';
+const normState = o => { const n = Object.assign(defaultState(), o); n.settings = Object.assign(defaultState().settings, o.settings); return n; };
+function ghFetch(url, token, opt){
+  opt = opt || {};
+  return fetch(url, {method:opt.method || 'GET', cache:'no-store', headers:Object.assign({'Authorization':'Bearer ' + token, 'Accept':'application/vnd.github+json'}, opt.body ? {'Content-Type':'application/json'} : {}), body:opt.body ? JSON.stringify(opt.body) : undefined});
+}
+const ghUrl = () => 'https://api.github.com/repos/' + gh.repo + '/contents/' + GH_FILE;
+async function ghPull(){
+  const r = await ghFetch(ghUrl(), gh.token);
+  if (r.status === 404) return null;
+  if (!r.ok) throw r.status;
+  const j = await r.json(); return {sha:j.sha, text:b64d(j.content)};
+}
+async function ghPush(sha){
+  const rev = ghRev;
+  const body = {message:'Aggiornamento dal ' + ghDevice(), content:b64e(JSON.stringify(state, null, 1))}; if (sha) body.sha = sha;
+  const r = await ghFetch(ghUrl(), gh.token, {method:'PUT', body});
+  if (r.status === 409 || r.status === 422) return false; // un altro dispositivo ha salvato prima
+  if (!r.ok) throw r.status;
+  const j = await r.json(); gh.sha = j.content.sha; gh.dirty = ghRev !== rev; ghStore(); ghWhen = new Date();
+  if (gh.dirty) ghAgain = true;
+  return true;
+}
+function ghAdopt(text, sha){
+  state = normState(JSON.parse(text)); saveLocal(); gh.sha = sha; gh.dirty = false; ghStore(); ghWhen = new Date();
+  if (!isEditing()) render(); else pendingRender = true;
+}
+function ghTouch(){
+  if (!gh || db) return;
+  gh.dirty = true; ghRev++; ghStore();
+  clearTimeout(ghTimer); ghTimer = setTimeout(() => { ghTimer = null; ghSync(); }, 1500);
+}
+async function ghSync(){
+  if (!gh || db) return;
+  if (ghBusy) { ghAgain = true; return; }
+  if (ghConflict || ghTimer) return;
+  ghBusy = true; if (gh.dirty) setSync('busy');
+  try {
+    const rem = await ghPull();
+    if (!rem) { if (!(await ghPush(null))) ghAgain = true; }
+    else if (rem.sha === gh.sha) { if (gh.dirty) { if (!(await ghPush(rem.sha))) ghAgain = true; } else ghWhen = new Date(); }
+    else {
+      const o = JSON.parse(rem.text); if (!o || !Array.isArray(o.cats)) throw 'formato';
+      const same = JSON.stringify(normState(o)) === JSON.stringify(state);
+      if (same) { gh.sha = rem.sha; gh.dirty = false; ghStore(); ghWhen = new Date(); }
+      else if (!gh.dirty && (gh.sha || !everSaved)) ghAdopt(rem.text, rem.sha);
+      else ghAsk(rem, !gh.sha);
+    }
+    setSync(gh.dirty ? 'busy' : 'ok');
+  } catch (e) {
+    setSync(e === 401 ? 'key' : 'err');
+  } finally {
+    ghBusy = false;
+    if (ghAgain) { ghAgain = false; setTimeout(ghSync, 300); }
+    if (ui.tab === 'altro' && !isEditing()) render();
+  }
+}
+// Avviso quando qui e online ci sono due versioni diverse (HIG, Alerts: titolo breve, due scelte, quella consigliata in grassetto)
+function ghAsk(rem, first){
+  ghConflict = rem;
+  $('#ghcT').textContent = first ? 'Online ci sono già dei dati' : 'I dati sono cambiati altrove';
+  $('#ghcP').textContent = first
+    ? 'L\'archivio contiene già i dati del matrimonio. Vuoi usare quelli o sostituirli con quelli di questo dispositivo?'
+    : 'Un altro dispositivo ha salvato delle modifiche mentre qui ne facevi altre. Quale versione vuoi tenere?';
+  $('#ghcLocal').textContent = first ? 'Sostituiscili con questi' : 'Tieni quelli di questo dispositivo';
+  const el = $('#ghc'); el.hidden = false; requestAnimationFrame(() => el.classList.add('show')); $('#ghcRemote').focus();
+}
+function ghClose(){ const el = $('#ghc'); el.classList.remove('show'); setTimeout(() => { el.hidden = true; }, 200); ghConflict = null; }
+$('#ghcRemote').addEventListener('click', () => {
+  const rem = ghConflict; if (!rem) return; const old = clone(state); ghClose();
+  ghAdopt(rem.text, rem.sha); setSync('ok');
+  toast('Ora usi i dati online', () => { state = old; saveLocal(); render(); ghTouch(); });
+});
+$('#ghcLocal').addEventListener('click', async () => {
+  const rem = ghConflict; if (!rem) return; ghClose();
+  gh.sha = rem.sha; gh.dirty = true; ghRev++; ghStore(); ghSync();
+});
+async function ghConnect(){
+  const repo = String(ui.ghRepo == null ? 'henriquez001/matrimonio-dati' : ui.ghRepo).trim().replace(/^https?:\/\/github\.com\//i, '').replace(/\.git$/i, '').replace(/\/+$/, '');
+  const token = String(ui.ghTok || '').trim();
+  if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) { toast('Scrivi l\'archivio come nome-utente/nome-archivio'); const el = $('#ghRepo'); if (el) el.focus(); return; }
+  if (!token) { toast('Incolla la chiave che hai creato su GitHub'); const el = $('#ghTok'); if (el) el.focus(); return; }
+  ui.ghWork = true; render();
+  try {
+    let r; try { r = await ghFetch('https://api.github.com/repos/' + repo, token); } catch (e) { throw 'Non riesco a raggiungere GitHub: controlla la connessione'; }
+    if (r.status === 401) throw 'La chiave non è valida: controlla di averla copiata tutta';
+    if (r.status === 404 || r.status === 403) throw 'Con questa chiave non vedo l\'archivio: controlla il nome e che la chiave lo includa';
+    if (!r.ok) throw 'GitHub non risponde, riprova tra poco';
+    const info = await r.json();
+    if (!info.private) throw 'Questo archivio è pubblico: per i dati degli invitati usane uno privato';
+    gh = {repo, token, sha:null, dirty:false}; ghStore(); ui.ghTok = '';
+    ui.ghWork = false; await ghSync();
+    if (syncState === 'ok') toast('Collegato: i dati ora si salvano online');
+    else if (syncState === 'err' || syncState === 'key') toast('Collegato, ma il salvataggio non è riuscito: la chiave deve avere Contents in Read and write');
+  } catch (m) { toast(typeof m === 'string' ? m : 'Collegamento non riuscito, riprova'); }
+  ui.ghWork = false; render();
+}
+function ghDisconnect(){ gh = null; ghStore(); ui.ghOff = false; setSync('local'); render(); toast('Questo dispositivo non salva più online'); }
+if (gh) { syncState = gh.dirty ? 'busy' : 'ok'; setTimeout(ghSync, 0); }
+document.addEventListener('visibilitychange', () => { if (!document.hidden) ghSync(); });
+window.addEventListener('online', () => ghSync());
+setInterval(() => { if (!document.hidden && gh && !gh.dirty) ghSync(); }, 60000);
 const isEditing = () => { const a = document.activeElement; return a && /INPUT|TEXTAREA|SELECT/.test(a.tagName); };
 document.addEventListener('focusout', () => setTimeout(() => { if (pendingRender && !isEditing()) { pendingRender = false; render(); } }, 0));
 
@@ -419,6 +543,19 @@ function render(){
 }
 
 /* ---------- viste ---------- */
+function ghSection(){
+  if (db) return `<p class="small" style="margin:0">${syncBadge()}</p><p class="small muted" style="margin:0">In questa versione i dati sono salvati nel database di Claude.</p>`;
+  if (!gh) return `<p class="small muted" style="margin:0">Salva i dati in un tuo archivio GitHub privato: su iPhone e PC trovi sempre gli stessi dati, senza esportare.</p>
+      <label class="f" for="ghRepo">Archivio<input id="ghRepo" autocapitalize="off" autocorrect="off" spellcheck="false" value="${esc(ui.ghRepo == null ? 'henriquez001/matrimonio-dati' : ui.ghRepo)}"></label>
+      <label class="f" for="ghTok">Chiave di accesso<input id="ghTok" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="github_pat_…" value="${esc(ui.ghTok || '')}"></label>
+      <div class="btns"><button class="btn primary" type="button" data-act="gh-connect" ${ui.ghWork ? 'disabled' : ''}>${ui.ghWork ? 'Collegamento…' : 'Collega'}</button></div>`;
+  const t = ghWhen ? ghWhen.toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'}) : '';
+  return `<p class="small" style="margin:0">${syncBadge()}</p>
+      <p class="small muted" style="margin:0">Archivio <b>${esc(gh.repo)}</b>${t ? ' · ultimo controllo alle ' + t : ''}</p>
+      ${syncState === 'key' ? `<p class="small" style="margin:0;color:var(--bad)">La chiave non funziona più: creane una nuova su GitHub, scollega questo dispositivo e ricollegalo con la chiave nuova.</p>` : ''}
+      <div class="gh-row"><button class="btn" type="button" data-act="gh-sync">Sincronizza ora</button><a class="btn" href="https://github.com/${esc(gh.repo)}/commits/HEAD/${GH_FILE}" target="_blank" rel="noopener">Storico delle modifiche</a></div>
+      <div>${ui.ghOff ? `<div class="confirm"><span class="small">Scollego questo dispositivo? I dati restano qui e online.</span><button class="btn danger" type="button" data-act="gh-off-yes">Scollega</button><button class="btn plain" type="button" data-act="gh-off-no">Annulla</button></div>` : `<button class="btn plain" type="button" data-act="gh-off">Scollega questo dispositivo</button>`}</div>`;
+}
 function syncBadge(){ return `<span class="sync ${syncState}" id="sync"><i></i><span>${syncLabel()}</span></span>`; }
 function daysLeft(){ if (!S().data) return null; const d = new Date(S().data + 'T12:00:00'); const n = new Date(); n.setHours(12,0,0,0); return Math.round((d - n) / 864e5); }
 
@@ -745,9 +882,11 @@ function vAltro(){
         <label class="f" for="ssb">Bambini stimati<input id="ssb" type="number" inputmode="numeric" min="0" data-s="stimaBambini" value="${esc(s.stimaBambini)}"></label>
       </div>
     </div>
+    <h2>Salvataggio online</h2>
+    <div class="card pad" style="display:grid;gap:12px">${ghSection()}</div>
     <h2>Backup</h2>
     <div class="card pad" style="display:grid;gap:12px">
-      <p class="small muted" style="margin:0">${syncBadge()}</p>
+      <p class="small muted" style="margin:0">Una copia dei dati in un file, da tenere da parte.</p>
       <div class="btns"><button class="btn" type="button" data-act="exp-json">Esporta backup</button><label class="btn" for="imp" style="cursor:pointer">Importa backup<input id="imp" type="file" data-act="imp" hidden></label><button class="btn" type="button" data-act="paste">${ui.paste ? 'Chiudi' : 'Incolla backup'}</button></div>
       ${ui.paste ? `<div style="display:grid;gap:10px"><label class="f" for="pasteTxt">Incolla qui tutto il testo del backup, dalla prima { all'ultima }<textarea id="pasteTxt" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder='{"settings": …}'></textarea></label><div class="btns"><button class="btn primary" type="button" data-act="paste-go">Importa il testo</button></div></div>` : ''}
       ${missingDefaults() ? `<div class="btns"><button class="btn" type="button" data-act="restore">Ripristina ${missingDefaults()} voci di spesa rimosse</button></div>` : ''}
@@ -883,6 +1022,11 @@ document.addEventListener('click', e => {
     case 'del-entrata': { const i = state.entrate.findIndex(x => x.id === id); const old = state.entrate[i]; state.entrate.splice(i, 1); save('base'); render(); toast('Contributo rimosso', () => { state.entrate.splice(i, 0, old); save('base'); render(); }); break; }
     case 'del-task': { const i = state.tasks.findIndex(x => x.id === id); const old = state.tasks[i]; state.tasks.splice(i, 1); save('checklist'); render(); toast('Attività rimossa', () => { state.tasks.splice(i, 0, old); save('checklist'); render(); }); break; }
     case 'add-task': { const t = $('#ntxt').value.trim(); if (!t) { $('#ntxt').focus(); return; } const fase = $('#nfase').value; let idx = -1; state.tasks.forEach((x, i) => { if (x.fase === fase) idx = i; }); state.tasks.splice(idx + 1, 0, {id:uid(), fase, testo:t, fatto:false}); save('checklist'); render(); toast('Attività aggiunta'); break; }
+    case 'gh-connect': ghConnect(); break;
+    case 'gh-sync': ghSync(); toast('Controllo l\'archivio online…'); break;
+    case 'gh-off': ui.ghOff = true; render(); break;
+    case 'gh-off-no': ui.ghOff = false; render(); break;
+    case 'gh-off-yes': ghDisconnect(); break;
     case 'paste': ui.paste = !ui.paste; render(); if (ui.paste) $('#pasteTxt').focus(); break;
     case 'paste-go': { const v = $('#pasteTxt').value; if (!v.trim()) { $('#pasteTxt').focus(); return; } importText(v, 'Il testo non è un backup completo: copia tutto, dalla prima { all\'ultima }'); break; }
     case 'reset': ui.confirmReset = true; render(); break;
@@ -897,6 +1041,8 @@ document.addEventListener('click', e => {
 
 document.addEventListener('input', e => {
   const t = e.target;
+  if (t.id === 'ghRepo') { ui.ghRepo = t.value; return; }
+  if (t.id === 'ghTok') { ui.ghTok = t.value; return; }
   if (t.dataset.act === 'scen') { ui.scen = +t.value; const o = $('#scenOut'); if (o) o.innerHTML = scenOut(ui.scen); return; }
   if (t.dataset.act === 'q') { ui.q = t.value; render(); return; }
   if (t.dataset.item) { const f = findItem(t.dataset.item); if (!f) return; const k = t.dataset.f; f.it[k] = k === 'prev' ? (t.value === '' ? '' : num(t.value)) : NUMF.has(k) ? num(t.value) : t.value; save('spese'); return; }
@@ -914,7 +1060,7 @@ document.addEventListener('change', e => {
     r.readAsText(file); return; }
   if (t.dataset.rencat || (t.matches('input,select,textarea') && (t.dataset.item || t.dataset.g || t.dataset.e || t.dataset.s))) setTimeout(render, 0);
 });
-document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.dataset && e.target.dataset.rencat) e.target.blur(); if (e.key === 'Enter' && e.target.id === 'ntxt') document.querySelector('[data-act="add-task"]').click(); });
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'ghTok') ghConnect(); if (e.key === 'Enter' && e.target.dataset && e.target.dataset.rencat) e.target.blur(); if (e.key === 'Enter' && e.target.id === 'ntxt') document.querySelector('[data-act="add-task"]').click(); });
 
 document.body.insertAdjacentHTML('beforeend', '<div id="dl"></div>');
 const renderDL = () => { $('#dl').innerHTML = datalists(); };

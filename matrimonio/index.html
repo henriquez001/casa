@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png?v=4">
 <link rel="icon" type="image/png" href="icon-192.png?v=4">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="app-version" content="20261116122500">
+<meta name="app-version" content="20261116200000">
 <title>Conti del Matrimonio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -733,6 +733,7 @@ function vPareggio(T){
   if (!ok) {
     leve.push(`<li><b>Busta media di ${fmt(bNeed)}</b> per adulto invece di ${fmt(B)}, con gli ospiti di oggi.</li>`);
     if (be) leve.push(`<li><b>${be} adulti invitati</b> invece di ${ext}: ogni invitato in più porta ${fmt(m)} in più di quanto costa.</li>`);
+    else if (m >= 1) { const extra = Math.ceil(gap / m); leve.push(`<li><b>Circa ${ext + extra} adulti invitati</b> invece di ${ext}: ogni invitato in più porta ${fmt(B)} di busta e costa circa ${fmt(marg)}, quindi copre ${fmt(m)} del buco. Servirebbero ${extra} invitati in più, per questo da soli gli ospiti non bastano.</li>`); }
     else leve.push(`<li><b>Più ospiti non bastano</b>: ogni adulto in più costa circa ${fmt(marg)} e la busta media ne porta ${fmt(B)}, quindi ogni invitato aumenta il buco di ${fmt(-m)}.</li>`);
     leve.push(`<li><b>Tagliare ${fmt(gap)}</b> di spese, per esempio togliendo voci dalla scheda Spese.</li>`);
     leve.push(`<li><b>Contributi in più per ${fmt(gap)}</b> da famiglie o lista nozze (Altro › Entrate).</li>`);

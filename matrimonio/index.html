@@ -8,10 +8,10 @@
 <meta name="apple-mobile-web-app-title" content="Matrimonio">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#F2ECDF">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
+<link rel="icon" type="image/png" href="icon-192.png?v=2">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="app-version" content="20261116115000">
+<meta name="app-version" content="20261116121000">
 <title>Conti del Matrimonio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -167,6 +167,7 @@ input[type=range]{padding:0;border:0;background:none;accent-color:var(--accent)}
 .ghc-box p{margin:0 0 16px;font-size:15px;color:var(--muted)}
 .ghc-box .btn{width:100%;justify-content:center;margin-top:8px}
 .ghc-box .btn.primary{font-weight:700}
+.ghc-list{list-style:none;margin:-6px 0 14px;padding:0;text-align:left;font-size:14px;display:grid;gap:6px}.ghc-list li{background:var(--bg);border-radius:10px;padding:8px 10px}.ghc-list b{display:block;font-size:13px}.ghc-list span{color:var(--muted)}
 .gh-row{display:flex;flex-wrap:wrap;gap:8px} a.btn{text-decoration:none}
 @media (prefers-reduced-motion: reduce){.ghc,.ghc-box{transition:opacity .2s linear}.ghc-box,.ghc.show .ghc-box{transform:none}}
 .task{display:flex;align-items:center;gap:12px;min-height:52px;padding:4px 4px 4px 16px;border-top:1px solid var(--line)}
@@ -187,7 +188,7 @@ table.scen thead th{border-top:0;color:var(--muted);font-weight:600;font-size:13
 <body>
 
 <div class="wrap" id="app"></div>
-<div class="ghc" id="ghc" role="alertdialog" aria-modal="true" aria-labelledby="ghcT" aria-describedby="ghcP" hidden><div class="ghc-box"><h3 id="ghcT"></h3><p id="ghcP"></p><button class="btn primary" type="button" id="ghcRemote">Usa i dati online</button><button class="btn" type="button" id="ghcLocal">Tieni quelli di questo dispositivo</button></div></div>
+<div class="ghc" id="ghc" role="alertdialog" aria-modal="true" aria-labelledby="ghcT" aria-describedby="ghcP" hidden><div class="ghc-box"><h3 id="ghcT"></h3><p id="ghcP"></p><ul id="ghcL" class="ghc-list" hidden></ul><button class="btn primary" type="button" id="ghcRemote">Usa i dati online</button><button class="btn" type="button" id="ghcLocal">Tieni quelli di questo dispositivo</button></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"><span id="toastText"></span><button id="toastBtn" type="button" hidden>Annulla</button></div>
 <div class="tabbar"><nav role="tablist" aria-label="Sezioni" id="tabs"></nav></div>
 
@@ -360,6 +361,61 @@ function ghFetch(url, token, opt){
   return fetch(url, {method:opt.method || 'GET', cache:'no-store', headers:Object.assign({'Authorization':'Bearer ' + token, 'Accept':'application/vnd.github+json'}, opt.body ? {'Content-Type':'application/json'} : {}), body:opt.body ? JSON.stringify(opt.body) : undefined});
 }
 const ghUrl = () => 'https://api.github.com/repos/' + gh.repo + '/contents/' + GH_FILE;
+
+// Copia dei dati all'ultima sincronizzazione: serve per capire chi ha cambiato cosa
+const GHB = 'conti-matrimonio-github-base';
+let ghBase = null; try { ghBase = localStorage.getItem(GHB); } catch (e) {}
+const ghSetBase = t => { ghBase = t; try { t == null ? localStorage.removeItem(GHB) : localStorage.setItem(GHB, t); } catch (e) {} };
+const J = v => JSON.stringify(v === undefined ? null : v);
+const FLAB = {nome:'nome', stima:'stima', prev:'preventivo', pagato:'pagato', qty:'quantità', mode:'calcolo', fornitore:'fornitore', contatto:'contatto', stato:'stato', scadenza:'scadenza', paga:'chi paga', note:'note',
+  adulti:'adulti', bambini:'bambini', neonati:'neonati', membri:'componenti', rsvp:'risposta', tavolo:'tavolo', allergie:'allergie', indirizzo:'indirizzo', lato:'lato', tipo:'tipo', gruppo:'gruppo', nucleo:'nucleo',
+  importo:'importo', testo:'testo', fatto:'fatto', fase:'quando', nomeA:'primo sposo/a', nomeB:'secondo sposo/a', data:'data', budget:'budget', imprevisti:'imprevisti', stimaAdulti:'adulti stimati',
+  stimaBambini:'bambini stimati', usaLista:'calcolo dalla lista', sposiInclusi:'sposi a tavola', perTavolo:'posti per tavolo', bustaMedia:'busta media', listaNozze:'lista nozze'};
+const fmtV = v => v === true ? 'sì' : v === false ? 'no' : (v === '' || v == null) ? 'vuoto' : String(v);
+// Unisce campo per campo: vince chi ha cambiato; se hanno cambiato tutti e due, è un conflitto (per ora tiene il valore di qui)
+function mergeObj(b, l, r, where, conf, lists){
+  const out = {}; const keys = new Set([...Object.keys(b || {}), ...Object.keys(l || {}), ...Object.keys(r || {})]);
+  keys.forEach(k => {
+    if (lists && lists[k]) { out[k] = mergeList((b || {})[k] || [], (l || {})[k] || [], (r || {})[k] || [], lists[k], conf); return; }
+    const bv = (b || {})[k], lv = (l || {})[k], rv = (r || {})[k];
+    if (J(lv) === J(rv)) out[k] = lv;
+    else if (J(lv) === J(bv)) out[k] = rv;
+    else if (J(rv) === J(bv)) out[k] = lv;
+    else { out[k] = lv; conf.push({obj:out, key:k, local:lv, remote:rv, label:where + ' › ' + (FLAB[k] || k)}); }
+    if (out[k] === undefined) delete out[k];
+  });
+  return out;
+}
+function mergeList(b, l, r, spec, conf){
+  const bm = new Map(b.map(x => [x.id, x])), lm = new Map(l.map(x => [x.id, x])), rm = new Map(r.map(x => [x.id, x]));
+  const res = [];
+  r.forEach(rx => {
+    const id = rx.id, bx = bm.get(id), lx = lm.get(id);
+    if (!lx) { if (bx && J(rx) === J(bx)) return; if (!bx) { res.push(rx); return; } res.push(rx); return; } // tolta qui: resta solo se l'altro l'ha cambiata
+    res.push(mergeObj(bx || {}, lx, rx, spec.label(lx), conf, spec.lists));
+  });
+  l.forEach((lx, i) => {
+    if (rm.has(lx.id)) return;
+    const bx = bm.get(lx.id);
+    if (bx && J(lx) === J(bx)) return; // tolta dall'altro dispositivo e qui non cambiata
+    let at = 0; for (let j = i - 1; j >= 0; j--) { const p = res.findIndex(x => x.id === l[j].id); if (p > -1) { at = p + 1; break; } }
+    res.splice(at, 0, lx);
+  });
+  return res;
+}
+const ITEMS = {label:x => x.nome || 'Voce'};
+const SPEC = {settings:null, entrate:{label:x => 'Entrata ' + (x.nome || '')}, guests:{label:x => x.nome || 'Ospite'}, tasks:{label:x => x.testo || 'Attività'},
+  cats:{label:x => x.nome || 'Categoria', lists:{items:ITEMS}}};
+function merge3(b, l, r){
+  const conf = []; const out = {};
+  const keys = new Set([...Object.keys(b), ...Object.keys(l), ...Object.keys(r)]);
+  keys.forEach(k => {
+    if (k === 'settings') out[k] = mergeObj(b[k] || {}, l[k] || {}, r[k] || {}, 'Impostazioni', conf);
+    else if (SPEC[k]) out[k] = mergeList(b[k] || [], l[k] || [], r[k] || [], SPEC[k], conf);
+    else out[k] = J(l[k]) === J(b[k]) ? r[k] : l[k];
+  });
+  return {state:out, conf};
+}
 async function ghPull(){
   const r = await ghFetch(ghUrl(), gh.token);
   if (r.status === 404) return null;
@@ -368,16 +424,17 @@ async function ghPull(){
 }
 async function ghPush(sha){
   const rev = ghRev;
-  const body = {message:'Aggiornamento dal ' + ghDevice(), content:b64e(JSON.stringify(state, null, 1))}; if (sha) body.sha = sha;
+  const text = JSON.stringify(state, null, 1);
+  const body = {message:'Aggiornamento dal ' + ghDevice(), content:b64e(text)}; if (sha) body.sha = sha;
   const r = await ghFetch(ghUrl(), gh.token, {method:'PUT', body});
   if (r.status === 409 || r.status === 422) return false; // un altro dispositivo ha salvato prima
   if (!r.ok) throw r.status;
-  const j = await r.json(); gh.sha = j.content.sha; gh.dirty = ghRev !== rev; ghStore(); ghWhen = new Date();
+  const j = await r.json(); gh.sha = j.content.sha; gh.dirty = ghRev !== rev; ghStore(); ghSetBase(text); ghWhen = new Date();
   if (gh.dirty) ghAgain = true;
   return true;
 }
 function ghAdopt(text, sha){
-  state = normState(JSON.parse(text)); saveLocal(); gh.sha = sha; gh.dirty = false; ghStore(); ghWhen = new Date();
+  state = normState(JSON.parse(text)); saveLocal(); gh.sha = sha; gh.dirty = false; ghStore(); ghSetBase(text); ghWhen = new Date();
   if (!isEditing()) render(); else pendingRender = true;
 }
 function ghTouch(){
@@ -393,12 +450,19 @@ async function ghSync(){
   try {
     const rem = await ghPull();
     if (!rem) { if (!(await ghPush(null))) ghAgain = true; }
-    else if (rem.sha === gh.sha) { if (gh.dirty) { if (!(await ghPush(rem.sha))) ghAgain = true; } else ghWhen = new Date(); }
+    else if (rem.sha === gh.sha) { if (!ghBase) ghSetBase(rem.text); if (gh.dirty) { if (!(await ghPush(rem.sha))) ghAgain = true; } else ghWhen = new Date(); }
     else {
       const o = JSON.parse(rem.text); if (!o || !Array.isArray(o.cats)) throw 'formato';
       const same = JSON.stringify(normState(o)) === JSON.stringify(state);
-      if (same) { gh.sha = rem.sha; gh.dirty = false; ghStore(); ghWhen = new Date(); }
+      if (same) { gh.sha = rem.sha; gh.dirty = false; ghStore(); ghSetBase(rem.text); ghWhen = new Date(); }
       else if (!gh.dirty && (gh.sha || !everSaved)) ghAdopt(rem.text, rem.sha);
+      else if (gh.sha && ghBase) {
+        // Modifiche da tutte e due le parti: unisce da solo, chiede solo per gli stessi campi
+        const m = merge3(JSON.parse(ghBase), JSON.parse(JSON.stringify(state)), normState(o));
+        state = normState(m.state); saveLocal(); if (!isEditing()) render(); else pendingRender = true;
+        if (m.conf.length) { gh.sha = rem.sha; ghStore(); ghSetBase(rem.text); ghAskFields(m.conf, m.state); }
+        else { gh.sha = rem.sha; ghStore(); ghSetBase(rem.text); if (JSON.stringify(state) === JSON.stringify(normState(o))) { gh.dirty = false; ghStore(); } else if (!(await ghPush(rem.sha))) ghAgain = true; }
+      }
       else ghAsk(rem, !gh.sha);
     }
     setSync(gh.dirty ? 'busy' : 'ok');
@@ -417,16 +481,32 @@ function ghAsk(rem, first){
   $('#ghcP').textContent = first
     ? 'L\'archivio contiene già i dati del matrimonio. Vuoi usare quelli o sostituirli con quelli di questo dispositivo?'
     : 'Un altro dispositivo ha salvato delle modifiche mentre qui ne facevi altre. Quale versione vuoi tenere?';
+  $('#ghcRemote').textContent = 'Usa i dati online'; $('#ghcL').hidden = true;
   $('#ghcLocal').textContent = first ? 'Sostituiscili con questi' : 'Tieni quelli di questo dispositivo';
   const el = $('#ghc'); el.hidden = false; requestAnimationFrame(() => el.classList.add('show')); $('#ghcRemote').focus();
 }
-function ghClose(){ const el = $('#ghc'); el.classList.remove('show'); setTimeout(() => { el.hidden = true; }, 200); ghConflict = null; }
+function ghAskFields(conf, merged){
+  ghConflict = {fields:conf, merged};
+  $('#ghcT').textContent = conf.length === 1 ? 'Un valore cambiato in due posti' : conf.length + ' valori cambiati in due posti';
+  $('#ghcP').textContent = 'Il resto delle modifiche è già unito. Per ' + (conf.length === 1 ? 'questo campo' : 'questi campi') + ' scegli quale valore tenere.';
+  const L = $('#ghcL'); L.innerHTML = conf.slice(0, 4).map(c => `<li><b>${esc(c.label)}</b><span>Qui: ${esc(fmtV(c.local))} · Altro dispositivo: ${esc(fmtV(c.remote))}</span></li>`).join('') + (conf.length > 4 ? `<li><span>e altri ${conf.length - 4}</span></li>` : ''); L.hidden = false;
+  $('#ghcRemote').textContent = 'Usa quelli dell\'altro dispositivo'; $('#ghcLocal').textContent = 'Tieni i miei';
+  const el = $('#ghc'); el.hidden = false; requestAnimationFrame(() => el.classList.add('show')); $('#ghcRemote').focus();
+}
+function ghResolveFields(useRemote){
+  const {fields:conf, merged} = ghConflict; ghClose();
+  if (useRemote) conf.forEach(c => { if (c.remote === undefined) delete c.obj[c.key]; else c.obj[c.key] = c.remote; });
+  state = normState(merged); saveLocal(); render(); gh.dirty = true; ghRev++; ghStore(); ghSync();
+}
+function ghClose(){ const el = $('#ghc'); el.classList.remove('show'); setTimeout(() => { el.hidden = true; $('#ghcL').hidden = true; }, 200); ghConflict = null; }
 $('#ghcRemote').addEventListener('click', () => {
+  if (ghConflict && ghConflict.fields) { ghResolveFields(true); return; }
   const rem = ghConflict; if (!rem) return; const old = clone(state); ghClose();
   ghAdopt(rem.text, rem.sha); setSync('ok');
   toast('Ora usi i dati online', () => { state = old; saveLocal(); render(); ghTouch(); });
 });
 $('#ghcLocal').addEventListener('click', async () => {
+  if (ghConflict && ghConflict.fields) { ghResolveFields(false); return; }
   const rem = ghConflict; if (!rem) return; ghClose();
   gh.sha = rem.sha; gh.dirty = true; ghRev++; ghStore(); ghSync();
 });
@@ -450,11 +530,11 @@ async function ghConnect(){
   } catch (m) { toast(typeof m === 'string' ? m : 'Collegamento non riuscito, riprova'); }
   ui.ghWork = false; render();
 }
-function ghDisconnect(){ gh = null; ghStore(); ui.ghOff = false; setSync('local'); render(); toast('Questo dispositivo non salva più online'); }
+function ghDisconnect(){ gh = null; ghStore(); ghSetBase(null); ui.ghOff = false; setSync('local'); render(); toast('Questo dispositivo non salva più online'); }
 if (gh) { syncState = gh.dirty ? 'busy' : 'ok'; setTimeout(ghSync, 0); }
 document.addEventListener('visibilitychange', () => { if (!document.hidden) ghSync(); });
 window.addEventListener('online', () => ghSync());
-setInterval(() => { if (!document.hidden && gh && !gh.dirty) ghSync(); }, 60000);
+setInterval(() => { if (!document.hidden && gh && !gh.dirty) ghSync(); }, 15000);
 const isEditing = () => { const a = document.activeElement; return a && /INPUT|TEXTAREA|SELECT/.test(a.tagName); };
 document.addEventListener('focusout', () => setTimeout(() => { if (pendingRender && !isEditing()) { pendingRender = false; render(); } }, 0));
 

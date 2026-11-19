@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png?v=4">
 <link rel="icon" type="image/png" href="icon-192.png?v=4">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="app-version" content="20261119150000">
+<meta name="app-version" content="20261119152000">
 <title>Conti del Matrimonio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -659,7 +659,7 @@ function inviteKey(g){ return isFam(g) ? 'f:' + g.id : ((g.nucleo || '').trim() 
 function inviteUnits(){
   const m = new Map();
   state.guests.forEach(g => { const k = inviteKey(g); if (!m.has(k)) m.set(k, []); m.get(k).push(g); });
-  return [...m.values()].map(list => {
+  const U = [...m.values()].map(list => {
     const g0 = list[0]; const fam = isFam(g0) ? g0 : null;
     const codice = (list.find(g => g.codice) || {}).codice || '';
     const persone = fam ? (g0.persone || []).map(p => ({id:p.id, nome:(p.nome || '').trim(), cognome:(p.cognome || '').trim(), tipo:p.tipo || 'adulto'}))
@@ -672,10 +672,15 @@ function inviteUnits(){
     const blocchi = [], avvisi = [];
     if (!persone.length) blocchi.push('mancano i nomi delle persone');
     if (persone.some(p => !p.nome)) blocchi.push('una persona è senza nome');
-    if (persone.some(p => p.nome && !p.cognome)) avvisi.push('manca un cognome: entra solo con il link');
     if (fam && persone.length && persone.length !== people(g0) && !g0.risposta) avvisi.push('nomi ' + persone.length + ' su ' + people(g0) + ' persone');
     return {list, fam, codice, persone, titolo:(titolo || 'Senza nome').trim(), saluto:saluto.trim(), salutoCustom, nomiTxt, messaggio, blocchi, avvisi, risposta:(list.find(g => g.risposta) || {}).risposta || null};
   });
+  // Senza cognome si entra con il solo nome, purché nessun altro invitato si chiami così
+  const nk = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
+  const conta = {}; U.forEach(u => u.persone.forEach(p => { const k = nk(p.nome); if (k) conta[k] = (conta[k] || 0) + 1; }));
+  U.forEach(u => { const d = u.persone.filter(p => p.nome && !p.cognome && conta[nk(p.nome)] > 1).map(p => p.nome);
+    if (d.length) u.avvisi.push('senza cognome e con un nome che si ripete (' + d.join(', ') + '): entra solo con il link'); });
+  return U;
 }
 function unitFor(g){ const k = inviteKey(g); return inviteUnits().find(u => inviteKey(u.list[0]) === k); }
 function ensureCode(g){ const u = unitFor(g); const c = u.codice || newCode(); u.list.forEach(x => { x.codice = c; }); return c; }

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2ECDF">
-<meta name="app-version" content="20261119150000">
+<meta name="app-version" content="20261119152000">
 <title>Alice &amp; Leandro</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -160,7 +160,7 @@ function demoGet(){ try { var r = JSON.parse(store.get('invito-demo-risposta') |
 function api(params){
   if (DEMO) return new Promise(function(res){ setTimeout(function(){
     if (params.a === 'invito') res(params.c === 'PROVA1' ? {ok:true, invito:demoGet()} : {ok:false, motivo:'codice'});
-    else if (params.a === 'cerca') res(/^carla$|^mario$|^luca$/i.test(params.nome.trim()) && /^rossi$/i.test(params.cognome.trim()) ? {ok:true, invito:demoGet()} : {ok:false, motivo:'nontrovato'});
+    else if (params.a === 'cerca') res(/^carla$|^mario$|^luca$/i.test(params.nome.trim()) && /^(rossi)?$/i.test((params.cognome || '').trim()) ? {ok:true, invito:demoGet()} : {ok:false, motivo:'nontrovato'});
     else res({ok:false}); }, 350); });
   var u = CONFIG.cassetta + '?' + new URLSearchParams(params).toString();
   return fetch(u, {redirect:'follow'}).then(function(r){ return r.json(); });
@@ -210,8 +210,8 @@ function vWho(){
     '<p class="sub">Qui trovi le informazioni, puoi confermare la presenza e il giorno delle nozze scattare le foto per noi.</p></section>' +
     '<form class="card sect" id="whoF" novalidate><p class="h">Come ti chiami?</p>' +
     '<label class="f" for="wn">Nome<input id="wn" name="nome" autocomplete="given-name" autocapitalize="words" placeholder="Es. Carla" required></label>' +
-    '<label class="f" for="wc">Cognome<input id="wc" name="cognome" autocomplete="family-name" autocapitalize="words" placeholder="Es. Rossi" required></label>' +
-    '<p class="tiny">Ci servono per riconoscerti. Se hai il link dell’invito, entri senza scrivere nulla.</p>' +
+    '<label class="f" for="wc">Cognome<input id="wc" name="cognome" autocomplete="family-name" autocapitalize="words" placeholder="Es. Rossi"></label>' +
+    '<p class="tiny">Se il tuo nome o il soprannome con cui ti conosciamo è unico, basta quello. Se hai il link dell’invito, entri senza scrivere nulla.</p>' +
     (S.err ? '<div class="msg err" role="alert">' + S.err + '</div>' : '') +
     (S.sposi ? (DEMO ? '<div class="msg ok">Ciao! Questa è solo l\'anteprima degli invitati, qui lo spazio sposi non c\'è. Sul sito vero, dai telefoni e dal PC che hanno la vostra chiave, si apre direttamente il vostro tool, senza scrivere il nome.</div>' : '<div class="msg ok">Ciao! Il vostro spazio da sposi si apre solo dai telefoni che hanno la vostra chiave. <a href="sposi.html" style="color:inherit;font-weight:700">Apri lo spazio sposi</a></div>') : '') +
     '<button class="btn primary" type="submit"' + (S.loading ? ' disabled' : '') + '>' + (S.loading ? 'Un attimo…' : 'Entra') + '</button></form>' +
@@ -326,13 +326,13 @@ document.addEventListener('submit', function(e){
   if (e.target.id !== 'whoF') return; e.preventDefault();
   var n = $('#wn').value.trim(), c = $('#wc').value.trim();
   S.sposi = false;
-  if (!n || !c) { S.err = 'Scrivi nome e cognome, come sull’invito.'; render(); return; }
+  if (!n) { S.err = 'Scrivi almeno il nome.'; render(); return; }
   if (CONFIG.firmaSposi.indexOf((n + ' ' + c).toLowerCase().replace(/\s+/g, ' ')) >= 0) { S.sposi = true; S.err = ''; render(); return; }
   S.loading = true; S.err = ''; render();
   api({a:'cerca', nome:n, cognome:c}).then(function(r){
     S.loading = false;
     if (r && r.ok) { S.inv = r.invito; S.draft = mkDraft(r.invito); codice = r.invito.c; store.set('invito-codice', codice); S.view = 'home'; window.scrollTo(0, 0); }
-    else S.err = r && r.motivo === 'ambiguo' ? 'Ci sono più invitati con questo nome. Usa il link che ti abbiamo mandato, oppure scrivici.' : 'Non troviamo questo nome. Controlla come è scritto sull’invito o usa il link che ti abbiamo mandato. Abbiamo avvisato gli sposi.';
+    else S.err = r && r.motivo === 'ambiguo' ? (c ? 'Ci sono più invitati con questo nome. Usa il link che ti abbiamo mandato, oppure scrivici.' : 'Ci sono più invitati che si chiamano così: aggiungi il cognome.') : 'Non troviamo questo nome. Controlla come è scritto sull’invito o usa il link che ti abbiamo mandato. Abbiamo avvisato gli sposi.';
     render();
     var el = $('#wn'); if (el && !S.inv) { el.value = n; $('#wc').value = c; }
   }).catch(function(){ S.loading = false; S.err = 'Non riesco a collegarmi. Controlla la connessione e riprova.'; render(); });

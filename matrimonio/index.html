@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2ECDF">
-<meta name="app-version" content="20261119213000">
+<meta name="app-version" content="20261119214000">
 <title>Alice &amp; Leandro</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -228,6 +228,12 @@ function fetchJ(u, opt){
   return fetch(u, Object.assign({redirect:'follow', signal:ac ? ac.signal : undefined}, opt || {})).then(leggiTesto)
     .then(function(o){ clearTimeout(t); return o; }, function(e){ clearTimeout(t); throw (e && e.name === 'AbortError') ? new Error('nessuna risposta in 12 secondi') : e; });
 }
+// Google a volte fallisce la prima richiesta dopo l'apertura: riprovo fino a 3 volte prima di passare al canale di riserva.
+function fetchRip(u, opt){
+  var n = 0;
+  var go = function(){ return fetchJ(u, Object.assign({cache:'no-store'}, opt || {})).catch(function(e){ n++; if (n >= 3) throw e; return new Promise(function(ok){ setTimeout(ok, 700 * n); }).then(go); }); };
+  return go();
+}
 function jsonp(params){
   return new Promise(function(res, rej){
     var cb = '_cas' + (++JP) + '_' + Date.now().toString(36), s = document.createElement('script'), fatto = false;
@@ -244,15 +250,15 @@ function viaRete(params){
   lastErr = '';
   var u = CONFIG.cassetta + '?' + new URLSearchParams(params).toString();
   var riserva = function(e1){ return jsonp(params).then(function(o){ useJP = true; store.set('cassetta-jsonp', '1'); return o; }, function(e2){ lastErr = (e1 ? (e1.message || e1) + '; ' : '') + (e2.message || e2); throw e2; }); };
-  if (useJP) return jsonp(params).catch(function(e){ return fetchJ(u).then(function(o){ useJP = false; store.set('cassetta-jsonp', null); return o; }, function(){ lastErr = e.message || String(e); throw e; }); });
-  return fetchJ(u).catch(riserva);
+  if (useJP) return jsonp(params).catch(function(e){ return fetchRip(u).then(function(o){ useJP = false; store.set('cassetta-jsonp', null); return o; }, function(){ lastErr = e.message || String(e); throw e; }); });
+  return fetchRip(u).catch(riserva);
 }
 function post(body){
   if (DEMO) return new Promise(function(res){ setTimeout(function(){ var r = body.risposta; r.quando = new Date().toISOString(); store.set('invito-demo-risposta', JSON.stringify(r)); res({ok:true, risposta:r}); }, 500); });
   // Invio diretto; se il browser lo blocca, la risposta passa dal canale di riserva. Se la cassetta è occupata riprova fino a 3 volte.
   lastErr = '';
   var tenta = function(n){
-    var via = useJP ? jsonp({a:'rispondi', d:JSON.stringify(body)}) : fetchJ(CONFIG.cassetta, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(body)})
+    var via = useJP ? jsonp({a:'rispondi', d:JSON.stringify(body)}) : fetchRip(CONFIG.cassetta, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(body)})
       .catch(function(e1){ return jsonp({a:'rispondi', d:JSON.stringify(body)}).then(function(o){ useJP = true; store.set('cassetta-jsonp', '1'); return o; }, function(e2){ lastErr = (e1.message || e1) + '; ' + (e2.message || e2); throw e2; }); });
     return via.then(function(r){ if (r && r.motivo === 'occupato' && n < 3) return new Promise(function(ok){ setTimeout(ok, 1500 * (n + 1)); }).then(function(){ return tenta(n + 1); }); return r; });
   };

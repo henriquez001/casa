@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2ECDF">
-<meta name="app-version" content="20261119200000">
+<meta name="app-version" content="20261119203000">
 <title>Alice &amp; Leandro</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -143,17 +143,17 @@ label.f{display:grid;gap:4px;font-size:13px;color:var(--muted);font-weight:500}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 /* Landing: schermata 0 del design */
 main.land{max-width:none;padding:0;gap:0}
-.cover{position:relative;min-height:min(700px,100svh);display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(160deg,#B9C2A6 0%,#CDB898 55%,#9FAA8C 100%) center/cover no-repeat}
+.cover{position:relative;min-height:100vh;min-height:100svh;display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(160deg,#B9C2A6 0%,#CDB898 55%,#9FAA8C 100%) center/cover no-repeat}
 .cover-in{position:relative;padding:120px 24px calc(40px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,rgba(46,53,40,0) 0%,rgba(46,53,40,.55) 45%,rgba(46,53,40,.78) 100%);color:#FFFCF5;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px}
 .cover .kick{margin:0;font-size:13px;letter-spacing:.18em;text-transform:uppercase;opacity:.9}
-.cover h1{margin:0;font-family:var(--font-script);font-weight:400;font-size:60px;line-height:1.1}
+.cover h1{margin:0;font-family:var(--font-script);font-weight:400;font-size:clamp(42px,13vw,60px);line-height:1.1;white-space:nowrap}
 .cover h1 .e{font-family:var(--font-display);font-style:italic;font-size:26px;opacity:.85}
 .cover .dt{margin:2px 0 0;font-family:var(--font-display);font-style:italic;font-weight:500;font-size:22px}
 .cover .rl{width:56px;height:1px;background:#D9BE6E;margin:10px 0}
 .cd{display:flex;gap:22px}.cd div{display:flex;flex-direction:column;align-items:center}
 .cd b{font-family:var(--font-display);font-style:italic;font-weight:600;font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
 .cd span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.85}
-.cover .dn{margin-top:18px;opacity:.8;width:20px;height:20px}
+.cover .dn{margin-top:10px;width:44px;height:44px;display:grid;place-items:center;border:0;background:none;color:inherit;opacity:.85;cursor:pointer;border-radius:22px}.cover .dn svg{width:22px;height:22px}.cover .dn:active{transform:scale(.92)}
 .land-body{max-width:520px;margin:0 auto;padding:32px 16px calc(120px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:28px}
 .lh{text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px}
 .lh h2{margin:0;font-family:var(--font-script);font-weight:400;font-size:40px;line-height:1.2}
@@ -380,7 +380,7 @@ function vLanding(){
     '<section class="cover"' + bg + '><div class="cover-in"><p class="kick">Ci sposiamo</p>' +
     '<h1>' + esc(n[0]) + ' <span class="e">e</span> ' + esc(n[1]) + '</h1><p class="dt">' + esc(CONFIG.dataTesto) + '</p><span class="rl" aria-hidden="true"></span>' +
     '<div class="cd" id="cd" role="timer" aria-label="' + cdLabel() + '">' + cdHtml() + '</div>' +
-    '<svg class="dn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></div></section>' +
+    '<button class="dn" type="button" data-act="giu" aria-label="Scorri alla nostra storia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></section>' +
     '<div class="land-body">' +
     (CONFIG.storia.length ? '<section class="story"><div class="lh"><h2>La nostra storia</h2><span class="gr" aria-hidden="true"></span></div>' +
       CONFIG.storia.map(function(x){ return '<article class="st"><div class="ph"' + (x.foto ? ' style="background-image:url(\'' + esc(x.foto) + '\')"' : '') + ' role="img" aria-label="' + esc(x.titolo) + '"></div><div class="tx"><p class="yr">' + esc(x.anno) + '</p><p class="tt">' + esc(x.titolo) + '</p><p class="ds">' + esc(x.testo) + '</p></div></article>'; }).join('') + '</section>' : '') +
@@ -445,6 +445,7 @@ document.addEventListener('click', function(e){
   else if (a === 'more') { S.more[t.dataset.id] = true; render(); }
   else if (a === 'all') { var y = dr.persone[+t.dataset.i], v = t.dataset.v, k = y.allergie.indexOf(v); if (k >= 0) y.allergie.splice(k, 1); else y.allergie.push(v); S.sent = false; render(); var c2 = document.querySelector('[data-act="all"][data-i="' + t.dataset.i + '"][data-v="' + v + '"]'); if (c2) c2.focus(); }
   else if (a === 'entra') { store.set('landing-vista', '1'); S.landing = false; S.view = 'home'; render(); window.scrollTo(0, 0); }
+  else if (a === 'giu') { var lb = document.querySelector('.land-body'); if (lb) lb.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}); }
   else if (a === 'landing') { S.landing = true; render(); window.scrollTo(0, 0); }
   else if (a === 'esci') { store.set('invito-codice', null); codice = ''; S.inv = null; S.view = 'home'; render(); }
   else if (a === 'send') {

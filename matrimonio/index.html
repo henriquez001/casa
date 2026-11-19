@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2ECDF">
-<meta name="app-version" content="20261119161000">
+<meta name="app-version" content="20261119200000">
 <title>Alice &amp; Leandro</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -28,6 +28,20 @@ var CONFIG = {
   luoghi: [
     {titolo: 'Cerimonia', ora: '[ora da definire]', nome: '[Luogo da definire]', indirizzo: '', cerca: ''},
     {titolo: 'Ricevimento', ora: '[ora da definire]', nome: 'Agriturismo Le Case', indirizzo: 'Macerata', cerca: 'Agriturismo Le Case Macerata', note: '[Indicazioni sul parcheggio]'}
+  ],
+  // Landing (schermata 0 del design). foto: indirizzo della foto verticale di copertina, vuoto = sfumatura.
+  copertina: '',
+  storia: [
+    {anno: '[anno]', titolo: 'Come ci siamo conosciuti', testo: '[Due righe su dove e come vi siete incontrati.]', foto: ''},
+    {anno: '[anno]', titolo: 'Il primo viaggio', testo: '[Un ricordo, un posto, una foto.]', foto: ''},
+    {anno: '[anno]', titolo: 'La proposta', testo: '[Com’è andata.]', foto: ''}
+  ],
+  programma: [
+    {ora: '[ore]', cosa: 'Arrivo degli invitati', dove: '[Nome della chiesa o del luogo]', icona: 'pin'},
+    {ora: '[ore]', cosa: 'Cerimonia', dove: '[Nome della chiesa o del luogo]', icona: 'chiesa'},
+    {ora: '[ore]', cosa: 'Aperitivo e brindisi', dove: 'Agriturismo Le Case', icona: 'calici'},
+    {ora: '[ore]', cosa: 'Cena', dove: 'Agriturismo Le Case', icona: 'cena'},
+    {ora: '[ore]', cosa: 'Taglio della torta e festa', dove: 'Fino a tarda notte', icona: 'musica'}
   ]
 };
 </script>
@@ -127,6 +141,44 @@ label.f{display:grid;gap:4px;font-size:13px;color:var(--muted);font-weight:500}
 .demo{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);right:max(10px,env(safe-area-inset-right,0px));z-index:30;font-size:12px;font-weight:600;background:var(--copper);color:#FFFCF5;padding:4px 10px;border-radius:999px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+/* Landing: schermata 0 del design */
+main.land{max-width:none;padding:0;gap:0}
+.cover{position:relative;min-height:min(700px,100svh);display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(160deg,#B9C2A6 0%,#CDB898 55%,#9FAA8C 100%) center/cover no-repeat}
+.cover-in{position:relative;padding:120px 24px calc(40px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,rgba(46,53,40,0) 0%,rgba(46,53,40,.55) 45%,rgba(46,53,40,.78) 100%);color:#FFFCF5;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px}
+.cover .kick{margin:0;font-size:13px;letter-spacing:.18em;text-transform:uppercase;opacity:.9}
+.cover h1{margin:0;font-family:var(--font-script);font-weight:400;font-size:60px;line-height:1.1}
+.cover h1 .e{font-family:var(--font-display);font-style:italic;font-size:26px;opacity:.85}
+.cover .dt{margin:2px 0 0;font-family:var(--font-display);font-style:italic;font-weight:500;font-size:22px}
+.cover .rl{width:56px;height:1px;background:#D9BE6E;margin:10px 0}
+.cd{display:flex;gap:22px}.cd div{display:flex;flex-direction:column;align-items:center}
+.cd b{font-family:var(--font-display);font-style:italic;font-weight:600;font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.cd span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.85}
+.cover .dn{margin-top:18px;opacity:.8;width:20px;height:20px}
+.land-body{max-width:520px;margin:0 auto;padding:32px 16px calc(120px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:28px}
+.lh{text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px}
+.lh h2{margin:0;font-family:var(--font-script);font-weight:400;font-size:40px;line-height:1.2}
+.lh .gr{width:40px;height:1px;background:var(--gold)}
+.lh .ey{margin:0;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.story{display:flex;flex-direction:column;gap:18px}
+.st{background:var(--surface);border:1px solid var(--line);border-radius:20px;overflow:hidden;display:flex;flex-direction:column}
+.st .ph{height:220px;background:#A7B08F center/cover no-repeat}.st:nth-child(3) .ph{height:200px;background-color:#CDB898}.st:nth-child(4) .ph{background-color:#9FAA8C}
+.st .tx{padding:16px 20px 20px;display:flex;flex-direction:column;gap:4px}
+.st .yr{margin:0;font-family:var(--font-display);font-style:italic;font-weight:600;font-size:22px;color:var(--copper)}
+.st .tt{margin:0;font-size:17px;font-weight:600}.st .ds{margin:0;font-size:15px;line-height:1.45;color:var(--muted)}
+.prog{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:22px 20px 20px;display:flex;flex-direction:column;gap:6px}
+.prog ol{list-style:none;margin:8px 0 0;padding:0;position:relative;display:flex;flex-direction:column}
+.prog ol::before{content:"";position:absolute;left:7px;top:22px;bottom:22px;width:1px;background:#C9BFA8}
+.prog li{position:relative;display:flex;align-items:center;gap:14px;min-height:64px}
+.prog .dot{flex:none;width:15px;height:15px;border-radius:8px;border:1px solid var(--accent);background:var(--surface);display:grid;place-items:center}.prog .dot i{width:7px;height:7px;border-radius:4px;background:var(--accent)}
+.prog .ic{flex:none;width:44px;height:44px;border-radius:22px;background:#EEF0E7;color:var(--accent);display:grid;place-items:center}.prog .ic svg{width:24px;height:24px}
+.prog .w{display:flex;flex-direction:column;gap:1px;min-width:0}
+.prog .o{font-family:var(--font-display);font-style:italic;font-weight:600;font-size:22px;line-height:1.1}.prog .c{font-size:15px;font-weight:600}.prog .d{font-size:13px;color:var(--muted)}
+.prog .nt{margin:8px 0 0;font-size:13px;line-height:1.4;color:var(--muted);text-align:center}
+.close{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:8px 4px 0}.close p{margin:0}
+.entra{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:12px 16px calc(16px + env(safe-area-inset-bottom,0px));background:rgba(242,236,223,.88);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border-top:1px solid var(--line);transform:translateY(110%);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+.entra.on{transform:none}.entra .btn{width:100%;max-width:488px;margin:0 auto;display:flex;min-height:52px;font-size:17px}
+@media (prefers-reduced-motion: reduce){.entra{transition:opacity .2s linear;transform:none;opacity:0;pointer-events:none}.entra.on{opacity:1;pointer-events:auto}}
+@media (prefers-reduced-transparency: reduce){.entra{background:var(--bg);-webkit-backdrop-filter:none;backdrop-filter:none}}
 @media (prefers-reduced-motion: reduce){.view.enter{animation:none}.btn,.seg button,.chk span{transition:none}.btn:active{transform:none}.panel{transition:none}}
 @media (prefers-reduced-transparency: reduce){.tabbar{background:var(--surface);-webkit-backdrop-filter:none;backdrop-filter:none}}
 @media (prefers-contrast: more){:root{--line:#B9AF98;--muted:#4F4D40}}
@@ -182,6 +234,8 @@ function post(body){
 var lastKey = '';
 var S = {view:'home', inv:null, loading:true, err:'', draft:null, open:null, more:{}, sending:false, sent:false, sposi:false};
 var codice = (q.get('i') || store.get('invito-codice') || '').toUpperCase();
+// Landing: la prima volta, oppure riaperta da Benvenuto. Dal QR del giorno delle nozze (?qr) non si mostra.
+S.landing = !store.get('landing-vista') && !q.has('qr');
 if (q.get('i')) { store.set('invito-codice', codice); history.replaceState(null, '', location.pathname + location.hash); }
 
 function daysLeft(){ var d = new Date(CONFIG.data + 'T12:00:00'), n = new Date(); n.setHours(12,0,0,0); return Math.round((d - n) / 864e5); }
@@ -239,6 +293,7 @@ function vHome(){
     '<p class="sub">' + esc(CONFIG.sposi.join(' e ')) + '</p></section>' + stato +
     '<div class="btns"><button class="btn primary" type="button" data-go="rsvp">' + (r ? 'Rivedi la tua risposta' : 'Conferma la tua presenza') + '</button>' +
     '<button class="btn" type="button" data-go="arrivare">Come arrivare</button></div>' +
+    '<button class="btn plain" type="button" data-act="landing">Rivedi la presentazione</button>' +
     '<button class="btn plain" type="button" data-act="esci">' + ((inv.persone || []).length > 1 ? 'Non siete ' : 'Non sei ') + esc(nomiInv(inv)) + '?</button></div>';
 }
 function nomiInv(inv){
@@ -307,11 +362,45 @@ function vArrivare(){
 }
 function vSoon(t, txt){ return '<div class="view"><header style="padding-top:24px"><h1 class="t">' + t + '</h1></header><section class="card empty"><img class="sprig" src="' + RAMETTO + '" alt="" style="width:110px"><b>Dal ' + esc(CONFIG.dataTesto.replace(/^\w+ /, '')) + '</b><span class="sub">' + txt + '</span></section></div>'; }
 
+
+var LIC = {pin:'<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+  chiesa:'<path d="M12 2v4M10 4h4M5 21V11l7-5 7 5v10M3 21h18M10 21v-4a2 2 0 0 1 4 0v4"/>',
+  calici:'<path d="M5 3h5l-.4 5a2.1 2.1 0 0 1-4.2 0zM7.5 10.5V19M5 19h5M14 3h5l-.4 5a2.1 2.1 0 0 1-4.2 0zM16.5 10.5V19M14 19h5"/>',
+  cena:'<path d="M6 3v7M4 3v5a2 2 0 0 0 4 0V3M6 10v11M17 21V3c-2 1.5-3 4-3 7h3"/>',
+  musica:'<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>'};
+function countdown(){
+  var ms = Math.max(0, new Date(CONFIG.data + 'T12:00:00+02:00') - new Date()), m = Math.floor(ms / 6e4);
+  return [[Math.floor(m / 1440), 'giorni'], [Math.floor(m / 60) % 24, 'ore'], [m % 60, 'minuti']];
+}
+function cdHtml(){ var c = countdown(); return c.map(function(x){ return '<div><b>' + x[0] + '</b><span>' + x[1] + '</span></div>'; }).join(''); }
+function cdLabel(){ var c = countdown(); return 'Mancano ' + c[0][0] + ' giorni, ' + c[1][0] + ' ore e ' + c[2][0] + ' minuti'; }
+function vLanding(){
+  var n = CONFIG.sposi, bg = CONFIG.copertina ? ' style="background-image:url(\'' + esc(CONFIG.copertina) + '\')"' : '';
+  return '<div class="view">' +
+    '<section class="cover"' + bg + '><div class="cover-in"><p class="kick">Ci sposiamo</p>' +
+    '<h1>' + esc(n[0]) + ' <span class="e">e</span> ' + esc(n[1]) + '</h1><p class="dt">' + esc(CONFIG.dataTesto) + '</p><span class="rl" aria-hidden="true"></span>' +
+    '<div class="cd" id="cd" role="timer" aria-label="' + cdLabel() + '">' + cdHtml() + '</div>' +
+    '<svg class="dn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></div></section>' +
+    '<div class="land-body">' +
+    (CONFIG.storia.length ? '<section class="story"><div class="lh"><h2>La nostra storia</h2><span class="gr" aria-hidden="true"></span></div>' +
+      CONFIG.storia.map(function(x){ return '<article class="st"><div class="ph"' + (x.foto ? ' style="background-image:url(\'' + esc(x.foto) + '\')"' : '') + ' role="img" aria-label="' + esc(x.titolo) + '"></div><div class="tx"><p class="yr">' + esc(x.anno) + '</p><p class="tt">' + esc(x.titolo) + '</p><p class="ds">' + esc(x.testo) + '</p></div></article>'; }).join('') + '</section>' : '') +
+    '<section class="prog"><div class="lh"><p class="ey">' + esc(CONFIG.dataTesto) + '</p><h2 style="font-size:38px">Il programma</h2><span class="gr" aria-hidden="true"></span></div><ol>' +
+      CONFIG.programma.map(function(x){ return '<li><span class="dot" aria-hidden="true"><i></i></span><span class="ic" aria-hidden="true">' + svg(LIC[x.icona] || LIC.pin).replace('stroke-width="1.6"', 'stroke-width="1.5"') + '</span><div class="w"><span class="o">' + esc(x.ora) + '</span><span class="c">' + esc(x.cosa) + '</span><span class="d">' + esc(x.dove) + '</span></div></li>'; }).join('') +
+    '</ol><p class="nt">Indicazioni, parcheggi e mappe li trovi dentro l’app.</p></section>' +
+    '<section class="close"><p style="font-size:17px;line-height:1.45">Conferma la presenza, scopri come arrivare e, il giorno delle nozze, scatta le foto per noi.</p>' +
+    '<p class="tiny">Questa pagina la vedi solo la prima volta. Puoi riaprirla da Benvenuto.</p></section></div>' +
+    '<div class="entra" id="entra"><button class="btn primary" type="button" data-act="entra">Entra</button></div></div>';
+}
+// La barra «Entra» si nasconde sulla copertina e compare appena si scorre
+function entraBar(){ var b = document.getElementById('entra'), c = document.querySelector('.cover'); if (b && c) b.classList.toggle('on', window.scrollY > c.offsetHeight * 0.5); }
+window.addEventListener('scroll', entraBar, {passive:true});
+setInterval(function(){ var el = document.getElementById('cd'); if (el && !document.hidden) { el.innerHTML = cdHtml(); el.setAttribute('aria-label', cdLabel()); } }, 30000);
 function render(){
   var app = $('#app');
-  var key = (S.inv ? 'in:' : 'out:') + S.view + (S.loading && !S.inv ? ':l' : '');
+  var key = (S.landing ? 'land:' : '') + (S.inv ? 'in:' : 'out:') + S.view + (S.loading && !S.inv ? ':l' : '');
   var enter = key !== lastKey; lastKey = key;
   setTimeout(function(){ var v = app.firstElementChild; if (v && enter) { v.classList.add('enter'); } }, 0);
+  if (S.landing) { app.className = 'land'; $('#bar').hidden = true; app.innerHTML = vLanding(); setTimeout(entraBar, 0); return; }
   if (S.loading && !S.inv && codice) { app.className = 'nobar'; $('#bar').hidden = true; app.innerHTML = '<div class="view"><section class="card empty"><img class="sprig" src="' + RAMETTO + '" alt="" style="width:110px"><b>Un attimo…</b></section></div>'; return; }
   if (!S.inv) { app.className = 'nobar'; $('#bar').hidden = true; app.innerHTML = vWho(); return; }
   app.className = ''; $('#bar').hidden = false; renderTabs();
@@ -355,6 +444,8 @@ document.addEventListener('click', function(e){
   else if (a === 'open') { S.open = S.open === t.dataset.id ? null : t.dataset.id; render(); var b = document.querySelector('[data-act="open"][data-id="' + t.dataset.id + '"]'); if (b) b.focus(); }
   else if (a === 'more') { S.more[t.dataset.id] = true; render(); }
   else if (a === 'all') { var y = dr.persone[+t.dataset.i], v = t.dataset.v, k = y.allergie.indexOf(v); if (k >= 0) y.allergie.splice(k, 1); else y.allergie.push(v); S.sent = false; render(); var c2 = document.querySelector('[data-act="all"][data-i="' + t.dataset.i + '"][data-v="' + v + '"]'); if (c2) c2.focus(); }
+  else if (a === 'entra') { store.set('landing-vista', '1'); S.landing = false; S.view = 'home'; render(); window.scrollTo(0, 0); }
+  else if (a === 'landing') { S.landing = true; render(); window.scrollTo(0, 0); }
   else if (a === 'esci') { store.set('invito-codice', null); codice = ''; S.inv = null; S.view = 'home'; render(); }
   else if (a === 'send') {
     S.sending = true; S.err = ''; render();

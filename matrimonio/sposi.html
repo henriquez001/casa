@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png?v=4">
 <link rel="icon" type="image/png" href="icon-192.png?v=4">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="app-version" content="20261119160000">
+<meta name="app-version" content="20261119163000">
 <title>Conti del Matrimonio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -188,6 +188,23 @@ input[type=range]{padding:0;border:0;background:none;accent-color:var(--accent)}
 .fast-nav{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
 .fast-nav .btn{justify-content:center}
 .btn:disabled{opacity:.45;cursor:default}
+.sala-sum{display:flex;align-items:center;gap:12px;padding:10px 12px 10px 16px;margin-bottom:12px;flex-wrap:wrap}
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.stepper button{font:inherit;font-size:20px;font-weight:700;width:44px;height:44px;border:0;background:var(--accent-soft);color:var(--accent);cursor:pointer}
+.stepper button:disabled{opacity:.45;cursor:default}.stepper b{min-width:44px;text-align:center;font-size:17px}
+.tv-row{display:flex;align-items:center;gap:12px;text-align:left}
+.tic{width:24px;height:24px;border:1.6px solid var(--accent);flex:none}.tic.r{border-radius:50%}.tic.l{height:14px;border-radius:3px}
+.occ{font-size:14px;color:var(--muted);padding-right:4px}.occ.over{color:#75590F;font-weight:600}
+.sala-h{font-family:var(--font-display);font-size:24px;font-weight:600;margin:4px 0 2px}
+.room{position:relative;width:100%;background-color:#F7F2E7;border:1px solid var(--line);border-radius:14px;overflow:hidden;background-image:radial-gradient(#DCD3BD 1px,transparent 1px);background-size:16px 16px;margin-bottom:16px}
+.room .lbl{position:absolute;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.tv{position:absolute;display:grid;place-items:center;text-align:center;background:var(--surface);border:1.6px solid var(--accent);color:var(--fg);font-size:11px;line-height:1.1;cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none}
+.tv b{font-size:13px}.tv.r{width:13.9%;aspect-ratio:1;border-radius:50%}.tv.l{width:26.7%;aspect-ratio:96/36;border-radius:8px}
+.tv.sp{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.tv.sel{outline:2px solid var(--gold);outline-offset:2px}
+.tv.drag{cursor:grabbing;box-shadow:0 8px 20px rgba(46,53,40,.18);z-index:2}
+.chip .nm{font-size:11px;color:inherit;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 4px}
+.chip b.w{font-size:14px}
 .fast-cta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
 .fast-cta .grow{min-width:180px}
 .tables .card ul{margin:0;padding:0 16px 14px;list-style:none;display:grid;gap:4px;font-size:15px}
@@ -1100,27 +1117,128 @@ function seatRef(key){
   return (g.persone || []).find((p, j) => String(p.id || j) === pk) || null;
 }
 // Tavoli numerati da 1 a quanti ne servono (persone ÷ posti), più quelli già usati con altri nomi («Sposi»)
+// Tavoli della sala: elenco salvato nelle Impostazioni (numero, nome, forma, posti, posizione).
+// Finché non si apre la vista Sala, i tavoli sono numerati da 1 a persone ÷ posti.
+const isNumT = k => /^\d+$/.test(k);
+const tavTitle = t => isNumT(t.k) ? (t.nome ? t.k + ' · ' + t.nome : 'Tavolo ' + t.k) : (t.nome || t.k);
 function tableList(U){
-  const per = num(S().perTavolo) || 10, occ = {};
+  const per = num(S().perTavolo) || 10, occ = {}, D = Array.isArray(S().tavoli) ? S().tavoli : null;
   U.forEach(u => { if (u.tavolo) occ[u.tavolo] = (occ[u.tavolo] || 0) + u.n; });
-  let max = Math.ceil(seatN(U) / per);
-  Object.keys(occ).forEach(k => { if (/^\d+$/.test(k)) max = Math.max(max, +k); });
-  const keys = []; for (let i = 1; i <= max; i++) keys.push(String(i));
-  Object.keys(occ).filter(k => !/^\d+$/.test(k)).sort((a, b) => a.localeCompare(b, 'it')).forEach(k => keys.push(k));
-  return {per, max, list:keys.map(k => ({k, n:occ[k] || 0}))};
+  let list;
+  if (D) {
+    list = D.map(t => ({k:t.k, nome:t.nome || '', forma:t.forma || 'tondo', posti:num(t.posti) || per, n:occ[t.k] || 0}));
+    Object.keys(occ).filter(k => !D.some(t => t.k === k)).sort((a, b) => a.localeCompare(b, 'it', {numeric:true})).forEach(k => list.push({k, nome:'', forma:'tondo', posti:per, n:occ[k], fuori:true}));
+  } else {
+    let max = Math.ceil(seatN(U) / per);
+    Object.keys(occ).forEach(k => { if (isNumT(k)) max = Math.max(max, +k); });
+    const keys = Object.keys(occ).filter(k => !isNumT(k)).sort((a, b) => a.localeCompare(b, 'it'));
+    for (let i = 1; i <= max; i++) keys.push(String(i));
+    list = keys.map(k => ({k, nome:'', forma:isNumT(k) ? 'tondo' : 'lungo', posti:per, n:occ[k] || 0}));
+  }
+  const max = list.reduce((m, t) => isNumT(t.k) ? Math.max(m, +t.k) : m, 0);
+  return {per, max, list};
+}
+const SALA_W = 360;
+function salaH(D){ const n = D.filter(t => isNumT(t.k)).length; return Math.max(320, Math.ceil(n / 4) * 80 + 110); }
+function autoPos(t, i){ return isNumT(t.k) ? {x:16 + (i % 4) * 88, y:96 + Math.floor(i / 4) * 80} : {x:128, y:16}; }
+function tavInit(){
+  if (Array.isArray(S().tavoli)) return S().tavoli;
+  const T = tableList(seatUnits()); let i = 0;
+  S().tavoli = T.list.map(t => { const d = {k:t.k, nome:'', forma:t.forma, posti:T.per}; Object.assign(d, autoPos(d, isNumT(t.k) ? i++ : 0)); return d; });
+  save('base'); return S().tavoli;
+}
+function tavAdd(k, forma){
+  const D = tavInit(), d = {k, nome:'', forma:forma || 'tondo', posti:k === 'Sposi' ? 8 : (num(S().perTavolo) || 10)};
+  Object.assign(d, autoPos(d, D.filter(t => isNumT(t.k)).length));
+  if (isNumT(k)) D.push(d); else D.unshift(d);
+  save('base'); return d;
+}
+// Togliere un tavolo: i suoi ospiti tornano senza tavolo, con «Annulla» nell'avviso
+function tavRemove(k){
+  const D = tavInit(), i = D.findIndex(t => t.k === k); if (i < 0) return;
+  const old = clone(D[i]), refs = [];
+  seatUnits().filter(u => u.tavolo === k).forEach(u => { const o = seatRef(u.key); if (o) { refs.push({key:u.key, prev:o.tavolo}); o.tavolo = ''; } });
+  // anche i tavoli di famiglia «di riserva» con quel numero
+  state.guests.forEach(g => { if (normT(g.tavolo) === k && !refs.some(r => r.key === g.id)) { refs.push({key:g.id, prev:g.tavolo}); g.tavolo = ''; } });
+  D.splice(i, 1); if (ui.openTav === k) ui.openTav = null;
+  save('base'); if (refs.length) save('ospiti'); render();
+  const n = refs.length;
+  toast('Tavolo ' + (old.nome || old.k) + ' tolto' + (n ? ': ' + n + (n === 1 ? ' voce torna' : ' voci tornano') + ' senza tavolo' : ''), () => {
+    S().tavoli.splice(Math.min(i, S().tavoli.length), 0, old);
+    refs.forEach(r => { const o = seatRef(r.key); if (o) o.tavolo = r.prev; });
+    save('base'); if (n) save('ospiti'); render();
+  });
 }
 function uLabel(u){ return u.p ? u.nome : u.resto ? u.g.nome + ', ' + u.n + (u.n === 1 ? ' persona senza nome' : ' persone senza nome') : u.nome + (isFam(u.g) ? ' (' + u.n + ')' : ''); }
 function vTavoli(){
-  const U = seatUnits(); if (!U.length) return '<div class="card empty"><b>Nessun ospite</b>Aggiungi ospiti nella vista Lista per comporre i tavoli.</div>';
-  const T = tableList(U), per = T.per, tot = seatN(U), done = seatN(U.filter(u => u.tavolo));
+  const seg = `<div class="seg" role="tablist" aria-label="Vista tavoli">${[['assegna','Assegna'],['pertavolo','Per tavolo'],['sala','Sala']].map(([k, l]) => `<button type="button" role="tab" data-act="tseg" data-id="${k}" aria-selected="${(ui.tavSeg || 'assegna') === k}">${l}</button>`).join('')}</div>`;
+  const U = seatUnits(); if (!U.length) return seg + '<div class="card empty"><b>Nessun ospite</b>Aggiungi ospiti nella vista Lista per comporre i tavoli.</div>';
+  if (ui.tavSeg === 'sala') return seg + vSala(U);
+  const T = tableList(U), tot = seatN(U), done = seatN(U.filter(u => u.tavolo));
   const by = {}; U.forEach(u => (by[u.tavolo] = by[u.tavolo] || []).push(u));
   const li = list => { const seen = new Set(); return list.map(u => { const al = u.g.allergie && !seen.has(u.g.id); seen.add(u.g.id); return `<li>${esc(uLabel(u))}${al ? ' <span class="pill warn">' + esc(u.g.allergie) + '</span>' : ''}</li>`; }).join(''); };
-  const keys = T.list.map(t => t.k).filter(k => by[k]);
-  return `<div class="card pad fast-cta"><div class="grow"><b class="num">${done} di ${tot}</b> persone hanno un tavolo<div class="meter" style="margin-top:8px" role="img" aria-label="${done} persone su ${tot} hanno un tavolo"><i style="width:${tot ? done / tot * 100 : 0}%"></i></div></div><button class="btn primary" type="button" data-act="fast-open">Assegna veloce</button></div>
-  <p class="sub">Assegna veloce mostra una persona alla volta: tocchi il numero del tavolo e passa subito alla prossima. Capienza indicativa: ${per} posti (la cambi in Impostazioni).</p>
-  <div class="tables">${keys.map(k => { const n = seatN(by[k]); return `<div class="card"><div class="row pad" style="padding-bottom:8px"><b class="grow">Tavolo ${esc(k)}</b><span class="pill ${n > per ? 'bad' : ''}">${n}/${per}</span></div><ul>${li(by[k])}</ul></div>`; }).join('')}
-  ${by[''] ? `<div class="card"><div class="row pad" style="padding-bottom:8px"><b class="grow">Senza tavolo</b><span class="pill mute">${seatN(by[''])}</span></div><ul>${li(by[''])}</ul></div>` : ''}</div>`;
+  const senza = by[''] ? `<div class="card"><div class="row pad" style="padding-bottom:8px"><b class="grow">Senza tavolo</b><span class="pill mute">${seatN(by[''])}</span></div><ul>${li(by[''])}</ul></div>` : '';
+  if (ui.tavSeg === 'pertavolo') {
+    const L = T.list.filter(t => by[t.k]);
+    return seg + `<div class="tables">${L.map(t => { const n = seatN(by[t.k]); return `<div class="card"><div class="row pad" style="padding-bottom:8px"><b class="grow">${esc(tavTitle(t))}</b><span class="pill ${n > t.posti ? 'warn' : ''}">${n}/${t.posti}</span></div><ul>${li(by[t.k])}</ul></div>`; }).join('')}${senza}</div>
+    ${L.length ? '' : '<p class="note">Nessuno ha ancora un tavolo: usa «Assegna veloce» nella vista Assegna.</p>'}`;
+  }
+  return seg + `<div class="card pad fast-cta"><div class="grow"><b class="num">${done} di ${tot}</b> persone hanno un tavolo<div class="meter" style="margin-top:8px" role="img" aria-label="${done} persone su ${tot} hanno un tavolo"><i style="width:${tot ? done / tot * 100 : 0}%"></i></div></div><button class="btn primary" type="button" data-act="fast-open">Assegna veloce</button></div>
+  <p class="sub">Assegna veloce mostra una persona alla volta: tocchi il numero del tavolo e passa subito alla prossima. Quanti tavoli ci sono, i loro nomi e i posti li decidi nella vista Sala.</p>
+  <div class="tables">${senza || '<div class="card empty"><b>Tutti hanno un tavolo</b>Li vedi nella vista Per tavolo.</div>'}</div>`;
 }
+function vSala(U){
+  const D = tavInit(), T = tableList(U), Hl = salaH(D), tot = seatN(U);
+  const posti = T.list.filter(t => !t.fuori).reduce((a, t) => a + t.posti, 0), nNum = D.filter(t => isNumT(t.k)).length;
+  const rows = T.list.map(t => {
+    const open = ui.openTav === t.k, d = D.find(x => x.k === t.k);
+    return `<div class="item${open ? ' open' : ''}"><div class="item-head"><button type="button" class="item-main tv-row" data-act="tav" data-id="${esc(t.k)}" aria-expanded="${open}"><i class="tic ${t.forma === 'lungo' ? 'l' : 'r'}" aria-hidden="true"></i><span class="grow"><span class="t">${esc(tavTitle(t))}</span><span class="small muted" style="display:block">${t.fuori ? 'Usato nelle schede, non è nella sala' : (t.forma === 'lungo' ? 'Lungo' : 'Tondo') + ' · ' + t.posti + ' posti'}</span></span><span class="occ num${t.n > t.posti ? ' over' : ''}">${t.n}/${t.posti}</span></button></div>
+    ${open && d ? `<div class="editor">
+      <label class="f" for="tvn-${esc(t.k)}">Nome<input id="tvn-${esc(t.k)}" data-tv="nome" data-k="${esc(t.k)}" value="${esc(d.nome)}" placeholder="${isNumT(t.k) ? 'Per esempio Ulivo' : 'Sposi'}"></label>
+      <label class="f" for="tvp-${esc(t.k)}">Posti<input id="tvp-${esc(t.k)}" data-tv="posti" data-k="${esc(t.k)}" type="number" inputmode="numeric" min="1" max="40" value="${esc(d.posti)}"></label>
+      <div class="full"><div class="seg" role="radiogroup" aria-label="Forma" style="margin:0">${[['tondo','Tondo'],['lungo','Lungo']].map(([f, l]) => `<button type="button" role="radio" data-act="tav-forma" data-id="${esc(t.k)}" data-v="${f}" aria-selected="${(d.forma || 'tondo') === f}" aria-checked="${(d.forma || 'tondo') === f}">${l}</button>`).join('')}</div></div>
+      <div class="full btns"><button class="btn danger" type="button" data-act="tav-del" data-id="${esc(t.k)}">Togli il tavolo</button></div>
+    </div>` : open && t.fuori ? `<div class="editor"><div class="full btns"><button class="btn" type="button" data-act="tav-adopt" data-id="${esc(t.k)}">Aggiungilo alla sala</button></div></div>` : ''}</div>`;
+  }).join('');
+  const room = `<div class="room" id="room" style="aspect-ratio:${SALA_W}/${Hl}" data-h="${Hl}" aria-label="Piantina della sala">
+    <span class="lbl" style="left:3%;top:${8 / Hl * 100}%">Ingresso</span>
+    ${D.map(t => `<div class="tv ${t.forma === 'lungo' ? 'l' : 'r'}${isNumT(t.k) ? '' : ' sp'}${ui.openTav === t.k ? ' sel' : ''}" data-k="${esc(t.k)}" style="left:${(num(t.x) / SALA_W * 100).toFixed(2)}%;top:${(num(t.y) / Hl * 100).toFixed(2)}%" aria-hidden="true"><span><b>${esc(isNumT(t.k) ? t.k : (t.nome || t.k))}</b>${isNumT(t.k) && t.nome ? '<br>' + esc(t.nome.length > 9 ? t.nome.slice(0, 8) + '.' : t.nome) : ''}</span></div>`).join('')}
+  </div>`;
+  return `<div class="card sala-sum"><span class="grow">Tavoli</span><span class="stepper" role="group" aria-label="Numero di tavoli"><button type="button" data-act="sala-dec" aria-label="Togli l'ultimo tavolo"${nNum ? '' : ' disabled'}>−</button><b class="num" aria-live="polite">${nNum}</b><button type="button" data-act="sala-inc" aria-label="Aggiungi un tavolo">+</button></span><span class="small muted num">${posti} posti · ${tot} ospiti</span></div>
+  ${D.some(t => !isNumT(t.k)) ? '' : '<div class="btns" style="margin:0 0 12px"><button class="btn" type="button" data-act="sala-sposi">+ Tavolo degli sposi</button></div>'}
+  <div class="card list" style="margin-bottom:16px">${rows}</div>
+  <h2 class="sala-h">Piantina</h2>
+  <p class="sub" style="margin-top:0">Trascina i tavoli al loro posto. Toccane uno per cambiarne nome, forma e posti.</p>
+  ${room}`;
+}
+// Trascinare i tavoli nella piantina: seguono il dito 1:1, al rilascio si agganciano alla griglia di 16
+let tdrag = null;
+document.addEventListener('pointerdown', e => {
+  const el = e.target.closest && e.target.closest('#room .tv'); if (!el || e.button > 0) return;
+  el.getAnimations && el.getAnimations().forEach(a => a.cancel());
+  tdrag = {el, k:el.dataset.k, x0:e.clientX, y0:e.clientY, on:false, id:e.pointerId};
+});
+document.addEventListener('pointermove', e => {
+  const d = tdrag; if (!d || e.pointerId !== d.id) return;
+  const dx = e.clientX - d.x0, dy = e.clientY - d.y0;
+  if (!d.on) { if (Math.hypot(dx, dy) < 10) return; d.on = true; d.el.classList.add('drag'); try { d.el.setPointerCapture(e.pointerId); } catch (_) {}
+    const room = $('#room'), t = (S().tavoli || []).find(x => x.k === d.k); if (!room || !t) { tdrag = null; return; }
+    d.room = room; d.t = t; d.H = +room.dataset.h; d.sx = SALA_W / room.clientWidth; d.sy = d.H / room.clientHeight; d.bx = num(t.x); d.by = num(t.y);
+    d.w = d.el.offsetWidth * d.sx; d.h = d.el.offsetHeight * d.sy; d.ox = dx; d.oy = dy; }
+  d.x = Math.max(0, Math.min(SALA_W - d.w, d.bx + (dx - d.ox) * d.sx)); d.y = Math.max(0, Math.min(d.H - d.h, d.by + (dy - d.oy) * d.sy));
+  d.el.style.left = (d.x / SALA_W * 100) + '%'; d.el.style.top = (d.y / d.H * 100) + '%';
+});
+function tavDrop(e){
+  const d = tdrag; if (!d || e.pointerId !== d.id) return; tdrag = null;
+  if (!d.on) { if (e.type === 'pointerup') { ui.openTav = ui.openTav === d.k ? null : d.k; render(); const r = document.querySelector('[data-act="tav"][aria-expanded="true"]'); if (r) r.scrollIntoView({block:'center', behavior:reduceMotion() ? 'auto' : 'smooth'}); } return; }
+  d.el.classList.remove('drag');
+  const x2 = Math.max(0, Math.min(SALA_W - d.w, Math.round(d.x / 16) * 16)), y2 = Math.max(0, Math.min(d.H - d.h, Math.round(d.y / 16) * 16));
+  d.t.x = x2; d.t.y = y2; save('base');
+  d.el.style.left = (x2 / SALA_W * 100) + '%'; d.el.style.top = (y2 / d.H * 100) + '%';
+  if (d.el.animate && !reduceMotion()) d.el.animate([{transform:`translate(${(d.x - x2) / d.sx}px,${(d.y - y2) / d.sy}px)`}, {transform:'none'}], {duration:300, easing:'cubic-bezier(.2,.8,.2,1)'});
+}
+document.addEventListener('pointerup', tavDrop);
+document.addEventListener('pointercancel', tavDrop);
 function fastCur(U){
   const f = ui.fast, ok = u => f.filter === 'tutti' || (!u.tavolo && !f.skip.includes(u.key));
   for (let i = f.pos; i < U.length; i++) if (ok(U[i])) return i;
@@ -1150,7 +1268,7 @@ function vFast(){
     <span class="pill">${esc(tag)}</span>${u.p && u.g.persone.length > 1 && u.p.cognome ? '' : ''}
     ${u.tavolo ? `<p class="hint">Ora al tavolo ${esc(u.tavolo)}</p>` : ''}${hint ? `<p class="hint">${esc(hint)}</p>` : ''}
     ${g.allergie ? `<span class="pill warn">${esc(g.allergie)}</span>` : ''}</div></div>
-  <div class="fast-chips" role="group" aria-label="Scegli il tavolo">${T.list.map(t => `<button type="button" class="chip${t.k === u.tavolo ? ' cur' : ''}${t.n >= T.per ? ' full' : ''}" data-act="fast-set" data-id="${esc(t.k)}" aria-pressed="${t.k === u.tavolo}" aria-label="Tavolo ${esc(t.k)}, ${t.n} posti occupati su ${T.per}"><b>${esc(t.k)}</b><small class="num">${t.n}/${T.per}</small></button>`).join('')}<button type="button" class="chip add" data-act="fast-new" aria-label="Nuovo tavolo, il ${T.max + 1}"><b>+</b><small>Nuovo</small></button></div>
+  <div class="fast-chips" role="group" aria-label="Scegli il tavolo">${T.list.map(t => `<button type="button" class="chip${t.k === u.tavolo ? ' cur' : ''}${t.n >= t.posti ? ' full' : ''}" data-act="fast-set" data-id="${esc(t.k)}" aria-pressed="${t.k === u.tavolo}" aria-label="${esc(tavTitle(t))}, ${t.n} posti occupati su ${t.posti}"><b${isNumT(t.k) ? '' : ' class="w"'}>${esc(isNumT(t.k) ? t.k : (t.nome || t.k))}</b>${isNumT(t.k) && t.nome ? `<small class="nm">${esc(t.nome)}</small>` : ''}<small class="num">${t.n}/${t.posti}</small></button>`).join('')}<button type="button" class="chip add" data-act="fast-new" aria-label="Nuovo tavolo, il ${T.max + 1}"><b>+</b><small>Nuovo</small></button></div>
   <div class="fast-nav"><button class="btn" type="button" data-act="fast-back"${f.hist.length ? '' : ' disabled'}>↶ Indietro</button><button class="btn" type="button" data-act="fast-skip">Salta →</button></div></div>`;
   return out;
 }
@@ -1379,8 +1497,11 @@ function exporter(act){
       return {key:'guests', name:'etichette-indirizzi.txt', text:t, mime:'text/plain'};
     }
     case 'exp-tables': {
-      const by = {}; seatUnits().forEach(u => { const k = u.tavolo || 'Senza tavolo'; (by[k] = by[k] || []).push(u); });
-      const t = Object.keys(by).sort((a, b) => a === 'Senza tavolo' ? 1 : b === 'Senza tavolo' ? -1 : a.localeCompare(b, 'it', {numeric:true})).map(k => (k === 'Senza tavolo' ? k : 'Tavolo ' + k) + ' (' + seatN(by[k]) + ')\n' + by[k].map(u => '  ' + uLabel(u) + (!u.p && !u.resto && isFam(u.g) && u.g.membri ? ': ' + u.g.membri : '')).join('\n')).join('\n\n');
+      const U = seatUnits(), TL = tableList(U), by = {}; U.forEach(u => (by[u.tavolo] = by[u.tavolo] || []).push(u));
+      const righe = list => list.map(u => '  ' + uLabel(u) + (!u.p && !u.resto && isFam(u.g) && u.g.membri ? ': ' + u.g.membri : '')).join('\n');
+      const blocchi = TL.list.filter(x => by[x.k]).map(x => (isNumT(x.k) ? (x.nome ? x.nome + ' (tavolo ' + x.k + ')' : 'Tavolo ' + x.k) : (x.nome || x.k)) + ' · ' + seatN(by[x.k]) + ' di ' + x.posti + ' posti\n' + righe(by[x.k]));
+      if (by['']) blocchi.push('Senza tavolo (' + seatN(by['']) + ')\n' + righe(by['']));
+      const t = blocchi.join('\n\n');
       return {key:'guests', name:'tableau-de-mariage.txt', text:t || 'Nessun ospite.', mime:'text/plain'};
     }
     case 'exp-catering': {
@@ -1458,7 +1579,15 @@ document.addEventListener('click', e => {
     case 'fast-close': ui.fast = null; render(); window.scrollTo(0, 0); break;
     case 'fast-filter': ui.fast.filter = id; ui.fast.pos = 0; ui.fast.skip = []; ui.fast.hist = []; render(); fastEnter(0); break;
     case 'fast-set': fastSet(id); break;
-    case 'fast-new': fastSet(String(tableList(seatUnits()).max + 1)); break;
+    case 'fast-new': { const k = String(tableList(seatUnits()).max + 1); if (Array.isArray(S().tavoli)) tavAdd(k); fastSet(k); break; }
+    case 'tseg': ui.tavSeg = id; ui.openTav = null; render(); break;
+    case 'tav': ui.openTav = ui.openTav === id ? null : id; render(); break;
+    case 'tav-forma': { const d = tavInit().find(t => t.k === id); if (d) { d.forma = b.dataset.v; save('base'); render(); } break; }
+    case 'tav-del': tavRemove(id); break;
+    case 'tav-adopt': tavAdd(id); ui.openTav = id; render(); break;
+    case 'sala-inc': { const d = tavAdd(String(tableList(seatUnits()).max + 1)); render(); toast('Aggiunto il tavolo ' + d.k); break; }
+    case 'sala-dec': { const D = tavInit().filter(t => isNumT(t.k)); if (D.length) tavRemove(D.reduce((m, t) => +t.k > +m.k ? t : m).k); break; }
+    case 'sala-sposi': tavAdd('Sposi', 'lungo'); ui.openTav = 'Sposi'; render(); break;
     case 'fast-skip': fastSkip(-1); break;
     case 'fast-back': fastBack(); break;
     case 'fast-again': ui.fast.pos = 0; ui.fast.skip = []; render(); fastEnter(0); break;
@@ -1527,6 +1656,7 @@ document.addEventListener('input', e => {
   if (t.id === 'ghRepo') { ui.ghRepo = t.value; return; }
   if (t.id === 'ghTok') { ui.ghTok = t.value; return; }
   if (t.id === 'casUrl') { ui.casUrl = t.value; return; }
+  if (t.dataset.tv) { const d = (S().tavoli || []).find(x => x.k === t.dataset.k); if (d) { d[t.dataset.tv] = t.dataset.tv === 'posti' ? (Math.max(1, Math.round(num(t.value))) || 1) : t.value; save('base'); } return; }
   if (t.id === 'casSec') { ui.casSec = t.value; return; }
   if (t.dataset.p) { const g = state.guests.find(x => x.id === t.dataset.id); const p = g && (g.persone || [])[+t.dataset.i]; if (p) { p[t.dataset.p] = t.value; save('ospiti'); if (t.dataset.p === 'tipo') render(); } return; }
   if (t.dataset.act === 'scen') { ui.scen = +t.value; const o = $('#scenOut'); if (o) o.innerHTML = scenOut(ui.scen); return; }
@@ -1544,7 +1674,7 @@ document.addEventListener('change', e => {
   if (t.dataset.act === 'imp') { const file = t.files && t.files[0]; if (!file) return; const r = new FileReader();
     r.onload = () => { importText(r.result, 'Questo file non è un backup del matrimonio: scegli il file esportato da qui'); t.value = ''; };
     r.readAsText(file); return; }
-  if (t.dataset.rencat || (t.matches('input,select,textarea') && (t.dataset.item || t.dataset.g || t.dataset.e || t.dataset.s))) setTimeout(render, 0);
+  if (t.dataset.rencat || (t.matches('input,select,textarea') && (t.dataset.item || t.dataset.g || t.dataset.e || t.dataset.s || t.dataset.tv))) setTimeout(render, 0);
 });
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'ghTok') ghConnect(); if (e.key === 'Enter' && e.target.dataset && e.target.dataset.rencat) e.target.blur(); if (e.key === 'Enter' && e.target.id === 'ntxt') document.querySelector('[data-act="add-task"]').click(); });
 

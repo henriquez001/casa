@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2ECDF">
-<meta name="app-version" content="20261119203000">
+<meta name="app-version" content="20261119213000">
 <title>Alice &amp; Leandro</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -60,7 +60,7 @@ var CONFIG = {
 }
 *{box-sizing:border-box}
 html,body{margin:0;overscroll-behavior-y:none}
-body{background:var(--bg);color:var(--fg);font-family:var(--font-ui);font-size:17px;line-height:1.4;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-ui);font-size:17px;line-height:1.4;overflow-wrap:anywhere;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
 main{max-width:520px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 20px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 104px) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
 main.nobar{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 32px)}
 .view{display:flex;flex-direction:column;gap:12px}
@@ -141,6 +141,7 @@ label.f{display:grid;gap:4px;font-size:13px;color:var(--muted);font-weight:500}
 .demo{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);right:max(10px,env(safe-area-inset-right,0px));z-index:30;font-size:12px;font-weight:600;background:var(--copper);color:#FFFCF5;padding:4px 10px;border-radius:999px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.msg .retry{display:flex;margin:10px 0 0;min-height:44px;width:100%;justify-content:center}
 /* Landing: schermata 0 del design */
 main.land{max-width:none;padding:0;gap:0}
 .cover{position:relative;min-height:100vh;min-height:100svh;display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(160deg,#B9C2A6 0%,#CDB898 55%,#9FAA8C 100%) center/cover no-repeat}
@@ -210,24 +211,52 @@ function demoGet(){ try { var r = JSON.parse(store.get('invito-demo-risposta') |
 
 /* ---------- cassetta ---------- */
 var lastErr = '';
-function errTxt(base){ return base + (lastErr ? ' <span style="opacity:.7;font-size:13px">(' + esc(lastErr) + ')</span>' : ''); }
+function errTxt(base, retry){ S.retry = retry || null; return base + (lastErr ? ' <span style="opacity:.7;font-size:13px">(' + esc(lastErr) + ')</span>' : '') + (retry ? '<button class="btn retry" type="button" data-act="riprova">Riprova</button>' : ''); }
 function api(params){
   if (DEMO) return new Promise(function(res){ setTimeout(function(){
     if (params.a === 'invito') res(params.c === 'PROVA1' ? {ok:true, invito:demoGet()} : {ok:false, motivo:'codice'});
     else if (params.a === 'cerca') res(/^carla$|^mario$|^luca$/i.test(params.nome.trim()) && /^(rossi)?$/i.test((params.cognome || '').trim()) ? {ok:true, invito:demoGet()} : {ok:false, motivo:'nontrovato'});
     else res({ok:false}); }, 350); });
+  return viaRete(params);
+}
+// Ogni richiesta aspetta al massimo 12 secondi. Se la richiesta diretta fallisce (browser che blocca, pagina di Google al posto dei dati)
+// si usa il canale di riserva: la cassetta risponde come script (JSONP). Se il canale di riserva funziona, lo si usa da subito.
+var useJP = store.get('cassetta-jsonp') === '1', JP = 0;
+function leggiTesto(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r.text().then(function(t){ try { return JSON.parse(t); } catch (e) { throw new Error('pagina al posto dei dati'); } }); }
+function fetchJ(u, opt){
+  var ac = window.AbortController ? new AbortController() : null, t = ac ? setTimeout(function(){ ac.abort(); }, 12000) : 0;
+  return fetch(u, Object.assign({redirect:'follow', signal:ac ? ac.signal : undefined}, opt || {})).then(leggiTesto)
+    .then(function(o){ clearTimeout(t); return o; }, function(e){ clearTimeout(t); throw (e && e.name === 'AbortError') ? new Error('nessuna risposta in 12 secondi') : e; });
+}
+function jsonp(params){
+  return new Promise(function(res, rej){
+    var cb = '_cas' + (++JP) + '_' + Date.now().toString(36), s = document.createElement('script'), fatto = false;
+    var fine = function(){ fatto = true; clearTimeout(t); try { delete window[cb]; } catch (e) { window[cb] = undefined; } s.remove(); };
+    var t = setTimeout(function(){ if (!fatto) { fine(); rej(new Error('nessuna risposta in 12 secondi')); } }, 12000);
+    window[cb] = function(o){ if (!fatto) { fine(); res(o); } };
+    s.onerror = function(){ if (!fatto) { fine(); rej(new Error('canale di riserva bloccato')); } };
+    s.onload = function(){ setTimeout(function(){ if (!fatto) { fine(); rej(new Error('cassetta da aggiornare')); } }, 0); };
+    s.src = CONFIG.cassetta + '?' + new URLSearchParams(Object.assign({}, params, {callback:cb})).toString();
+    document.head.appendChild(s);
+  });
+}
+function viaRete(params){
+  lastErr = '';
   var u = CONFIG.cassetta + '?' + new URLSearchParams(params).toString();
-  // Google a volte risponde con una pagina invece che con i dati: riprovo due volte prima di arrendermi.
-  var once = function(){ return fetch(u, {redirect:'follow', cache:'no-store'}).then(function(r){
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    return r.text().then(function(t){ try { return JSON.parse(t); } catch (e) { throw new Error('pagina al posto dei dati'); } }); }); };
-  var tries = 0;
-  var go = function(){ return once().catch(function(e){ tries++; if (tries > 2) { lastErr = e && e.message || String(e); throw e; } return new Promise(function(res){ setTimeout(res, 800 * tries); }).then(go); }); };
-  return go();
+  var riserva = function(e1){ return jsonp(params).then(function(o){ useJP = true; store.set('cassetta-jsonp', '1'); return o; }, function(e2){ lastErr = (e1 ? (e1.message || e1) + '; ' : '') + (e2.message || e2); throw e2; }); };
+  if (useJP) return jsonp(params).catch(function(e){ return fetchJ(u).then(function(o){ useJP = false; store.set('cassetta-jsonp', null); return o; }, function(){ lastErr = e.message || String(e); throw e; }); });
+  return fetchJ(u).catch(riserva);
 }
 function post(body){
   if (DEMO) return new Promise(function(res){ setTimeout(function(){ var r = body.risposta; r.quando = new Date().toISOString(); store.set('invito-demo-risposta', JSON.stringify(r)); res({ok:true, risposta:r}); }, 500); });
-  return fetch(CONFIG.cassetta, {method:'POST', redirect:'follow', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(body)}).then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r.text().then(function(t){ try { return JSON.parse(t); } catch (e) { throw new Error('pagina al posto dei dati'); } }); }).catch(function(e){ lastErr = e && e.message || String(e); throw e; });
+  // Invio diretto; se il browser lo blocca, la risposta passa dal canale di riserva. Se la cassetta è occupata riprova fino a 3 volte.
+  lastErr = '';
+  var tenta = function(n){
+    var via = useJP ? jsonp({a:'rispondi', d:JSON.stringify(body)}) : fetchJ(CONFIG.cassetta, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(body)})
+      .catch(function(e1){ return jsonp({a:'rispondi', d:JSON.stringify(body)}).then(function(o){ useJP = true; store.set('cassetta-jsonp', '1'); return o; }, function(e2){ lastErr = (e1.message || e1) + '; ' + (e2.message || e2); throw e2; }); });
+    return via.then(function(r){ if (r && r.motivo === 'occupato' && n < 3) return new Promise(function(ok){ setTimeout(ok, 1500 * (n + 1)); }).then(function(){ return tenta(n + 1); }); return r; });
+  };
+  return tenta(0);
 }
 
 /* ---------- stato ---------- */
@@ -236,7 +265,7 @@ var S = {view:'home', inv:null, loading:true, err:'', draft:null, open:null, mor
 var codice = (q.get('i') || store.get('invito-codice') || '').toUpperCase();
 // Landing: la prima volta, oppure riaperta da Benvenuto. Dal QR del giorno delle nozze (?qr) non si mostra.
 S.landing = !store.get('landing-vista') && !q.has('qr');
-if (q.get('i')) { store.set('invito-codice', codice); history.replaceState(null, '', location.pathname + location.hash); }
+if (q.get('i')) store.set('invito-codice', codice);
 
 function daysLeft(){ var d = new Date(CONFIG.data + 'T12:00:00'), n = new Date(); n.setHours(12,0,0,0); return Math.round((d - n) / 864e5); }
 function fmtDate(iso){ if (!iso) return ''; var d = new Date(iso + 'T12:00:00'); return d.toLocaleDateString('it-IT', {day:'numeric', month:'long', year:'numeric'}); }
@@ -409,14 +438,19 @@ function render(){
     galleria:function(){ return vSoon('Galleria', 'Dopo la festa qui trovi tutte le foto scattate dagli invitati.'); }})[S.view]();
 }
 
-function load(c){
-  S.loading = true; S.err = ''; render();
+// L'invito si salva sul telefono: chi è già entrato lo ritrova anche senza rete, e intanto si aggiorna in silenzio.
+function entra(inv, nuovaBozza){ S.inv = inv; if (nuovaBozza || !S.draft) S.draft = mkDraft(inv); codice = inv.c; store.set('invito-codice', codice); store.set('invito-copia', JSON.stringify(inv)); segnaCodice(); }
+function esci(){ store.set('invito-codice', null); store.set('invito-copia', null); codice = ''; S.inv = null; S.draft = null; S.view = 'home'; segnaCodice(); }
+// Il codice resta nell'indirizzo: l'icona sulla schermata Home riapre lo stesso invito.
+function segnaCodice(){ try { var u = new URL(location.href); if (codice) u.searchParams.set('i', codice); else u.searchParams.delete('i'); if (u.href !== location.href) history.replaceState(null, '', u.href); } catch (e) {} }
+function load(c, silenzioso){
+  if (!silenzioso) { S.loading = true; S.err = ''; render(); }
   return api({a:'invito', c:c}).then(function(r){
     S.loading = false;
-    if (r && r.ok) { S.inv = r.invito; S.draft = mkDraft(r.invito); codice = r.invito.c; store.set('invito-codice', codice); }
-    else { store.set('invito-codice', null); codice = ''; S.err = 'Questo link d’invito non funziona più. Scrivi nome e cognome per entrare.'; }
+    if (r && r.ok) { entra(r.invito, !silenzioso || S.view !== 'rsvp'); }
+    else if (r && r.motivo === 'codice') { esci(); S.err = 'Questo link d’invito non funziona più. Scrivi nome e cognome per entrare.'; }
     render();
-  }).catch(function(){ S.loading = false; S.err = errTxt('Non riesco a collegarmi. Controlla la connessione e riprova.'); render(); });
+  }).catch(function(){ S.loading = false; if (silenzioso) return; S.err = errTxt('Non riesco a collegarmi. Controlla la connessione e riprova.', function(){ load(c); }); render(); });
 }
 
 document.addEventListener('submit', function(e){
@@ -428,11 +462,11 @@ document.addEventListener('submit', function(e){
   S.loading = true; S.err = ''; render();
   api({a:'cerca', nome:n, cognome:c}).then(function(r){
     S.loading = false;
-    if (r && r.ok) { S.inv = r.invito; S.draft = mkDraft(r.invito); codice = r.invito.c; store.set('invito-codice', codice); S.view = 'home'; window.scrollTo(0, 0); }
+    if (r && r.ok) { entra(r.invito, true); S.view = 'home'; window.scrollTo(0, 0); }
     else S.err = r && r.motivo === 'ambiguo' ? (c ? 'Ci sono più invitati con questo nome. Usa il link che ti abbiamo mandato, oppure scrivici.' : 'Ci sono più invitati che si chiamano così: aggiungi il cognome.') : 'Non troviamo questo nome. Controlla come è scritto sull’invito o usa il link che ti abbiamo mandato. Abbiamo avvisato gli sposi.';
     render();
     var el = $('#wn'); if (el && !S.inv) { el.value = n; $('#wc').value = c; }
-  }).catch(function(){ S.loading = false; S.err = errTxt('Non riesco a collegarmi. Controlla la connessione e riprova.'); render(); });
+  }).catch(function(){ S.loading = false; S.err = errTxt('Non riesco a collegarmi. Controlla la connessione e riprova.', function(){ var f = $('#whoF'); $('#wn').value = n; $('#wc').value = c; if (f.requestSubmit) f.requestSubmit(); else f.dispatchEvent(new Event('submit', {cancelable:true})); }); render(); var el = $('#wn'); if (el) { el.value = n; $('#wc').value = c; } });
 });
 
 document.addEventListener('click', function(e){
@@ -447,17 +481,20 @@ document.addEventListener('click', function(e){
   else if (a === 'entra') { store.set('landing-vista', '1'); S.landing = false; S.view = 'home'; render(); window.scrollTo(0, 0); }
   else if (a === 'giu') { var lb = document.querySelector('.land-body'); if (lb) lb.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}); }
   else if (a === 'landing') { S.landing = true; render(); window.scrollTo(0, 0); }
-  else if (a === 'esci') { store.set('invito-codice', null); codice = ''; S.inv = null; S.view = 'home'; render(); }
+  else if (a === 'esci') { esci(); render(); }
+  else if (a === 'riprova') { var f = S.retry; S.err = ''; S.retry = null; if (f) f(); else render(); }
   else if (a === 'send') {
+    if (S.sending) return;
+    if (dr.presenza === 'si' && !dr.persone.some(function(p){ return p.viene; })) { S.err = 'Hai risposto sì ma nessuno risulta presente: segna chi viene, oppure scegli «No».'; render(); return; }
     S.sending = true; S.err = ''; render();
     var body = {a:'rispondi', c:S.inv.c, risposta:{presenza:dr.presenza, messaggio:dr.presenza === 'no' ? dr.messaggio : '', piuUno:dr.piuUno,
       persone: dr.presenza === 'si' ? dr.persone : dr.persone.map(function(p){ return {id:p.id, viene:false, allergie:[], note:''}; })}};
     post(body).then(function(r){
       S.sending = false;
-      if (r && r.ok) { S.inv.risposta = r.risposta; S.sent = true; }
-      else S.err = r && r.motivo === 'scaduto' ? 'Il tempo per rispondere è finito. Scrivici direttamente e ci pensiamo noi.' : 'La risposta non è partita. Riprova tra poco.';
+      if (r && r.ok) { S.inv.risposta = r.risposta; S.sent = true; store.set('invito-copia', JSON.stringify(S.inv)); }
+      else S.err = r && r.motivo === 'scaduto' ? 'Il tempo per rispondere è finito. Scrivici direttamente e ci pensiamo noi.' : errTxt(r && r.motivo === 'occupato' ? 'Tante risposte insieme: la tua non è ancora partita.' : 'La risposta non è partita.', function(){ var bt = document.querySelector('[data-act="send"]'); if (bt) bt.click(); });
       render(); window.scrollTo(0, 0);
-    }).catch(function(){ S.sending = false; S.err = errTxt('Non riesco a collegarmi: la risposta non è partita. Controlla la connessione e riprova.'); render(); });
+    }).catch(function(){ S.sending = false; S.err = errTxt('Non riesco a collegarmi: la risposta non è partita. Controlla la connessione e riprova.', function(){ var bt = document.querySelector('[data-act="send"]'); if (bt) bt.click(); }); render(); });
   }
 });
 document.addEventListener('input', function(e){
@@ -468,7 +505,10 @@ document.addEventListener('input', function(e){
 });
 
 if (DEMO) { var b = document.createElement('div'); b.className = 'demo'; b.textContent = 'Prova · dati finti'; document.body.appendChild(b); }
-if (codice) load(codice); else { S.loading = false; render(); }
+(function(){ var copia = null; try { copia = JSON.parse(store.get('invito-copia') || 'null'); } catch (e) {}
+  if (codice && copia && copia.c === codice) { S.loading = false; entra(copia, true); render(); load(codice, true); }
+  else if (codice) load(codice); else { S.loading = false; render(); } })();
+if ('serviceWorker' in navigator && !DEMO && location.protocol === 'https:') navigator.serviceWorker.register('sw-invitati.js').catch(function(){});
 })();
 </script>
 </body>

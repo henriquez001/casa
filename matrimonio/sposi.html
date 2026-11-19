@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png?v=4">
 <link rel="icon" type="image/png" href="icon-192.png?v=4">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="app-version" content="20261119144000">
+<meta name="app-version" content="20261119150000">
 <title>Conti del Matrimonio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -140,7 +140,7 @@ input[type=range]{padding:0;border:0;background:none;accent-color:var(--accent)}
 /* Pills */
 .pill{display:inline-block;font-size:12px;font-weight:600;padding:3px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
 .pill.good{background:var(--good-soft);color:var(--good)}
-.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.warn{background:var(--warn-soft);color:#75590F}
 .pill.bad{background:var(--bad-soft);color:var(--bad)}
 .pill.mute{background:var(--line);color:var(--muted)}
 
@@ -298,7 +298,7 @@ function defaultCats(){ return [
 ];}
 function defaultTasks(){
   const F = {
-    '12 mesi o più':['Fissare budget e data','Scegliere il tipo di rito','Prima bozza della lista ospiti','Prenotare la location','Valutare un wedding planner'],
+    '12 mesi o più':['Fissare la data','Scegliere il tipo di rito','Prima bozza della lista ospiti','Prenotare la location','Valutare un wedding planner'],
     '9–12 mesi':['Prenotare fotografo e videomaker','Prenotare la musica','Scegliere il catering','Iniziare a cercare gli abiti'],
     '6–9 mesi':['Ordinare l\'abito','Prenotare il fiorista','Scegliere i testimoni','Prenotare il viaggio di nozze','Inviare i save the date'],
     '4–6 mesi':['Ordinare le partecipazioni','Fare il corso prematrimoniale','Prenotare trucco e parrucco','Scegliere le fedi','Prenotare i trasporti','Ordinare le bomboniere'],
@@ -665,14 +665,16 @@ function inviteUnits(){
     const persone = fam ? (g0.persone || []).map(p => ({id:p.id, nome:(p.nome || '').trim(), cognome:(p.cognome || '').trim(), tipo:p.tipo || 'adulto'}))
       : list.map(g => { const n = splitName(g.nome); return {id:g.id, nome:n.nome, cognome:n.cognome, tipo:g.tipo || 'adulto'}; });
     const titolo = fam ? g0.nome : list.length > 1 ? (g0.nucleo || '').trim() : g0.nome;
-    const saluto = (list.find(g => (g.saluto || '').trim()) || {}).saluto || (persone.some(p => p.nome) ? persone.map(p => p.nome).filter(Boolean).join(', ').replace(/, ([^,]*)$/, (m, x) => (/^[eE]/.test(x) ? ' ed ' : ' e ') + x) : titolo);
+    const salutoCustom = ((list.find(g => (g.saluto || '').trim()) || {}).saluto || '').trim();
+    const nomiTxt = persone.some(p => p.nome) ? persone.map(p => p.nome).filter(Boolean).join(', ').replace(/, ([^,]*)$/, (m, x) => (/^[eE]/.test(x) ? ' ed ' : ' e ') + x) : titolo;
+    const saluto = salutoCustom || 'Ciao, ' + nomiTxt;
     const messaggio = (list.find(g => (g.messaggio || '').trim()) || {}).messaggio || '';
     const blocchi = [], avvisi = [];
     if (!persone.length) blocchi.push('mancano i nomi delle persone');
     if (persone.some(p => !p.nome)) blocchi.push('una persona è senza nome');
     if (persone.some(p => p.nome && !p.cognome)) avvisi.push('manca un cognome: entra solo con il link');
     if (fam && persone.length && persone.length !== people(g0) && !g0.risposta) avvisi.push('nomi ' + persone.length + ' su ' + people(g0) + ' persone');
-    return {list, fam, codice, persone, titolo:(titolo || 'Senza nome').trim(), saluto:saluto.trim(), messaggio, blocchi, avvisi, risposta:(list.find(g => g.risposta) || {}).risposta || null};
+    return {list, fam, codice, persone, titolo:(titolo || 'Senza nome').trim(), saluto:saluto.trim(), salutoCustom, nomiTxt, messaggio, blocchi, avvisi, risposta:(list.find(g => g.risposta) || {}).risposta || null};
   });
 }
 function unitFor(g){ const k = inviteKey(g); return inviteUnits().find(u => inviteKey(u.list[0]) === k); }
@@ -702,9 +704,9 @@ function invitoBox(x){
   const u = unitFor(x); const shared = u.list.length > 1;
   return `<div class="invbox full">
     <span class="eyebrow">Invito online${shared ? ' · condiviso dal nucleo «' + esc(u.titolo) + '»' : ''}</span>
-    <label class="f" for="gs-${x.id}">Saluto<input id="gs-${x.id}" data-g="saluto" data-id="${x.id}" value="${esc(x.saluto || '')}" placeholder="${esc(u.saluto || 'Zia Carla')}"></label>
+    <label class="f" for="gs-${x.id}">Saluto in corsivo: se lo scrivi, prende il posto di «Ciao, ${esc(u.nomiTxt)}»<input id="gs-${x.id}" data-g="saluto" data-id="${x.id}" value="${esc(x.saluto || '')}" placeholder="Ciao, ${esc(u.nomiTxt)}"></label>
     <div class="f"><span>Link personale</span><div class="codebox">${u.codice ? `<code>${esc(u.codice)}</code><button class="btn" type="button" data-act="inv-copy" data-id="${x.id}">Copia link</button>` : `<button class="btn" type="button" data-act="inv-code" data-id="${x.id}">Crea il link</button>`}</div></div>
-    <label class="f full" for="gm-${x.id}">Messaggio personale (lo vede solo questo invito)<textarea id="gm-${x.id}" data-g="messaggio" data-id="${x.id}" rows="3" placeholder="Due righe solo per loro, facoltative">${esc(x.messaggio || '')}</textarea></label>
+    <label class="f full" for="gm-${x.id}">Messaggio sotto il saluto (lo vede solo questo invito)<textarea id="gm-${x.id}" data-g="messaggio" data-id="${x.id}" rows="3" placeholder="Due righe solo per loro, facoltative">${esc(x.messaggio || '')}</textarea></label>
     ${u.blocchi.length || u.avvisi.length ? `<p class="warnline full">${esc(u.blocchi.concat(u.avvisi).join(' · '))}</p>` : ''}
     ${u.risposta ? `<p class="small full" style="margin:0"><b>${esc(rispostaTxt(u.risposta, u.persone.length))}</b>${u.risposta.messaggio ? ' · «' + esc(u.risposta.messaggio) + '»' : ''}</p>` : ''}
   </div>`;
@@ -771,7 +773,7 @@ function applyRisposte(R){
 // Pubblica e scarica da soli: pubblica ~10 s dopo l'ultima modifica alla lista, scarica all'apertura, al ritorno nell'app e ogni 5 minuti
 var CASH = 'conti-matrimonio-cassetta-pub';
 var casPubT = null, casBusy = false;
-function casPayload(){ return inviteUnits().filter(u => !u.blocchi.length && u.codice).map(u => ({c:u.codice, saluto:u.saluto, messaggio:u.messaggio, scadenza:S().rsvpScadenza || '', piuUno:false, persone:u.persone})); }
+function casPayload(){ return inviteUnits().filter(u => !u.blocchi.length && u.codice).map(u => ({c:u.codice, saluto:u.salutoCustom, messaggio:u.messaggio, scadenza:S().rsvpScadenza || '', piuUno:false, persone:u.persone})); }
 function casSchedule(){ if (db || !casGet()) return; clearTimeout(casPubT); casPubT = setTimeout(() => casPublish(false), 10000); }
 function casPublish(manual){
   const cas = casGet(); if (!cas || db) return;
@@ -831,8 +833,7 @@ function syncBadge(){ return `<span class="sync ${syncState}" id="sync"><i></i><
 function daysLeft(){ if (!S().data) return null; const d = new Date(S().data + 'T12:00:00'); const n = new Date(); n.setHours(12,0,0,0); return Math.round((d - n) / 864e5); }
 
 function vRiepilogo(){
-  const T = totals(); const c = T.c; const b = num(S().budget);
-  const pct = b ? Math.min(100, T.tot / b * 100) : 0; const over = b && T.tot > b;
+  const T = totals(); const c = T.c;
   const dl = daysLeft();
   const titolo = S().nomeB ? `<span>${esc(nome('A'))}</span><span class="amp">&amp;</span><span>${esc(nome('B'))}</span>` : 'Il nostro matrimonio';
   const dataTxt = S().data ? new Date(S().data + 'T12:00:00').toLocaleDateString('it-IT', {weekday:'long', day:'numeric', month:'long', year:'numeric'}) : '';
@@ -849,8 +850,7 @@ function vRiepilogo(){
     <div class="goldrule" aria-hidden="true"></div>
     ${dl != null ? `<div class="days display num">${dl > 0 ? 'Mancano ' + dl + ' giorni' : dl === 0 ? 'È oggi' : 'Sposati da ' + (-dl) + ' giorni'}</div>` : ''}
     <div><div class="eyebrow">Totale previsto, imprevisti inclusi</div><div class="total display num">${fmt(T.tot)}</div></div>
-    <div><div class="meter ${over ? 'over' : ''}" role="img" aria-label="${Math.round(b ? T.tot / b * 100 : 0)}% del budget"><i style="width:${pct}%"></i></div>
-    <div class="row small" style="margin-top:6px"><span class="grow muted">Budget ${fmt(b)}</span><b class="num" style="color:var(--${over ? 'bad' : 'good'})">${over ? 'Sfori di ' + fmt(T.tot - b) : 'Restano ' + fmt(b - T.tot)}</b></div></div>
+    <div class="row" style="padding-top:10px;border-top:1px solid var(--line);font-size:15px;text-align:left"><span class="grow muted">Entrate previste <b class="num" style="color:var(--fg)">${fmt(T.entrate)}</b></span><b class="num" style="color:var(--${T.netto > 0 ? 'bad' : 'good'})">${T.netto > 0 ? 'Mancano ' + fmt(T.netto) : 'Avanzano ' + fmt(-T.netto)}</b></div>
   </section>
   <div class="stats" style="margin-top:12px">
     <div class="stat"><span class="small muted">Già pagato</span><b class="num">${fmt(T.pagato)}</b></div>
@@ -872,8 +872,8 @@ function vRiepilogo(){
     <label class="f" for="scen">Sposta per cambiare il numero di adulti</label>
     <input type="range" id="scen" min="20" max="300" step="1" value="${scenA}" data-act="scen">
     <div id="scenOut">${scenOut(scenA, T)}</div>
-    <div class="scroll" style="margin-top:12px"><table class="scen num"><thead><tr><th>Adulti</th><th>Totale</th><th>Per ospite</th><th>Sul budget</th></tr></thead><tbody>
-    ${[60, 80, 100, 120, 150, 200].map(n => { const t = totals(counts(n)); return `<tr><td>${n}</td><td>${fmt(t.tot)}</td><td>${fmt(t.tot / t.c.ospiti)}</td><td style="color:var(--${b && t.tot > b ? 'bad' : 'good'})">${b ? (t.tot > b ? '+' : '−') + fmt(Math.abs(t.tot - b)) : '–'}</td></tr>`; }).join('')}
+    <div class="scroll" style="margin-top:12px"><table class="scen num"><thead><tr><th>Adulti</th><th>Totale</th><th>Per ospite</th><th>Con le entrate</th></tr></thead><tbody>
+    ${[60, 80, 100, 120, 150, 200].map(n => { const t = totals(counts(n)); return `<tr><td>${n}</td><td>${fmt(t.tot)}</td><td>${fmt(t.tot / t.c.ospiti)}</td><td style="color:var(--${t.netto > 0 ? 'bad' : 'good'})">${(t.netto > 0 ? '−' : '+') + fmt(Math.abs(t.netto))}</td></tr>`; }).join('')}
     </tbody></table></div>
   </div>
 
@@ -881,9 +881,9 @@ function vRiepilogo(){
   <div class="card list">${Object.keys(P).filter(k => T.perPaga[k]).map(k => `<div class="item"><div class="item-head" style="padding-right:16px"><span class="grow">${esc(P[k])}</span><b class="num">${fmt(T.perPaga[k])}</b></div></div>`).join('') || '<div class="empty">Nessuna spesa assegnata.</div>'}</div>
   <p class="note">Gli imprevisti non sono assegnati: dividetevi ${fmt(T.imp)} come preferite.</p>
 
-  ${sopra.length ? `<h2>Preventivi sopra la stima</h2><div class="card list">${sopra.slice(0, 6).map(x => `<div class="item"><div class="item-head" style="padding-right:16px"><span class="grow">${esc(x.it.nome)}</span><span class="pill bad num">+${fmt(x.d)}</span></div></div>`).join('')}</div>` : ''}
+  ${sopra.length ? `<h2>Preventivi sopra la stima</h2><div class="card list">${sopra.slice(0, 6).map(x => `<div class="item"><div class="item-head" style="padding-right:16px"><span class="grow">${esc(x.it.nome)}</span><span class="pill warn num">+${fmt(x.d)}</span></div></div>`).join('')}</div>` : ''}
 
-  <div class="btns" style="margin-top:24px"><button class="btn" type="button" data-act="exp-budget">Esporta il budget (CSV)</button></div>
+  <div class="btns" style="margin-top:24px"><button class="btn" type="button" data-act="exp-budget">Esporta le spese (CSV)</button></div>
   ${previewBox('budget')}
   <p class="note">I prezzi di partenza sono stime indicative: sostituiscili con i preventivi reali nella scheda Spese.</p>`;
 }
@@ -951,7 +951,8 @@ function vPareggio(T){
 function scenOut(scenA, T){
   const Ts = totals(counts(scenA)); T = T || totals();
   return `<div class="row" style="margin-top:10px"><span class="grow muted">Con <b class="num" style="color:var(--fg)">${scenA}</b> adulti e ${Ts.c.bambini} bambini</span><b class="num display" style="font-size:28px">${fmt(Ts.tot)}</b></div>
-    <div class="small" style="color:var(--${Ts.tot > T.tot ? 'bad' : 'good'})">${Math.round(Ts.tot) === Math.round(T.tot) ? 'Uguale a oggi' : (Ts.tot > T.tot ? '+' : '−') + fmt(Math.abs(Ts.tot - T.tot)) + ' rispetto a oggi'}</div>`;
+    <div class="small muted">${Math.round(Ts.tot) === Math.round(T.tot) ? 'Uguale a oggi' : (Ts.tot > T.tot ? '+' : '−') + fmt(Math.abs(Ts.tot - T.tot)) + ' rispetto a oggi'}</div>
+    <div class="small" style="color:var(--${Ts.netto > 0 ? 'bad' : 'good'})">${Ts.netto > 0 ? 'Mancano ' + fmt(Ts.netto) : 'Avanzano ' + fmt(-Ts.netto)} con le entrate previste</div>`;
 }
 function vSpese(){
   const T = totals(); const c = T.c;
@@ -1097,7 +1098,7 @@ function vScadenze(){
     const dTxt = d ? new Date(d + 'T12:00:00').toLocaleDateString('it-IT', {day:'numeric', month:'short', year:'numeric'}) : 'Senza data';
     return `<div class="item"><div class="item-head" style="padding-right:4px"><button class="item-main" type="button" data-act="goto-item" data-cat="${x.cat.id}" data-id="${x.it.id}"><span class="t"><span>${esc(x.it.nome)}</span><span class="meta">${esc(x.cat.nome)} · ${esc(P[x.it.paga])}${num(x.it.pagato) ? ' · pagato ' + fmt(x.it.pagato) : ''}</span></span><span style="text-align:right"><span class="amount num" style="display:block">${fmt(x.r)}</span><span class="pill ${cls}">${d && d < today ? 'Scaduta · ' : ''}${dTxt}</span></span></button><button class="btn plain small" type="button" data-act="paid" data-id="${x.it.id}" aria-label="Segna ${esc(x.it.nome)} come saldato">Saldato</button></div></div>`; };
   return `<h1>Scadenze</h1><p class="sub">Restano da pagare <b class="num">${fmt(sum(rows))}</b>${late.length ? ` · <span style="color:var(--bad)">${late.length} scadute</span>` : ''}</p>
-  <div class="stats"><div class="stat"><span class="small muted">Scadute</span><b class="num" style="color:var(--${late.length ? 'bad' : 'fg'})">${fmt(sum(late))}</b></div><div class="stat"><span class="small muted">Entro 30 giorni</span><b class="num">${fmt(sum(soon))}</b></div><div class="stat"><span class="small muted">Senza data</span><b class="num">${fmt(sum(undated))}</b></div></div>
+  <div class="stats"><div class="stat"><span class="small muted">Scadute</span><b class="num" style="color:${late.length ? '#75590F' : 'var(--fg)'}">${fmt(sum(late))}</b></div><div class="stat"><span class="small muted">Entro 30 giorni</span><b class="num">${fmt(sum(soon))}</b></div><div class="stat"><span class="small muted">Senza data</span><b class="num">${fmt(sum(undated))}</b></div></div>
   <h2>Pagamenti in ordine di scadenza</h2>
   ${rows.length ? `<div class="card list">${rows.map(row).join('')}</div>` : '<div class="card empty"><b>Tutto saldato</b>Non ci sono pagamenti in sospeso.</div>'}
   <p class="note">Imposta la data del saldo e l'importo già versato aprendo la voce nella scheda Spese. «Saldato» registra l'intero importo come pagato.</p>
@@ -1144,7 +1145,6 @@ function vAltro(){
       <label class="f" for="sa">Primo sposo/a<input id="sa" data-s="nomeA" value="${esc(s.nomeA)}"></label>
       <label class="f" for="sb">Secondo sposo/a<input id="sb" data-s="nomeB" value="${esc(s.nomeB)}" placeholder="Nome"></label>
       <label class="f" for="sd">Data del matrimonio<input id="sd" type="date" data-s="data" value="${esc(s.data)}"></label>
-      <label class="f" for="sbu">Budget totale (€)<input id="sbu" type="number" inputmode="decimal" min="0" step="500" data-s="budget" value="${esc(s.budget)}"></label>
       <label class="f" for="si">Margine imprevisti (%), solo sulle voci senza preventivo<input id="si" type="number" inputmode="decimal" min="0" max="50" data-s="imprevisti" value="${esc(s.imprevisti)}"></label>
       <label class="f" for="spt">Posti per tavolo<input id="spt" type="number" inputmode="numeric" min="2" max="30" data-s="perTavolo" value="${esc(s.perTavolo)}"></label>
     </div>
@@ -1190,7 +1190,7 @@ function exporter(act){
       const rows = [['Categoria','Voce','Calcolo','Prezzo stimato','Preventivo','Quantità','Moltiplicatore','Totale','Pagato','Residuo','Stato','Chi paga','Scadenza','Fornitore','Contatto','Note']];
       state.cats.forEach(cat => cat.items.forEach(it => { const v = cost(it, c); rows.push([cat.nome, it.nome, MODES[it.mode], it2(num(it.stima)), it.prev === '' ? '' : it2(num(it.prev)), it.qty, ({fisso:1, adulto:c.adulti, bambino:c.bambini, ospite:c.ospiti, tavolo:c.tavoli})[it.mode], it2(v), it2(num(it.pagato)), it2(Math.max(0, v - num(it.pagato))), STATI[it.stato], P[it.paga], it.scadenza, it.fornitore, it.contatto, it.note]); }));
       const T = totals(c); rows.push([]); rows.push(['','Subtotale','','','','','',it2(T.sub)]); rows.push(['','Imprevisti ' + num(S().imprevisti) + '% sulle voci senza preventivo','','','','','',it2(T.imp)]); rows.push(['','Totale','','','','','',it2(T.tot)]);
-      return {key:'budget', name:'budget-matrimonio.csv', text:csv(rows), mime:'text/csv'};
+      return {key:'budget', name:'spese-matrimonio.csv', text:csv(rows), mime:'text/csv'};
     }
     case 'exp-guests': return {key:'guests', name:'ospiti-matrimonio.csv', mime:'text/csv', text:csv([['Nome','Tipo','Persone','Adulti','Bambini','Neonati','Componenti','Nucleo','Gruppo','Invitato da','Risposta','Tavolo','Indirizzo','Contatto','Allergie e intolleranze'], ...state.guests.map(g => { const z = size(g); return [g.nome, isFam(g) ? 'Famiglia' : TIPO[g.tipo], people(g), z.a, z.b, z.n, g.membri || '', isFam(g) ? g.nome : g.nucleo, g.gruppo, LATO(g.lato), RSVP[g.rsvp], g.tavolo, g.indirizzo, g.contatto, g.allergie]; })])};
     case 'exp-merge': {

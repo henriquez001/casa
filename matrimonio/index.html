@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2ECDF">
-<meta name="app-version" content="20261119140700">
+<meta name="app-version" content="20261119150000">
 <title>Alice &amp; Leandro</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -152,7 +152,7 @@ var q = new URLSearchParams(location.search);
 var DEMO = !CONFIG.cassetta || q.has('demo');
 
 /* ---------- dati di prova (solo modalità prova) ---------- */
-var DEMO_INV = {c:'PROVA1', saluto:'Zia Carla', messaggio:'Senza di te il tiramisù non sarebbe stato lo stesso. Non vediamo l’ora di festeggiare insieme.', scadenza:'2027-04-30', piuUno:false, risposta:null,
+var DEMO_INV = {c:'PROVA1', saluto:'Ciao zia Carla!', messaggio:'Senza di te il tiramisù non sarebbe stato lo stesso. Non vediamo l’ora di festeggiare insieme.', scadenza:'2027-04-30', piuUno:false, risposta:null,
   persone:[{id:'p1', nome:'Carla', cognome:'Rossi', tipo:'adulto'},{id:'p2', nome:'Mario', cognome:'Rossi', tipo:'adulto'},{id:'p3', nome:'Luca', cognome:'Rossi', tipo:'bambino'},{id:'p4', nome:'Sofia', cognome:'Rossi', tipo:'neonato'}]};
 function demoGet(){ try { var r = JSON.parse(store.get('invito-demo-risposta') || 'null'); var o = JSON.parse(JSON.stringify(DEMO_INV)); o.risposta = r; return o; } catch (e) { return DEMO_INV; } }
 
@@ -226,12 +226,17 @@ function vHome(){
   return '<div class="view">' +
     '<section class="card hero"><div class="olive"><img src="' + COPPIA + '" alt="">' + names(false) + '</div>' +
     '<p class="sub">' + esc(CONFIG.dataTesto) + '</p><div class="goldrule" aria-hidden="true"></div><div class="days">' + dTxt + '</div></section>' +
-    '<section class="card greet"><p class="hi">Ciao, ' + esc(inv.saluto || inv.persone[0].nome) + '</p>' +
+    '<section class="card greet"><p class="hi">' + esc((inv.saluto || '').trim() || 'Ciao, ' + nomiInv(inv)) + '</p>' +
     (inv.messaggio ? '<p>' + esc(inv.messaggio) + '</p>' : '<p>Non vediamo l’ora di festeggiare insieme.</p>') +
     '<p class="sub">' + esc(CONFIG.sposi.join(' e ')) + '</p></section>' + stato +
     '<div class="btns"><button class="btn primary" type="button" data-go="rsvp">' + (r ? 'Rivedi la tua risposta' : 'Conferma la tua presenza') + '</button>' +
     '<button class="btn" type="button" data-go="arrivare">Come arrivare</button></div>' +
-    '<button class="btn plain" type="button" data-act="esci">Non sei ' + esc(inv.saluto || inv.persone[0].nome) + '?</button></div>';
+    '<button class="btn plain" type="button" data-act="esci">' + ((inv.persone || []).length > 1 ? 'Non siete ' : 'Non sei ') + esc(nomiInv(inv)) + '?</button></div>';
+}
+function nomiInv(inv){
+  var n = (inv.persone || []).map(function (p) { return p.nome; }).filter(Boolean);
+  if (n.length < 2) return n[0] || '';
+  var last = n.pop(); return n.join(', ') + (/^[eE]/.test(last) ? ' ed ' : ' e ') + last;
 }
 
 function summary(dr){

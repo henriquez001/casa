@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png?v=4">
 <link rel="icon" type="image/png" href="icon-192.png?v=4">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="app-version" content="20261119133000">
+<meta name="app-version" content="20261119144000">
 <title>Conti del Matrimonio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -325,7 +325,7 @@ let db = null, syncState = 'local';
 const lastJson = {}, inflight = {}, again = {}, timers = {};
 const sliceJson = k => { const o = {}; DOCS[k].forEach(f => o[f] = state[f]); return JSON.stringify(o); };
 function saveLocal(){ try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {} }
-function save(k){ saveLocal(); everSaved = true; ghTouch(); if (!db) return; clearTimeout(timers[k]); timers[k] = setTimeout(() => { timers[k] = null; flush(k); }, 700); }
+function save(k){ saveLocal(); everSaved = true; ghTouch(); if (k === 'ospiti' || k === 'base') casSchedule(); if (!db) return; clearTimeout(timers[k]); timers[k] = setTimeout(() => { timers[k] = null; flush(k); }, 700); }
 async function flush(k){
   if (inflight[k]) { again[k] = true; return; }
   const j = sliceJson(k); if (j === lastJson[k]) return;
@@ -722,10 +722,10 @@ function vInviti(){
       <label class="f" for="casSec">Segreto<input id="casSec" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(ui.casSec || '')}"></label>
       <div class="btns"><button class="btn primary" type="button" data-act="cas-on" ${ui.casWork ? 'disabled' : ''}>${ui.casWork ? 'Collegamento…' : 'Collega'}</button></div>`;
   else cassa = `<p class="small" style="margin:0"><span class="pill good">Collegata</span> ${ui.casPub ? '<span class="small muted">· inviti pubblicati alle ' + esc(ui.casPub) + '</span>' : ''} ${ui.casPull ? '<span class="small muted">· risposte scaricate alle ' + esc(ui.casPull) + '</span>' : ''}</p>
-      <div class="btns"><button class="btn primary" type="button" data-act="cas-pub" ${ui.casWork ? 'disabled' : ''}>Pubblica ${pronti.length} ${pronti.length === 1 ? 'invito' : 'inviti'}</button><button class="btn" type="button" data-act="cas-pull" ${ui.casWork ? 'disabled' : ''}>Scarica le risposte</button></div>
-      <p class="small muted" style="margin:0">Pubblicare manda alla cassetta solo nomi, saluto e messaggio di ogni invito: niente indirizzi, contatti o conti.</p>
+      <div class="btns"><button class="btn primary" type="button" data-act="cas-pub" ${ui.casWork ? 'disabled' : ''}>Pubblica ora</button><button class="btn" type="button" data-act="cas-pull" ${ui.casWork ? 'disabled' : ''}>Scarica le risposte ora</button></div>
+      <p class="small muted" style="margin:0">Gli inviti si pubblicano da soli pochi secondi dopo ogni modifica, e le risposte arrivano da sole quando apri l’app. Alla cassetta vanno solo nomi, saluto e messaggio: niente indirizzi, contatti o conti.</p>
       <div>${ui.casOff ? `<div class="confirm"><span class="small">Scollego la cassetta da questo dispositivo?</span><button class="btn danger" type="button" data-act="cas-off-yes">Scollega</button><button class="btn plain" type="button" data-act="cas-off-no">Annulla</button></div>` : `<button class="btn plain" type="button" data-act="cas-off">Scollega la cassetta</button>`}</div>`;
-  return `<p class="sub">Ogni invito ha un link personale. Pubblica gli inviti, mandate i link, poi scarica le risposte: entrano da sole nella lista.</p>
+  return `<p class="sub">Ogni invito ha un link personale. Gli inviti si aggiornano da soli e le risposte entrano da sole nella lista: a voi resta mandare i link.</p>
     <div class="stats"><div class="stat"><span class="small muted">Inviti</span><b class="num">${U.length}</b></div><div class="stat"><span class="small muted">Pronti da pubblicare</span><b class="num">${pronti.length}</b></div><div class="stat"><span class="small muted">Hanno risposto</span><b class="num">${risp.length} <span class="small muted">(${si} sì)</span></b></div><div class="stat"><span class="small muted">Da sistemare</span><b class="num">${probl.length}</b></div></div>
     <h2>Cassetta delle risposte</h2>
     <div class="card pad" style="display:grid;gap:12px">${cassa}
@@ -767,6 +767,46 @@ function applyRisposte(R){
     }
   });
   return {n, kept};
+}
+// Pubblica e scarica da soli: pubblica ~10 s dopo l'ultima modifica alla lista, scarica all'apertura, al ritorno nell'app e ogni 5 minuti
+var CASH = 'conti-matrimonio-cassetta-pub';
+var casPubT = null, casBusy = false;
+function casPayload(){ return inviteUnits().filter(u => !u.blocchi.length && u.codice).map(u => ({c:u.codice, saluto:u.saluto, messaggio:u.messaggio, scadenza:S().rsvpScadenza || '', piuUno:false, persone:u.persone})); }
+function casSchedule(){ if (db || !casGet()) return; clearTimeout(casPubT); casPubT = setTimeout(() => casPublish(false), 10000); }
+function casPublish(manual){
+  const cas = casGet(); if (!cas || db) return;
+  let made = 0; inviteUnits().forEach(u => { if (!u.blocchi.length && !u.codice) { ensureCode(u.list[0]); made++; } }); if (made) { saveLocal(); ghTouch(); }
+  const inviti = casPayload(); const j = JSON.stringify(inviti);
+  let last = null; try { last = localStorage.getItem(CASH); } catch (e) {}
+  if (!manual && j === last) return;
+  if (casBusy) { casSchedule(); return; }
+  casBusy = true; if (manual) { ui.casWork = true; render(); }
+  casCall(cas, {a:'pubblica', inviti}).then(r => {
+    casBusy = false; ui.casWork = false;
+    if (r && r.ok) { try { localStorage.setItem(CASH, j); } catch (e) {} ui.casPub = new Date().toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'}); if (manual) toast(r.inviti + ' inviti pubblicati'); }
+    else toast(r && r.motivo === 'segreto' ? 'Il segreto della cassetta non è più giusto: scollega e ricollega la cassetta' : 'Pubblicazione degli inviti non riuscita');
+    if (ui.tab === 'ospiti') render();
+  }).catch(() => { casBusy = false; ui.casWork = false; if (manual) toast('Non riesco a raggiungere la cassetta'); else casSchedule(); if (ui.tab === 'ospiti') render(); });
+}
+var casPullAt = 0;
+function casPull(manual){
+  const cas = casGet(); if (!cas || db) return;
+  if (!manual && Date.now() - casPullAt < 60000) return; casPullAt = Date.now();
+  if (manual) { ui.casWork = true; render(); }
+  casCall(cas, {a:'risposte'}).then(r => {
+    ui.casWork = false;
+    if (r && r.ok) {
+      const old = clone(state.guests); const res = applyRisposte(r.risposte || {}); ui.registro = r.registro || [];
+      ui.casPull = new Date().toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'});
+      if (res.n) { saveLocal(); ghTouch(); render(); toast(res.n + (res.n === 1 ? ' risposta nuova' : ' risposte nuove') + (res.kept ? ' · ' + res.kept + ' allergie scritte a mano lasciate com’erano' : ''), () => { state.guests = old; save('ospiti'); render(); }); }
+      else { if (manual) toast('Nessuna risposta nuova'); if (ui.tab === 'ospiti') render(); }
+    } else if (manual || (r && r.motivo === 'segreto')) toast(r && r.motivo === 'segreto' ? 'Il segreto della cassetta non è più giusto: scollega e ricollega la cassetta' : 'Download delle risposte non riuscito');
+  }).catch(() => { ui.casWork = false; if (manual) { toast('Non riesco a raggiungere la cassetta'); render(); } });
+}
+if (!db) {
+  setTimeout(() => casPull(false), 1500); // all'apertura solo scarica: si pubblica dopo una modifica, quando i dati degli altri telefoni sono già arrivati
+  setInterval(() => { if (!document.hidden) casPull(false); }, 300000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) casPull(false); });
 }
 async function copyText(t, ok){
   try { await navigator.clipboard.writeText(t); toast(ok); }
@@ -1259,17 +1299,8 @@ document.addEventListener('click', e => {
       ui.casWork = true; render();
       casCall({url, segreto:sec}, {a:'risposte'}).then(r => { ui.casWork = false; if (r && r.ok) { casSet({url, segreto:sec}); ui.casUrl = ui.casSec = ''; ui.registro = r.registro || []; toast('Cassetta collegata'); } else toast(r && r.motivo === 'segreto' ? 'Il segreto non è giusto' : 'La cassetta non risponde come previsto'); render(); })
         .catch(() => { ui.casWork = false; toast('Non riesco a raggiungere la cassetta: controlla l’indirizzo'); render(); }); break; }
-    case 'cas-pub': { const cas = casGet(); if (!cas) break; const U = inviteUnits().filter(u => !u.blocchi.length);
-      U.forEach(u => { if (!u.codice) ensureCode(u.list[0]); }); save('ospiti');
-      const inviti = inviteUnits().filter(u => !u.blocchi.length).map(u => ({c:u.codice, saluto:u.saluto, messaggio:u.messaggio, scadenza:S().rsvpScadenza || '', piuUno:false, persone:u.persone}));
-      ui.casWork = true; render();
-      casCall(cas, {a:'pubblica', inviti}).then(r => { ui.casWork = false; if (r && r.ok) { ui.casPub = new Date().toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'}); toast(r.inviti + ' inviti pubblicati'); } else toast(r && r.motivo === 'segreto' ? 'Il segreto non è più giusto: scollega e ricollega la cassetta' : 'Pubblicazione non riuscita'); render(); })
-        .catch(() => { ui.casWork = false; toast('Non riesco a raggiungere la cassetta'); render(); }); break; }
-    case 'cas-pull': { const cas = casGet(); if (!cas) break; ui.casWork = true; render();
-      casCall(cas, {a:'risposte'}).then(r => { ui.casWork = false; if (r && r.ok) { const old = clone(state.guests); const res = applyRisposte(r.risposte || {}); ui.registro = r.registro || []; ui.casPull = new Date().toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'});
-          if (res.n) { save('ospiti'); toast(res.n + (res.n === 1 ? ' risposta nuova' : ' risposte nuove') + (res.kept ? ' · ' + res.kept + ' allergie scritte a mano lasciate com’erano' : ''), () => { state.guests = old; save('ospiti'); render(); }); } else toast('Nessuna risposta nuova'); }
-        else toast(r && r.motivo === 'segreto' ? 'Il segreto non è più giusto: scollega e ricollega la cassetta' : 'Download non riuscito'); render(); })
-        .catch(() => { ui.casWork = false; toast('Non riesco a raggiungere la cassetta'); render(); }); break; }
+    case 'cas-pub': casPublish(true); break;
+    case 'cas-pull': casPull(true); break;
     case 'probl-all': ui.allProbl = !ui.allProbl; render(); break;
     case 'cas-off': ui.casOff = true; render(); break;
     case 'cas-off-no': ui.casOff = false; render(); break;

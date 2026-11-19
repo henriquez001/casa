@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png?v=4">
 <link rel="icon" type="image/png" href="icon-192.png?v=4">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="app-version" content="20261119152000">
+<meta name="app-version" content="20261119160000">
 <title>Conti del Matrimonio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -167,6 +167,29 @@ input[type=range]{padding:0;border:0;background:none;accent-color:var(--accent)}
 .empty b{display:block;color:var(--fg);font-size:17px;margin-bottom:4px}
 .counts{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
 .tables{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+.fast{max-width:520px;margin:0 auto}
+.fast-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 6px}
+.fast-top .btn{margin-left:-10px}
+.fast .meter{height:6px;border-radius:3px;margin-bottom:12px}
+.fast-stack{position:relative;margin:4px 0 16px}
+.fcard{background:var(--surface);border:1px solid var(--line);border-radius:18px}
+.fcard.back{position:absolute;inset:0;transform:translateY(8px) scale(.95);opacity:.7}
+.fcard.front{position:relative;padding:18px 16px 16px;text-align:center;box-shadow:0 6px 18px rgba(46,53,40,.08);min-height:160px;display:grid;align-content:center;justify-items:center;gap:6px;touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:grab}
+.fcard .who{font-family:var(--font-display);font-weight:600;font-size:clamp(30px,9vw,40px);line-height:1.1;letter-spacing:-.01em;overflow-wrap:anywhere}
+.fcard .hint{margin:2px 0 0;font-size:14px;color:var(--muted)}
+.fcard .pill.warn{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.fast-chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(62px,1fr));gap:8px}
+.chip{font:inherit;display:grid;place-items:center;min-height:52px;padding:6px 4px;border-radius:12px;background:var(--surface);border:1px solid var(--line);color:var(--fg);cursor:pointer;transition:transform .1s ease-out}
+.chip b{font-size:18px;line-height:1.15}.chip small{font-size:12px;color:var(--muted)}
+.chip.full{opacity:.55}
+.chip.cur{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);opacity:1}.chip.cur small{color:var(--accent-soft)}
+.chip.add{border-style:dashed;color:var(--accent)}
+.chip:active{transform:scale(.97)}
+.fast-nav{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+.fast-nav .btn{justify-content:center}
+.btn:disabled{opacity:.45;cursor:default}
+.fast-cta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.fast-cta .grow{min-width:180px}
 .tables .card ul{margin:0;padding:0 16px 14px;list-style:none;display:grid;gap:4px;font-size:15px}
 .note{font-size:13px;color:var(--muted);margin:10px 4px 0}
 .sync{font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
@@ -1012,6 +1035,7 @@ function missingDefaults(){
 }
 
 function vOspiti(){
+  if (ui.fast) { if (ui.guestSeg === 'tavoli') return vFast(); ui.fast = null; }
   const g = state.guests; const c = counts();
   const conf = sumPeople(g.filter(x => x.rsvp === 'si')), att = sumPeople(g.filter(x => x.rsvp === 'attesa')), no = sumPeople(g.filter(x => x.rsvp === 'no'));
   const famN = g.filter(isFam).length, totP = sumPeople(g);
@@ -1031,12 +1055,7 @@ function vOspiti(){
   } else if (ui.guestSeg === 'inviti') {
     body = vInviti();
   } else if (ui.guestSeg === 'tavoli') {
-    const by = {}; g.filter(x => x.rsvp !== 'no').forEach(x => { const k = x.tavolo || ''; (by[k] = by[k] || []).push(x); });
-    const keys = Object.keys(by).filter(k => k).sort((a, b) => a.localeCompare(b, 'it', {numeric:true}));
-    const per = num(S().perTavolo) || 10;
-    body = `<p class="sub">Assegna il tavolo dalla scheda di ogni ospite. Capienza indicativa: ${per} posti (la cambi in Impostazioni).</p>
-    ${keys.length || by[''] ? `<div class="tables">${keys.map(k => `<div class="card"><div class="row pad" style="padding-bottom:8px"><b class="grow">Tavolo ${esc(k)}</b><span class="pill ${sumPeople(by[k]) > per ? 'bad' : ''}">${sumPeople(by[k])}/${per}</span></div><ul>${by[k].map(x => `<li>${esc(x.nome)}${isFam(x) ? ' (' + people(x) + ')' : ''}${x.allergie ? ' <span class="pill warn">' + esc(x.allergie) + '</span>' : ''}</li>`).join('')}</ul></div>`).join('')}
-    ${by[''] ? `<div class="card"><div class="row pad" style="padding-bottom:8px"><b class="grow">Senza tavolo</b><span class="pill mute">${sumPeople(by[''])}</span></div><ul>${by[''].map(x => `<li>${esc(x.nome)}${isFam(x) ? ' (' + people(x) + ')' : ''}</li>`).join('')}</ul></div>` : ''}</div>` : '<div class="card empty"><b>Nessun ospite</b>Aggiungi ospiti nella vista Lista per comporre i tavoli.</div>'}`;
+    body = vTavoli();
   } else {
     const nuclei = groupNuclei().length;
     body = `<p class="sub">Ogni file si apre in Excel o si usa in Word con la stampa unione.</p>
@@ -1052,13 +1071,163 @@ function vOspiti(){
   }
   return `<h1>Ospiti</h1><p class="sub">${totP} persone${famN ? ' in ' + g.length + ' voci, di cui ' + famN + (famN === 1 ? ' famiglia' : ' famiglie') : ''}${S().usaLista ? '' : ' · i costi usano la stima, non la lista'}</p>${seg}${body}`;
 }
+
+/* ---------- Tavoli: una voce per persona ---------- */
+// Famiglie con i nomi: una voce per persona, con il suo tavolo o, se non ce l'ha, quello della famiglia.
+// Chi nella famiglia non ha ancora un nome resta in una voce sola. Famiglie senza nomi e persone singole: una voce.
+const normT = t => { t = String(t == null ? '' : t).trim(); return /^\d+$/.test(t) ? String(+t) : t; };
+function seatUnitsOf(g){
+  if (g.rsvp === 'no') return [];
+  const U = [];
+  if (isFam(g) && Array.isArray(g.persone) && g.persone.length) {
+    const P = g.persone.map((p, i) => ({p, i})).filter(o => !(g.risposta && o.p.viene === false));
+    P.forEach(o => U.push({key:g.id + ':' + (o.p.id || o.i), g, p:o.p, n:1, nome:[o.p.nome, o.p.cognome].filter(Boolean).join(' ') || 'Senza nome', breve:o.p.nome || 'Senza nome', tipo:o.p.tipo || 'adulto', tavolo:normT(o.p.tavolo || g.tavolo)}));
+    const resto = g.risposta ? 0 : people(g) - P.length;
+    if (resto > 0) U.push({key:g.id + ':resto', g, resto:true, n:resto, nome:g.nome || 'Famiglia', breve:'il resto della famiglia', tavolo:normT(g.tavolo)});
+  } else {
+    const n = people(g); if (!n) return U;
+    U.push({key:g.id, g, n, nome:g.nome || 'Senza nome', breve:g.nome || 'Senza nome', tipo:isFam(g) ? '' : (g.tipo || 'adulto'), tavolo:normT(g.tavolo)});
+  }
+  return U;
+}
+const seatUnits = () => state.guests.reduce((a, g) => a.concat(seatUnitsOf(g)), []);
+const seatN = U => U.reduce((a, u) => a + u.n, 0);
+function tavTxt(g){ const t = [...new Set(seatUnitsOf(g).map(u => u.tavolo).filter(Boolean))]; return t.length ? (t.length === 1 ? 'tavolo ' : 'tavoli ') + t.join(', ').replace(/, ([^,]*)$/, ' e $1') : ''; }
+function seatRef(key){
+  const i = key.indexOf(':'), gid = i < 0 ? key : key.slice(0, i), pk = i < 0 ? '' : key.slice(i + 1);
+  const g = state.guests.find(x => x.id === gid); if (!g) return null;
+  if (!pk || pk === 'resto') return g;
+  return (g.persone || []).find((p, j) => String(p.id || j) === pk) || null;
+}
+// Tavoli numerati da 1 a quanti ne servono (persone ÷ posti), più quelli già usati con altri nomi («Sposi»)
+function tableList(U){
+  const per = num(S().perTavolo) || 10, occ = {};
+  U.forEach(u => { if (u.tavolo) occ[u.tavolo] = (occ[u.tavolo] || 0) + u.n; });
+  let max = Math.ceil(seatN(U) / per);
+  Object.keys(occ).forEach(k => { if (/^\d+$/.test(k)) max = Math.max(max, +k); });
+  const keys = []; for (let i = 1; i <= max; i++) keys.push(String(i));
+  Object.keys(occ).filter(k => !/^\d+$/.test(k)).sort((a, b) => a.localeCompare(b, 'it')).forEach(k => keys.push(k));
+  return {per, max, list:keys.map(k => ({k, n:occ[k] || 0}))};
+}
+function uLabel(u){ return u.p ? u.nome : u.resto ? u.g.nome + ', ' + u.n + (u.n === 1 ? ' persona senza nome' : ' persone senza nome') : u.nome + (isFam(u.g) ? ' (' + u.n + ')' : ''); }
+function vTavoli(){
+  const U = seatUnits(); if (!U.length) return '<div class="card empty"><b>Nessun ospite</b>Aggiungi ospiti nella vista Lista per comporre i tavoli.</div>';
+  const T = tableList(U), per = T.per, tot = seatN(U), done = seatN(U.filter(u => u.tavolo));
+  const by = {}; U.forEach(u => (by[u.tavolo] = by[u.tavolo] || []).push(u));
+  const li = list => { const seen = new Set(); return list.map(u => { const al = u.g.allergie && !seen.has(u.g.id); seen.add(u.g.id); return `<li>${esc(uLabel(u))}${al ? ' <span class="pill warn">' + esc(u.g.allergie) + '</span>' : ''}</li>`; }).join(''); };
+  const keys = T.list.map(t => t.k).filter(k => by[k]);
+  return `<div class="card pad fast-cta"><div class="grow"><b class="num">${done} di ${tot}</b> persone hanno un tavolo<div class="meter" style="margin-top:8px" role="img" aria-label="${done} persone su ${tot} hanno un tavolo"><i style="width:${tot ? done / tot * 100 : 0}%"></i></div></div><button class="btn primary" type="button" data-act="fast-open">Assegna veloce</button></div>
+  <p class="sub">Assegna veloce mostra una persona alla volta: tocchi il numero del tavolo e passa subito alla prossima. Capienza indicativa: ${per} posti (la cambi in Impostazioni).</p>
+  <div class="tables">${keys.map(k => { const n = seatN(by[k]); return `<div class="card"><div class="row pad" style="padding-bottom:8px"><b class="grow">Tavolo ${esc(k)}</b><span class="pill ${n > per ? 'bad' : ''}">${n}/${per}</span></div><ul>${li(by[k])}</ul></div>`; }).join('')}
+  ${by[''] ? `<div class="card"><div class="row pad" style="padding-bottom:8px"><b class="grow">Senza tavolo</b><span class="pill mute">${seatN(by[''])}</span></div><ul>${li(by[''])}</ul></div>` : ''}</div>`;
+}
+function fastCur(U){
+  const f = ui.fast, ok = u => f.filter === 'tutti' || (!u.tavolo && !f.skip.includes(u.key));
+  for (let i = f.pos; i < U.length; i++) if (ok(U[i])) return i;
+  return -1;
+}
+function vFast(){
+  const U = seatUnits(), f = ui.fast, T = tableList(U), tot = seatN(U), done = seatN(U.filter(u => u.tavolo));
+  const i = fastCur(U), u = U[i];
+  let out = `<div class="fast"><div class="fast-top"><button class="btn plain" type="button" data-act="fast-close">Fine</button><span class="small"><b class="num">${done}</b> di ${tot} sistemati</span></div>
+  <div class="meter" role="img" aria-label="${done} persone su ${tot} hanno un tavolo"><i style="width:${tot ? done / tot * 100 : 0}%"></i></div>
+  <div class="seg" role="tablist" aria-label="Chi mostrare">${[['senza','Senza tavolo'],['tutti','Tutti']].map(([k, l]) => `<button type="button" role="tab" data-act="fast-filter" data-id="${k}" aria-selected="${f.filter === k}">${l}</button>`).join('')}</div>`;
+  if (!u) {
+    const left = f.filter === 'senza' ? U.filter(x => !x.tavolo).length : 0;
+    return out + `<div class="card empty"><b>${left ? 'Fine del giro' : f.filter === 'senza' ? 'Tutti hanno un tavolo' : 'Fine della lista'}</b>${left ? (left === 1 ? 'Resta una voce senza tavolo, quella che hai saltato.' : 'Restano ' + left + ' voci senza tavolo, quelle che hai saltato.') : f.filter === 'senza' ? 'Ogni persona che viene ha il suo posto.' : 'Hai visto tutte le persone.'}
+      <div class="btns" style="justify-content:center;margin-top:14px">${left ? '<button class="btn primary" type="button" data-act="fast-again">Rivedi le saltate</button>' : f.filter === 'tutti' ? '<button class="btn" type="button" data-act="fast-again">Ricomincia</button>' : ''}<button class="btn" type="button" data-act="fast-close">Fine</button></div></div>
+      ${f.hist.length ? '<div class="fast-nav"><button class="btn" type="button" data-act="fast-back">↶ Indietro</button></div>' : ''}</div>`;
+  }
+  const g = u.g, more = U.some((x, j) => j > i && (f.filter === 'tutti' || (!x.tavolo && !f.skip.includes(x.key))));
+  const eb = [u.p || u.resto ? g.nome : (isFam(g) ? '' : g.nucleo), g.gruppo].filter(Boolean).join(' · ');
+  const tag = u.p ? TIPO[u.tipo] : u.resto ? u.n + (u.n === 1 ? ' persona senza nome' : ' persone senza nome') : isFam(g) ? u.n + (u.n === 1 ? ' persona' : ' persone') : TIPO[u.tipo];
+  // Dove siede il resto della famiglia (o del nucleo, per le persone singole)
+  const vic = U.filter(x => x !== u && x.tavolo && (x.g === g || (!isFam(g) && g.nucleo && !isFam(x.g) && x.g.nucleo === g.nucleo)));
+  const byT = {}; vic.forEach(x => (byT[x.tavolo] = byT[x.tavolo] || []).push(x.breve));
+  const hint = Object.keys(byT).slice(0, 2).map(t => { const n = byT[t]; return (n.length > 2 ? n.slice(0, 2).join(', ') + ' e altri ' + (n.length - 2) : n.join(' e ')) + (n.length > 1 ? ' sono' : ' è') + ' al tavolo ' + t; }).join(' · ');
+  out += `<div class="fast-stack">${more ? '<div class="fcard back" aria-hidden="true"></div>' : ''}<div class="fcard front" id="fcard" aria-live="polite">
+    ${eb ? `<span class="eyebrow">${esc(eb)}</span>` : ''}<div class="who">${esc(u.p ? u.breve : u.nome)}</div>
+    <span class="pill">${esc(tag)}</span>${u.p && u.g.persone.length > 1 && u.p.cognome ? '' : ''}
+    ${u.tavolo ? `<p class="hint">Ora al tavolo ${esc(u.tavolo)}</p>` : ''}${hint ? `<p class="hint">${esc(hint)}</p>` : ''}
+    ${g.allergie ? `<span class="pill warn">${esc(g.allergie)}</span>` : ''}</div></div>
+  <div class="fast-chips" role="group" aria-label="Scegli il tavolo">${T.list.map(t => `<button type="button" class="chip${t.k === u.tavolo ? ' cur' : ''}${t.n >= T.per ? ' full' : ''}" data-act="fast-set" data-id="${esc(t.k)}" aria-pressed="${t.k === u.tavolo}" aria-label="Tavolo ${esc(t.k)}, ${t.n} posti occupati su ${T.per}"><b>${esc(t.k)}</b><small class="num">${t.n}/${T.per}</small></button>`).join('')}<button type="button" class="chip add" data-act="fast-new" aria-label="Nuovo tavolo, il ${T.max + 1}"><b>+</b><small>Nuovo</small></button></div>
+  <div class="fast-nav"><button class="btn" type="button" data-act="fast-back"${f.hist.length ? '' : ' disabled'}>↶ Indietro</button><button class="btn" type="button" data-act="fast-skip">Salta →</button></div></div>`;
+  return out;
+}
+const reduceMotion = () => !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+// La scheda esce dal punto in cui si trova (anche a metà trascinamento) e la prossima sale da dietro.
+// Uso le Web Animations: la regola CSS di «Riduci movimento» spegne le transizioni, qui scelgo io la dissolvenza.
+function fastFly(dir, apply){
+  const el = document.getElementById('fcard');
+  if (!el || !el.animate) { apply(); return; }
+  const r = el.getBoundingClientRect(), from = el.style.transform || 'none', c = el.cloneNode(true);
+  c.removeAttribute('id'); c.removeAttribute('aria-live'); c.setAttribute('aria-hidden', 'true');
+  Object.assign(c.style, {position:'fixed', left:r.left + 'px', top:r.top + 'px', width:r.width + 'px', height:r.height + 'px', margin:'0', zIndex:'25', pointerEvents:'none', transform:from});
+  document.body.appendChild(c);
+  apply();
+  const a = reduceMotion() ? c.animate([{opacity:1}, {opacity:0}], {duration:200, easing:'linear', fill:'forwards'})
+    : c.animate([{transform:from, opacity:1}, {transform:`translateX(${dir * (r.width + 80)}px) rotate(${dir * 8}deg)`, opacity:0}], {duration:350, easing:'cubic-bezier(.2,.8,.2,1)', fill:'forwards'});
+  a.onfinish = () => c.remove(); setTimeout(() => c.remove(), 700);
+  fastEnter(0);
+}
+function fastEnter(fromX){
+  const el = document.getElementById('fcard'); if (!el || !el.animate) return;
+  if (reduceMotion()) { el.animate([{opacity:0}, {opacity:1}], {duration:200, easing:'linear'}); return; }
+  el.animate(fromX ? [{transform:`translateX(${fromX}px) rotate(${fromX > 0 ? 8 : -8}deg)`, opacity:0}, {transform:'none', opacity:1}] : [{transform:'translateY(8px) scale(.95)', opacity:.7}, {transform:'none', opacity:1}], {duration:350, easing:'cubic-bezier(.2,.8,.2,1)'});
+}
+function fastSet(t){
+  const f = ui.fast, U = seatUnits(), i = fastCur(U), u = U[i]; if (!u) return;
+  const o = seatRef(u.key); if (!o) return;
+  f.hist.push({key:u.key, had:Object.prototype.hasOwnProperty.call(o, 'tavolo'), prev:o.tavolo, pos:f.pos, skip:f.skip.slice()});
+  fastFly(-1, () => { o.tavolo = normT(t); f.pos = i + 1; save('ospiti'); render(); });
+}
+function fastSkip(dir){
+  const f = ui.fast, U = seatUnits(), i = fastCur(U); if (i < 0) return;
+  f.hist.push({key:null, pos:f.pos, skip:f.skip.slice()});
+  fastFly(dir, () => { if (!f.skip.includes(U[i].key)) f.skip.push(U[i].key); f.pos = i + 1; render(); });
+}
+function fastBack(){
+  const f = ui.fast, h = f && f.hist.pop(); if (!h) return;
+  if (h.key) { const o = seatRef(h.key); if (o) { if (h.had) o.tavolo = h.prev; else delete o.tavolo; save('ospiti'); } }
+  f.pos = h.pos; f.skip = h.skip; render();
+  const el = document.getElementById('fcard'); fastEnter(-((el && el.offsetWidth) || 300) - 80);
+}
+// Trascinare la scheda: segue il dito 1:1; oltre un terzo della larghezza, o con una spinta veloce, la persona viene saltata.
+let fdrag = null;
+document.addEventListener('pointerdown', e => {
+  const el = ui.fast && e.target.closest && e.target.closest('#fcard'); if (!el || e.button > 0) return;
+  el.getAnimations && el.getAnimations().forEach(a => a.cancel());
+  fdrag = {el, x0:e.clientX, y0:e.clientY, on:false, ox:0, x:0, id:e.pointerId, pts:[{x:e.clientX, t:e.timeStamp}]};
+});
+document.addEventListener('pointermove', e => {
+  const d = fdrag; if (!d || e.pointerId !== d.id) return;
+  const dx = e.clientX - d.x0, dy = e.clientY - d.y0;
+  if (!d.on) { if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return; if (Math.abs(dy) > Math.abs(dx)) { fdrag = null; return; } d.on = true; d.ox = Math.sign(dx) * 10; try { d.el.setPointerCapture(e.pointerId); } catch (_) {} }
+  d.x = dx - d.ox; d.el.style.transform = `translateX(${d.x}px) rotate(${d.x / 24}deg)`;
+  d.pts.push({x:e.clientX, t:e.timeStamp}); if (d.pts.length > 6) d.pts.shift();
+});
+function fastDrop(e){
+  const d = fdrag; if (!d || e.pointerId !== d.id) return; fdrag = null; if (!d.on) return;
+  const a = d.pts[0], b = d.pts[d.pts.length - 1], v = b.t > a.t ? (b.x - a.x) / (b.t - a.t) : 0;
+  if (e.type === 'pointerup' && (Math.abs(d.x) > d.el.offsetWidth / 3 || (Math.abs(v) > 0.5 && Math.sign(v) === Math.sign(d.x)))) { fastSkip(Math.sign(d.x) || -1); return; }
+  const from = d.el.style.transform; d.el.style.transform = '';
+  if (d.el.animate && !reduceMotion()) d.el.animate([{transform:from}, {transform:'none'}], {duration:350, easing:'cubic-bezier(.2,.8,.2,1)'});
+}
+document.addEventListener('pointerup', fastDrop);
+document.addEventListener('pointercancel', fastDrop);
+document.addEventListener('keydown', e => {
+  if (!ui.fast || ui.tab !== 'ospiti' || isEditing() || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === 'ArrowRight') { e.preventDefault(); fastSkip(-1); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); fastBack(); }
+  else if (e.key === 'Escape') { ui.fast = null; render(); }
+});
 function expRow(act, t, d){ return `<div class="item"><div class="item-head" style="padding-right:12px"><span class="grow"><span style="display:block">${t}</span><span class="small muted">${d}</span></span><button class="btn" type="button" data-act="${act}">Esporta</button></div></div>`; }
 function guestRow(x){
   const open = ui.openGuest === x.id;
   const rp = {si:['good','Sì'], no:['bad','No'], attesa:['warn','In attesa']}[x.rsvp];
   const z = size(x);
   const famTxt = isFam(x) ? people(x) + (people(x) === 1 ? ' persona' : ' persone') + ' (' + [z.a ? z.a + (z.a === 1 ? ' adulto' : ' adulti') : '', z.b ? z.b + (z.b === 1 ? ' bambino' : ' bambini') : '', z.n ? z.n + (z.n === 1 ? ' neonato' : ' neonati') : ''].filter(Boolean).join(', ') + ')' : '';
-  const meta = [famTxt, isFam(x) ? '' : x.nucleo, x.gruppo, !isFam(x) && x.tipo !== 'adulto' ? x.tipo : '', x.tavolo ? 'tavolo ' + x.tavolo : '', famWarn(x)].filter(Boolean).map(esc).join(' · ');
+  const meta = [famTxt, isFam(x) ? '' : x.nucleo, x.gruppo, !isFam(x) && x.tipo !== 'adulto' ? x.tipo : '', tavTxt(x), famWarn(x)].filter(Boolean).map(esc).join(' · ');
   return `<div class="item ${open ? 'open' : ''}">
     <div class="item-head">
       <button class="item-main" type="button" data-act="guest" data-id="${x.id}" aria-expanded="${open}">${CHEV}<span class="t"><span>${esc(x.nome) || '<span class="muted">Senza nome</span>'}</span><span class="meta">${meta || 'Tocca per aggiungere i dettagli'}</span></span><span class="pill ${rp[0]}">${rp[1]}</span></button>
@@ -1075,7 +1244,7 @@ function guestRow(x){
       <label class="f" for="gl-${x.id}">Invitato da<select id="gl-${x.id}" data-g="lato" data-id="${x.id}">${[['A', nome('A')], ['B', nome('B')], ['entrambi', 'Entrambi']].map(([k, l]) => `<option value="${k}" ${x.lato === k ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></label>
       ${isFam(x) ? '' : `<label class="f" for="gt-${x.id}">Età<select id="gt-${x.id}" data-g="tipo" data-id="${x.id}">${[['adulto','Adulto'],['bambino','Bambino'],['neonato','Neonato (non paga)']].map(([k, l]) => `<option value="${k}" ${x.tipo === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>`}
       <label class="f" for="gr-${x.id}">Risposta<select id="gr-${x.id}" data-g="rsvp" data-id="${x.id}">${[['attesa','In attesa'],['si','Sì, viene'],['no','No, non viene']].map(([k, l]) => `<option value="${k}" ${x.rsvp === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
-      <label class="f" for="gta-${x.id}">Tavolo<input id="gta-${x.id}" data-g="tavolo" data-id="${x.id}" value="${esc(x.tavolo)}" placeholder="1, 2, Sposi…"></label>
+      <label class="f" for="gta-${x.id}">${isFam(x) && (x.persone || []).length ? 'Tavolo della famiglia' : 'Tavolo'}<input id="gta-${x.id}" data-g="tavolo" data-id="${x.id}" value="${esc(x.tavolo)}" placeholder="1, 2, Sposi…"></label>
       <label class="f full" for="gi-${x.id}">Indirizzo<input id="gi-${x.id}" data-g="indirizzo" data-id="${x.id}" value="${esc(x.indirizzo)}" placeholder="Via, numero, CAP, città"></label>
       <label class="f" for="gc-${x.id}">Telefono o email<input id="gc-${x.id}" data-g="contatto" data-id="${x.id}" value="${esc(x.contatto)}"></label>
       <label class="f" for="ga-${x.id}">Allergie e intolleranze<input id="ga-${x.id}" data-g="allergie" data-id="${x.id}" value="${esc(x.allergie)}" placeholder="Celiachia, vegetariano…"></label>
@@ -1210,13 +1379,13 @@ function exporter(act){
       return {key:'guests', name:'etichette-indirizzi.txt', text:t, mime:'text/plain'};
     }
     case 'exp-tables': {
-      const by = {}; state.guests.filter(g => g.rsvp !== 'no').forEach(g => { const k = g.tavolo || 'Senza tavolo'; (by[k] = by[k] || []).push(g); });
-      const t = Object.keys(by).sort((a, b) => a.localeCompare(b, 'it', {numeric:true})).map(k => (k === 'Senza tavolo' ? k : 'Tavolo ' + k) + ' (' + sumPeople(by[k]) + ')\n' + by[k].map(g => '  ' + g.nome + (isFam(g) ? ' (' + people(g) + (g.membri ? ': ' + g.membri : '') + ')' : '')).join('\n')).join('\n\n');
+      const by = {}; seatUnits().forEach(u => { const k = u.tavolo || 'Senza tavolo'; (by[k] = by[k] || []).push(u); });
+      const t = Object.keys(by).sort((a, b) => a === 'Senza tavolo' ? 1 : b === 'Senza tavolo' ? -1 : a.localeCompare(b, 'it', {numeric:true})).map(k => (k === 'Senza tavolo' ? k : 'Tavolo ' + k) + ' (' + seatN(by[k]) + ')\n' + by[k].map(u => '  ' + uLabel(u) + (!u.p && !u.resto && isFam(u.g) && u.g.membri ? ': ' + u.g.membri : '')).join('\n')).join('\n\n');
       return {key:'guests', name:'tableau-de-mariage.txt', text:t || 'Nessun ospite.', mime:'text/plain'};
     }
     case 'exp-catering': {
       const al = state.guests.filter(g => g.rsvp !== 'no' && g.allergie);
-      const t = `Conteggi per il catering\n\nAdulti: ${c.adulti}${S().sposiInclusi ? ' (sposi inclusi)' : ''}\nBambini: ${c.bambini}\nNeonati: ${c.neonati}\nTavoli: ${c.tavoli}\nPasti fornitori: vedi accordi\n\nAllergie e intolleranze (${al.length})\n` + (al.map(g => `- ${g.nome}${g.tavolo ? ' (tavolo ' + g.tavolo + ')' : ''}: ${g.allergie}`).join('\n') || '- nessuna segnalata');
+      const t = `Conteggi per il catering\n\nAdulti: ${c.adulti}${S().sposiInclusi ? ' (sposi inclusi)' : ''}\nBambini: ${c.bambini}\nNeonati: ${c.neonati}\nTavoli: ${c.tavoli}\nPasti fornitori: vedi accordi\n\nAllergie e intolleranze (${al.length})\n` + (al.map(g => `- ${g.nome}${tavTxt(g) ? ' (' + tavTxt(g) + ')' : ''}: ${g.allergie}`).join('\n') || '- nessuna segnalata');
       return {key:'guests', name:'conteggi-catering.txt', text:t, mime:'text/plain'};
     }
     case 'exp-rsvp': {
@@ -1285,6 +1454,14 @@ document.addEventListener('click', e => {
       save('spese'); render(); toast('Voci predefinite ripristinate'); break; }
     case 'scen': break;
     case 'gseg': ui.guestSeg = id; ui.preview = null; render(); break;
+    case 'fast-open': ui.fast = {filter:'senza', pos:0, skip:[], hist:[]}; render(); window.scrollTo(0, 0); fastEnter(0); break;
+    case 'fast-close': ui.fast = null; render(); window.scrollTo(0, 0); break;
+    case 'fast-filter': ui.fast.filter = id; ui.fast.pos = 0; ui.fast.skip = []; ui.fast.hist = []; render(); fastEnter(0); break;
+    case 'fast-set': fastSet(id); break;
+    case 'fast-new': fastSet(String(tableList(seatUnits()).max + 1)); break;
+    case 'fast-skip': fastSkip(-1); break;
+    case 'fast-back': fastBack(); break;
+    case 'fast-again': ui.fast.pos = 0; ui.fast.skip = []; render(); fastEnter(0); break;
     case 'p-add': { const g = state.guests.find(x => x.id === id); g.persone = g.persone || []; g.persone.push({id:uid(), nome:'', cognome:famSurname(g), tipo:'adulto'}); save('ospiti'); render(); const el = document.getElementById('pn-' + g.id + '-' + (g.persone.length - 1)); if (el) el.focus(); break; }
     case 'p-del': { const g = state.guests.find(x => x.id === id); const i = +b.dataset.i; const old = g.persone[i]; g.persone.splice(i, 1); save('ospiti'); render(); toast((old.nome || 'Persona') + ' tolta', () => { g.persone.splice(i, 0, old); save('ospiti'); render(); }); break; }
     case 'p-fill': { const g = state.guests.find(x => x.id === id); const z = size(g); const cg = famSurname(g);

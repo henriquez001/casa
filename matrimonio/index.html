@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2ECDF">
-<meta name="app-version" content="20261119221000">
+<meta name="app-version" content="20261119223000">
 <title>Alice &amp; Leandro</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -27,8 +27,10 @@ var CONFIG = {
   firmaSposi: ['alice stefoni', 'leandro henriquez'],
   luoghi: [
     {titolo: 'Cerimonia', ora: '[ora da definire]', nome: '[Luogo da definire]', indirizzo: '', cerca: ''},
-    {titolo: 'Ricevimento', ora: '[ora da definire]', nome: 'Agriturismo Le Case', indirizzo: 'Macerata', cerca: 'Agriturismo Le Case Macerata', note: '[Indicazioni sul parcheggio]'}
+    {titolo: 'Ricevimento', ora: '[ora da definire]', nome: '[Luogo da definire]', indirizzo: '', cerca: ''}
   ],
+  // Testi, orari, luoghi e foto veri arrivano dalla cassetta (foglio «Contenuti», si cambiano dal tool in Altro › Sito):
+  // qui restano solo i segnaposto, così sul sito pubblico non c'è nessun indirizzo.
   // Landing (schermata 0 del design). foto: indirizzo della foto verticale di copertina, vuoto = sfumatura.
   copertina: '',
   storia: [
@@ -39,8 +41,8 @@ var CONFIG = {
   programma: [
     {ora: '[ore]', cosa: 'Arrivo degli invitati', dove: '[Nome della chiesa o del luogo]', icona: 'pin'},
     {ora: '[ore]', cosa: 'Cerimonia', dove: '[Nome della chiesa o del luogo]', icona: 'chiesa'},
-    {ora: '[ore]', cosa: 'Aperitivo e brindisi', dove: 'Agriturismo Le Case', icona: 'calici'},
-    {ora: '[ore]', cosa: 'Cena', dove: 'Agriturismo Le Case', icona: 'cena'},
+    {ora: '[ore]', cosa: 'Aperitivo e brindisi', dove: '[Luogo del ricevimento]', icona: 'calici'},
+    {ora: '[ore]', cosa: 'Cena', dove: '[Luogo del ricevimento]', icona: 'cena'},
     {ora: '[ore]', cosa: 'Taglio della torta e festa', dove: 'Fino a tarda notte', icona: 'musica'}
   ]
 };
@@ -511,6 +513,22 @@ document.addEventListener('input', function(e){
 });
 
 if (DEMO) { var b = document.createElement('div'); b.className = 'demo'; b.textContent = 'Prova · dati finti'; document.body.appendChild(b); }
+// Contenuti della home dalla cassetta: prima la copia sul telefono, poi la versione aggiornata in silenzio.
+function applicaContenuti(c){
+  if (!c || typeof c !== 'object') return;
+  if (typeof c.copertina === 'string') CONFIG.copertina = c.copertina;
+  if (Array.isArray(c.storia)) CONFIG.storia = c.storia.filter(function(x){ return x && (x.titolo || x.testo || x.foto); });
+  ['programma', 'luoghi'].forEach(function(k){ if (Array.isArray(c[k]) && c[k].length) CONFIG[k] = c[k].filter(function(x){ return x && (x.cosa || x.nome || x.ora); }); });
+}
+try { applicaContenuti(JSON.parse(store.get('contenuti-copia') || 'null')); } catch (e) {}
+if (!DEMO) (useJP ? jsonp({a:'contenuti'}) : fetchRip(CONFIG.cassetta + '?a=contenuti').catch(function(){ return jsonp({a:'contenuti'}); }))
+  .then(function(r){
+    if (!r || !r.ok || !r.contenuti) return;
+    var nuovo = JSON.stringify(r.contenuti); if (nuovo === store.get('contenuti-copia')) return;
+    store.set('contenuti-copia', nuovo); applicaContenuti(r.contenuti);
+    // Ridisegno solo le schermate che li mostrano, mai mentre qualcuno scrive il nome o la risposta.
+    if (S.landing || (S.inv && (S.view === 'home' || S.view === 'arrivare'))) render();
+  }).catch(function(){});
 (function(){ var copia = null; try { copia = JSON.parse(store.get('invito-copia') || 'null'); } catch (e) {}
   if (codice && copia && copia.c === codice) { S.loading = false; entra(copia, true); render(); load(codice, true); }
   else if (codice) load(codice); else { S.loading = false; render(); } })();

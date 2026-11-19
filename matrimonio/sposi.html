@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png?v=4">
 <link rel="icon" type="image/png" href="icon-192.png?v=4">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="app-version" content="20261119210000">
+<meta name="app-version" content="20261119223000">
 <title>Conti del Matrimonio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -205,6 +205,18 @@ input[type=range]{padding:0;border:0;background:none;accent-color:var(--accent)}
 .tv.drag{cursor:grabbing;box-shadow:0 8px 20px rgba(46,53,40,.18);z-index:2}
 .chip .nm{font-size:11px;color:inherit;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 4px}
 .chip b.w{font-size:14px}
+.sito-cov{position:relative;height:180px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:linear-gradient(160deg,#B9C2A6 0%,#CDB898 55%,#9FAA8C 100%) center/cover no-repeat}
+.sito-cov .pick{position:absolute;right:10px;bottom:10px;min-height:44px;padding:0 16px;border-radius:999px;border:0;background:rgba(255,252,245,.94);color:var(--accent);font:inherit;font-size:15px;font-weight:600;cursor:pointer;transition:transform .1s ease-out}
+.sito-cov .pick:active,.sito-ph:active{transform:scale(.97)}
+.sito-st{display:grid;grid-template-columns:72px 1fr;gap:12px;padding:12px;border-top:1px solid var(--line)}
+.sito-pr{display:grid;grid-template-columns:84px 1fr;gap:8px;padding:12px;border-top:1px solid var(--line);align-items:start}
+.sito-st{align-items:start}
+.sito-lo{display:grid;gap:8px;padding:12px;border-top:1px solid var(--line)}
+.sito-st:first-child,.sito-pr:first-child,.sito-lo:first-child{border-top:0}
+.sito-ph{width:72px;height:72px;border-radius:10px;border:1px solid var(--line);padding:0 0 6px;cursor:pointer;background:linear-gradient(160deg,#B9C2A6 0%,#CDB898 55%,#9FAA8C 100%) center/cover no-repeat;display:grid;place-items:end center;color:#FFFCF5;font:inherit;font-size:12px;font-weight:600;transition:transform .1s ease-out}
+.sito-ph.busy{opacity:.55}
+.sito-f{display:grid;gap:8px;min-width:0}.sito-row{display:flex;gap:8px}.sito-row .yr{width:84px;flex:none}.sito-row input:not(.yr){flex:1}
+.sito-stato{font-size:14px;color:var(--muted);text-align:center;margin:12px 0}.sito-stato.bad{color:var(--bad)}
 .fast-cta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
 .fast-cta .grow{min-width:180px}
 .tables .card ul{margin:0;padding:0 16px 14px;list-style:none;display:grid;gap:4px;font-size:15px}
@@ -1405,7 +1417,7 @@ function vScadenze(){
 }
 
 function vAltro(){
-  const seg = `<div class="seg" role="tablist" aria-label="Altro">${[['entrate','Entrate'],['checklist','Checklist'],['impostazioni','Impostazioni']].map(([k, l]) => `<button type="button" role="tab" data-act="aseg" data-id="${k}" aria-selected="${ui.altroSeg === k}">${l}</button>`).join('')}</div>`;
+  const seg = `<div class="seg" role="tablist" aria-label="Altro">${[['entrate','Entrate'],['checklist','Checklist'],['impostazioni','Impostazioni'],['sito','Sito']].map(([k, l]) => `<button type="button" role="tab" data-act="aseg" data-id="${k}" aria-selected="${ui.altroSeg === k}">${l}</button>`).join('')}</div>`;
   let body = '';
   const T = totals();
   if (ui.altroSeg === 'entrate') {
@@ -1425,6 +1437,8 @@ function vAltro(){
       <input id="ei-${e.id}" data-e="importo" data-id="${e.id}" type="number" inputmode="decimal" min="0" value="${esc(e.importo)}" placeholder="€" aria-label="Importo" style="flex:1">
       <button class="x" type="button" data-act="del-entrata" data-id="${e.id}" aria-label="Rimuovi contributo">${ICON_X}</button></div></div>`).join('') || '<div class="empty">Nessun contributo inserito.</div>'}
       <div class="cat-foot"><button class="btn plain" type="button" data-act="add-entrata">+ Aggiungi contributo</button></div></div>`;
+  } else if (ui.altroSeg === 'sito') {
+    body = vSito();
   } else if (ui.altroSeg === 'checklist') {
     const fasi = [...new Set(state.tasks.map(t => t.fase))]; const done = state.tasks.filter(t => t.fatto).length;
     body = `<p class="sub">${done} di ${state.tasks.length} completate</p>
@@ -1467,6 +1481,114 @@ function vAltro(){
     ${previewBox('json')}`;
   }
   return `<h1>Altro</h1>${seg}${body}`;
+}
+
+/* ---------- sito degli invitati: foto su GitHub (casa), testi, orari e luoghi solo nella cassetta ---------- */
+const SITO_REPO = 'henriquez001/casa', SITO_DIR = 'matrimonio/foto/', SITO_WEB = 'https://henriquez001.github.io/casa/matrimonio/', SITOK = 'conti-matrimonio-sito';
+function sitoVuoto(){
+  const st = t => ({anno:'', titolo:t, testo:'', foto:''}), pr = (cosa, icona) => ({ora:'', cosa, dove:'', icona}), lo = titolo => ({titolo, nome:'', indirizzo:'', ora:'', note:'', cerca:''});
+  return {copertina:'', storia:[st('Come ci siamo conosciuti'), st('Il primo viaggio'), st('La proposta')],
+    programma:[pr('Arrivo degli invitati','pin'), pr('Cerimonia','chiesa'), pr('Aperitivo e brindisi','calici'), pr('Cena','cena'), pr('Taglio della torta e festa','musica')],
+    luoghi:[lo('Cerimonia'), lo('Ricevimento')]};
+}
+function sitoNorm(c){
+  const v = sitoVuoto(); c = c || {};
+  const fondi = (a, b) => a.map((x, i) => Object.assign({}, x, (b || [])[i] || {}));
+  return {copertina:String(c.copertina || ''), storia:fondi(v.storia, c.storia), programma:fondi(v.programma, c.programma), luoghi:fondi(v.luoghi, c.luoghi)};
+}
+let sito = null; try { const x = JSON.parse(localStorage.getItem(SITOK) || 'null'); if (x) sito = sitoNorm(x); } catch (e) {}
+let sitoT = null, sitoLoaded = false, sitoDirty = false;
+const sitoPrev = {}, sitoBusy = {};
+const sitoCache = () => { try { localStorage.setItem(SITOK, JSON.stringify(sito)); } catch (e) {} };
+const sitoImg = (key, path) => sitoPrev[key] || (path ? (/github\.io$/.test(location.hostname) ? path : SITO_WEB + path) : '');
+function sitoStatoTxt(t, err){ ui.sitoStato = (err ? 'err:' : 'txt:') + t; const el = $('#sitoStato'); if (el) { el.textContent = t; el.classList.toggle('bad', !!err); } }
+const sitoMotivo = r => r && r.motivo === 'azione' ? 'La cassetta è ancora la versione vecchia: incolla quella nuova (versione 4)' : r && r.motivo === 'segreto' ? 'Il segreto della cassetta non è giusto: controllalo in Ospiti › Inviti' : 'La cassetta non ha risposto bene: riprovo alla prossima modifica';
+async function sitoCarica(){
+  const cas = casGet(); if (!cas || sitoLoaded) return;
+  sitoLoaded = true; ui.sitoStato = 'carico';
+  try {
+    const r = await fetch(cas.url + '?a=contenuti', {redirect:'follow', cache:'no-store'}).then(x => x.json());
+    if (r && r.ok) {
+      if (r.contenuti && !sitoDirty) { sito = sitoNorm(r.contenuti); sitoCache(); }
+      if (!sito) sito = sitoVuoto();
+      ui.sitoStato = r.contenuti ? 'txt:✓ Online sul sito' : 'txt:Ancora niente sul sito: quello che scrivi qui si pubblica da solo';
+    } else ui.sitoStato = 'err:' + sitoMotivo(r);
+  } catch (e) { sitoLoaded = false; ui.sitoStato = 'err:Non riesco a leggere la cassetta: controlla la connessione'; }
+  if (ui.tab === 'altro' && ui.altroSeg === 'sito') render();
+}
+function sitoSet(path, val){
+  const [k, i, f] = path.split('.'); if (!sito) return;
+  if (f) sito[k][+i][f] = val; else sito[k] = val;
+  if (k === 'luoghi') { const l = sito.luoghi[+i]; l.cerca = [l.nome, l.indirizzo].filter(Boolean).join(' '); }
+  sitoCache(); sitoDirty = true; clearTimeout(sitoT); sitoStatoTxt('Modifiche da pubblicare…'); sitoT = setTimeout(sitoSalva, 2500);
+}
+async function sitoSalva(){
+  const cas = casGet(); if (!cas || !sito) return;
+  clearTimeout(sitoT); sitoStatoTxt('Pubblico…');
+  try {
+    const r = await casCall(cas, {a:'contenuti', contenuti:sito});
+    if (r && r.ok) { sitoDirty = false; sitoStatoTxt('✓ Online sul sito'); }
+    else if (r && r.motivo === 'occupato') sitoT = setTimeout(sitoSalva, 3000);
+    else sitoStatoTxt(sitoMotivo(r), true);
+  } catch (e) { sitoStatoTxt('Non pubblicato: controlla la connessione. Riprovo tra 15 secondi', true); sitoT = setTimeout(sitoSalva, 15000); }
+}
+// Foto: ridotta a 1600 px sul lato lungo, JPEG 0,8 (circa 200–350 KB), così la home resta veloce.
+async function sitoRiduci(file){
+  let img;
+  try { img = await createImageBitmap(file, {imageOrientation:'from-image'}); }
+  catch (e) { img = await new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ko('Questo file non è una foto che riesco ad aprire'); i.src = URL.createObjectURL(file); }); }
+  const w = img.width, h = img.height, k = Math.min(1, 1600 / Math.max(w, h));
+  const cv = document.createElement('canvas'); cv.width = Math.round(w * k); cv.height = Math.round(h * k);
+  cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+  return cv.toDataURL('image/jpeg', 0.8);
+}
+async function sitoFoto(key, file){
+  if (!gh || !gh.token) { toast('Per caricare le foto serve la chiave GitHub su questo dispositivo'); return; }
+  if (!sito) return;
+  sitoBusy[key] = true; render();
+  try {
+    const dataUrl = await sitoRiduci(file); sitoPrev[key] = dataUrl; render();
+    const nome = (key === 'copertina' ? 'copertina' : 'storia' + (+key.split('.')[1] + 1)) + '-' + Date.now().toString(36) + '.jpg';
+    let r; try { r = await ghFetch('https://api.github.com/repos/' + SITO_REPO + '/contents/' + SITO_DIR + nome, gh.token, {method:'PUT', body:{message:'Matrimonio: foto della home (' + nome + ')', content:dataUrl.split(',')[1]}}); }
+    catch (e) { throw 'Foto non caricata: controlla la connessione'; }
+    if (r.status === 403 || r.status === 404) throw 'La chiave GitHub non può scrivere nel sito: aggiungi il repository casa alla chiave (passi nel messaggio di Claude)';
+    if (!r.ok) throw 'Foto non caricata: GitHub ha risposto ' + r.status;
+    const path = 'foto/' + nome;
+    if (key === 'copertina') sito.copertina = path; else sito.storia[+key.split('.')[1]].foto = path;
+    sitoCache(); sitoDirty = true; await sitoSalva();
+    toast('Foto caricata: sul sito compare entro un minuto');
+  } catch (e) { delete sitoPrev[key]; toast(typeof e === 'string' ? e : 'Foto non caricata'); }
+  delete sitoBusy[key]; render();
+}
+function vSito(){
+  if (db) return `<div class="card pad"><p style="margin:0">Le foto e i testi della home si cambiano dal tool sul telefono o sul PC, collegato alla cassetta.</p></div>`;
+  if (!casGet()) return `<div class="card pad"><p style="margin:0">Collega prima la cassetta in Ospiti › Inviti: testi, orari e luoghi della home stanno lì.</p></div>`;
+  if (!sitoLoaded) setTimeout(sitoCarica, 0);
+  const st = String(ui.sitoStato || '');
+  if (!sito) return st.startsWith('err:') ? `<div class="card pad" style="display:grid;gap:10px"><p style="margin:0;color:var(--bad)">${esc(st.slice(4))}</p><button class="btn" type="button" data-act="sito-riprova">Riprova</button></div>`
+    : `<div class="card pad"><p class="muted" style="margin:0">Carico i contenuti della home…</p></div>`;
+  const bg = (key, path) => { const u = sitoImg(key, path); return u ? ` style="background-image:url('${esc(u)}')"` : ''; };
+  const v = (path, val, extra) => `data-sito="${path}" value="${esc(val)}" ${extra || ''}`;
+  return `<p class="sub">Foto, testi, orari e luoghi della home degli invitati. Ogni modifica si pubblica da sola dopo qualche secondo.</p>
+    <h2>Copertina</h2>
+    <div class="sito-cov"${bg('copertina', sito.copertina)}><button class="pick" type="button" data-act="sito-foto" data-id="copertina"${sitoBusy.copertina ? ' disabled' : ''}>${sitoBusy.copertina ? 'Carico…' : sito.copertina ? 'Cambia foto' : 'Scegli la foto'}</button></div>
+    <h2>La nostra storia</h2>
+    <div class="card">${sito.storia.map((x, i) => `<div class="sito-st">
+      <button class="sito-ph${sitoBusy['storia.' + i] ? ' busy' : ''}" type="button" data-act="sito-foto" data-id="storia.${i}"${bg('storia.' + i, x.foto)} aria-label="${x.foto ? 'Cambia la foto' : 'Scegli la foto'}: ${esc(x.titolo || 'tappa ' + (i + 1))}">${sitoBusy['storia.' + i] ? 'Carico…' : x.foto || sitoPrev['storia.' + i] ? '' : 'Foto'}</button>
+      <div class="sito-f"><div class="sito-row"><input class="yr" ${v('storia.' + i + '.anno', x.anno, 'placeholder="Anno" aria-label="Anno" inputmode="numeric"')}><input ${v('storia.' + i + '.titolo', x.titolo, 'placeholder="Titolo" aria-label="Titolo"')}></div>
+      <textarea data-sito="storia.${i}.testo" rows="2" placeholder="Due righe di racconto" aria-label="Racconto">${esc(x.testo)}</textarea></div></div>`).join('')}</div>
+    <h2>Programma</h2>
+    <div class="card">${sito.programma.map((x, i) => `<div class="sito-pr"><input class="yr" ${v('programma.' + i + '.ora', x.ora, 'placeholder="Ora" aria-label="Ora di ' + esc(x.cosa) + '"')}>
+      <div class="sito-f"><input ${v('programma.' + i + '.cosa', x.cosa, 'aria-label="Cosa succede"')}><input ${v('programma.' + i + '.dove', x.dove, 'placeholder="Dove" aria-label="Dove"')}></div></div>`).join('')}</div>
+    <h2>Luoghi</h2>
+    <div class="card">${sito.luoghi.map((x, i) => `<div class="sito-lo"><b>${esc(x.titolo)}</b>
+      <input ${v('luoghi.' + i + '.nome', x.nome, 'placeholder="Nome del luogo" aria-label="Nome del luogo: ' + esc(x.titolo) + '"')}>
+      <input ${v('luoghi.' + i + '.indirizzo', x.indirizzo, 'placeholder="Indirizzo" aria-label="Indirizzo: ' + esc(x.titolo) + '" autocomplete="off"')}>
+      <div class="sito-row"><input class="yr" ${v('luoghi.' + i + '.ora', x.ora, 'placeholder="Ora" aria-label="Ora: ' + esc(x.titolo) + '"')}><input ${v('luoghi.' + i + '.note', x.note, 'placeholder="Note, es. parcheggio" aria-label="Note: ' + esc(x.titolo) + '"')}></div></div>`).join('')}</div>
+    <p class="small muted" style="margin:12px 4px 0">🔒 Testi, orari e luoghi non vanno su GitHub: restano nella cassetta Google. Le foto stanno sul sito.</p>
+    <p id="sitoStato" class="sito-stato${st.startsWith('err:') ? ' bad' : ''}" role="status">${esc(st.replace(/^(err|txt):/, '').replace(/^carico$/, 'Carico…'))}</p>
+    <div class="btns"><a class="btn plain" href="${/github\.io$/.test(location.hostname) ? 'index.html' : SITO_WEB}?invitato" target="_blank" rel="noopener">Vedi la home come un invitato</a></div>
+    <input type="file" id="sitoFile" accept="image/*" hidden>`;
 }
 
 /* ---------- esportazioni ---------- */
@@ -1624,6 +1746,8 @@ document.addEventListener('click', e => {
     case 'cas-off-yes': casSet(null); ui.casOff = false; render(); toast('Cassetta scollegata da questo dispositivo'); break;
 
     case 'aseg': ui.altroSeg = id; ui.preview = null; render(); break;
+    case 'sito-foto': { ui.sitoKey = id; const f = $('#sitoFile'); if (f) f.click(); break; }
+    case 'sito-riprova': sitoLoaded = false; sitoCarica(); render(); break;
     case 'add-guest': { const g = {id:uid(), nome:'', nucleo:'', gruppo:'', lato:'entrambi', tipo:'adulto', rsvp:'attesa', indirizzo:'', contatto:'', allergie:'', tavolo:''}; state.guests.unshift(g); ui.openGuest = g.id; ui.q = ''; save('ospiti'); render(); const el = document.getElementById('gn-' + g.id); if (el) el.focus(); break; }
     case 'add-fam': { const g = {id:uid(), kind:'famiglia', nome:'Famiglia ', adulti:2, bambini:0, neonati:0, membri:'', nucleo:'', gruppo:'', lato:'entrambi', tipo:'adulto', rsvp:'attesa', indirizzo:'', contatto:'', allergie:'', tavolo:''}; state.guests.unshift(g); ui.openGuest = g.id; ui.q = ''; save('ospiti'); render(); const el = document.getElementById('gn-' + g.id); if (el) { el.focus(); try { el.setSelectionRange(el.value.length, el.value.length); } catch (_) {} } break; }
     case 'bulk': ui.bulk = !ui.bulk; render(); if (ui.bulk) $('#bulkTxt').focus(); break;
@@ -1664,6 +1788,7 @@ document.addEventListener('input', e => {
   if (t.id === 'casUrl') { ui.casUrl = t.value; return; }
   if (t.dataset.tv) { const d = (S().tavoli || []).find(x => x.k === t.dataset.k); if (d) { d[t.dataset.tv] = t.dataset.tv === 'posti' ? (Math.max(1, Math.round(num(t.value))) || 1) : t.value; save('base'); } return; }
   if (t.id === 'casSec') { ui.casSec = t.value; return; }
+  if (t.dataset.sito) { sitoSet(t.dataset.sito, t.value); return; }
   if (t.dataset.p) { const g = state.guests.find(x => x.id === t.dataset.id); const p = g && (g.persone || [])[+t.dataset.i]; if (p) { p[t.dataset.p] = t.value; save('ospiti'); if (t.dataset.p === 'tipo') render(); } return; }
   if (t.dataset.act === 'scen') { ui.scen = +t.value; const o = $('#scenOut'); if (o) o.innerHTML = scenOut(ui.scen); return; }
   if (t.dataset.act === 'q') { ui.q = t.value; render(); return; }
@@ -1677,6 +1802,7 @@ document.addEventListener('change', e => {
   const t = e.target;
   if (t.dataset.act === 'task') { const x = state.tasks.find(y => y.id === t.dataset.id); x.fatto = t.checked; save('checklist'); render(); return; }
   if (t.dataset.s && t.type === 'checkbox') { state.settings[t.dataset.s] = t.checked; save('base'); render(); return; }
+  if (t.id === 'sitoFile') { const f = t.files && t.files[0]; t.value = ''; if (f && ui.sitoKey) sitoFoto(ui.sitoKey, f); return; }
   if (t.dataset.act === 'imp') { const file = t.files && t.files[0]; if (!file) return; const r = new FileReader();
     r.onload = () => { importText(r.result, 'Questo file non è un backup del matrimonio: scegli il file esportato da qui'); t.value = ''; };
     r.readAsText(file); return; }

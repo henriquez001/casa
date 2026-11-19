@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2ECDF">
-<meta name="app-version" content="20261119214000">
+<meta name="app-version" content="20261119215000">
 <title>Alice &amp; Leandro</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -231,7 +231,7 @@ function fetchJ(u, opt){
 // Google a volte fallisce la prima richiesta dopo l'apertura: riprovo fino a 3 volte prima di passare al canale di riserva.
 function fetchRip(u, opt){
   var n = 0;
-  var go = function(){ return fetchJ(u, Object.assign({cache:'no-store'}, opt || {})).catch(function(e){ n++; if (n >= 3) throw e; return new Promise(function(ok){ setTimeout(ok, 700 * n); }).then(go); }); };
+  var go = function(){ return fetchJ(u, Object.assign({cache:'no-store'}, opt || {})).catch(function(e){ n++; if (n >= 3 || /12 secondi/.test(e && e.message || '')) throw e; return new Promise(function(ok){ setTimeout(ok, 700 * n); }).then(go); }); };
   return go();
 }
 function jsonp(params){

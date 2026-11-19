@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2ECDF">
-<meta name="app-version" content="20261119215000">
+<meta name="app-version" content="20261119220000">
 <title>Alice &amp; Leandro</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -123,6 +123,11 @@ label.f{display:grid;gap:4px;font-size:13px;color:var(--muted);font-weight:500}
 .who{padding:16px 18px 22px;display:grid;gap:6px;text-align:center;justify-items:center}
 .sprig{width:150px;height:auto}
 .sprig.sm{width:96px;margin-bottom:-4px}
+/* Chi sei? si compatta solo se non sta nello schermo (testo grande o schermo basso): 3 livelli */
+#app.st1 .view{gap:10px}#app.st1 .who{padding:10px 16px 14px;gap:4px}#app.st1 .who .sprig{width:96px}#app.st1 .sect{gap:8px}
+#app.st2 .opz2{display:none}
+#app.st3 .who .sprig{width:72px}#app.st3 .opz{display:none}
+#app.st4 .who .sprig{display:none}
 .msg{padding:14px 16px;border-radius:12px;font-size:15px}
 .msg.ok{background:var(--accent-soft);color:var(--accent)}
 .msg.err{background:#F5E1D8;color:#7E3420}
@@ -304,7 +309,7 @@ function vWho(){
   return '<div class="view">' +
     '<section class="card who"><img class="sprig" src="' + RAMETTO + '" alt="">' + names(true) +
     '<p style="margin:2px 0 0;font-family:var(--font-display);font-weight:600;font-size:26px;line-height:1.15">Benvenuto al nostro matrimonio</p>' +
-    '<p class="sub">Qui trovi le informazioni, puoi confermare la presenza e il giorno delle nozze scattare le foto per noi.</p></section>' +
+    '<p class="sub opz">Qui trovi le informazioni, puoi confermare la presenza e il giorno delle nozze scattare le foto per noi.</p></section>' +
     '<form class="card sect" id="whoF" novalidate><p class="h">Come ti chiami?</p>' +
     '<label class="f" for="wn">Nome<input id="wn" name="nome" autocomplete="given-name" autocapitalize="words" placeholder="Es. Carla" required></label>' +
     '<label class="f" for="wc">Cognome<input id="wc" name="cognome" autocomplete="family-name" autocapitalize="words" placeholder="Es. Rossi"></label>' +
@@ -312,7 +317,7 @@ function vWho(){
     (S.err ? '<div class="msg err" role="alert">' + S.err + '</div>' : '') +
     (S.sposi ? (DEMO ? '<div class="msg ok">Ciao! Questa è solo l\'anteprima degli invitati, qui lo spazio sposi non c\'è. Sul sito vero, dai telefoni e dal PC che hanno la vostra chiave, si apre direttamente il vostro tool, senza scrivere il nome.</div>' : '<div class="msg ok">Ciao! Il vostro spazio da sposi si apre solo dai telefoni che hanno la vostra chiave. <a href="sposi.html" style="color:inherit;font-weight:700">Apri lo spazio sposi</a></div>') : '') +
     '<button class="btn primary" type="submit"' + (S.loading ? ' disabled' : '') + '>' + (S.loading ? 'Un attimo…' : 'Entra') + '</button></form>' +
-    '<p class="tiny" style="text-align:center">Il nome resta su questo telefono: la prossima volta entri direttamente.</p></div>';
+    '<p class="tiny opz2" style="text-align:center">Il nome resta su questo telefono: la prossima volta entri direttamente.</p></div>';
 }
 
 function vHome(){
@@ -430,6 +435,21 @@ function vLanding(){
 function entraBar(){ var b = document.getElementById('entra'), c = document.querySelector('.cover'); if (b && c) b.classList.toggle('on', window.scrollY > c.offsetHeight * 0.5); }
 window.addEventListener('scroll', entraBar, {passive:true});
 setInterval(function(){ var el = document.getElementById('cd'); if (el && !document.hidden) { el.innerHTML = cdHtml(); el.setAttribute('aria-label', cdLabel()); } }, 30000);
+// Se la schermata Chi sei? non sta nello schermo la compatto a gradi (spazi, nota in fondo, sottotitolo, rametto); se ci sta resta com'è.
+var adW = 0;
+function adattaWho(){
+  var app = $('#app'), lv = ['st1', 'st2', 'st3', 'st4'], i = 0;
+  lv.forEach(function(c){ app.classList.remove(c); });
+  if (S.landing || S.inv) return;
+  adW = innerWidth;
+  while (i < lv.length && document.documentElement.scrollHeight > innerHeight + 1) { app.classList.add(lv[i]); i++; }
+}
+function adattaDopo(){ // rifaccio il conto quando arrivano rametto e caratteri, che cambiano l'altezza
+  var im = $('#app .who .sprig');
+  if (im && !im.complete) im.addEventListener('load', function(){ if (!S.inv && !S.landing) adattaWho(); }, {once:true});
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ if (!S.inv && !S.landing) adattaWho(); });
+}
+addEventListener('resize', function(){ if (innerWidth !== adW && !S.inv && !S.landing) adattaWho(); });
 function render(){
   var app = $('#app');
   var key = (S.landing ? 'land:' : '') + (S.inv ? 'in:' : 'out:') + S.view + (S.loading && !S.inv ? ':l' : '');
@@ -437,7 +457,7 @@ function render(){
   setTimeout(function(){ var v = app.firstElementChild; if (v && enter) { v.classList.add('enter'); } }, 0);
   if (S.landing) { app.className = 'land'; $('#bar').hidden = true; app.innerHTML = vLanding(); setTimeout(entraBar, 0); return; }
   if (S.loading && !S.inv && codice) { app.className = 'nobar'; $('#bar').hidden = true; app.innerHTML = '<div class="view"><section class="card empty"><img class="sprig" src="' + RAMETTO + '" alt="" style="width:110px"><b>Un attimo…</b></section></div>'; return; }
-  if (!S.inv) { app.className = 'nobar'; $('#bar').hidden = true; app.innerHTML = vWho(); return; }
+  if (!S.inv) { app.className = 'nobar'; $('#bar').hidden = true; app.innerHTML = vWho(); adattaWho(); adattaDopo(); return; }
   app.className = ''; $('#bar').hidden = false; renderTabs();
   app.innerHTML = ({home:vHome, rsvp:vRsvp, arrivare:vArrivare,
     scatta:function(){ return vSoon('Scatta', 'Il giorno delle nozze da qui scatti foto e video per noi, e partecipi alle sfide fotografiche.'); },

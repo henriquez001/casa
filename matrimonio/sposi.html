@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png?v=4">
 <link rel="icon" type="image/png" href="icon-192.png?v=4">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="app-version" content="20261119223000">
+<meta name="app-version" content="20261120140000">
 <title>Conti del Matrimonio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -100,6 +100,43 @@ h2::after{content:"";flex:1;min-width:24px;border-top:1px solid var(--gold);opac
 .open > .item-head .chev,.open > .cat-head .chev{transform:rotate(90deg)}
 .editor{padding:4px 16px 18px;display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}
 .editor .full{grid-column:1/-1}
+:root{--c-a:#5F7F89;--c-b:#A57C55}
+.rl{display:grid;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+.rli{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 44px;gap:6px;padding:10px;border-top:1px solid var(--line);align-items:center}
+.rli:first-child{border-top:0}
+.rli .rn{grid-column:1/-1}
+.rli select{grid-column:1/-1}
+.rli .rp{grid-column:1/-1;display:flex;align-items:center;gap:8px;font-size:15px;min-height:44px;cursor:pointer}
+.rli.paid{background:var(--good-soft)}
+.pchart{padding:12px 12px 8px;display:grid;gap:6px;margin-bottom:12px}
+.pchart svg{display:block;width:100%;height:auto;overflow:visible}
+.pchart g[data-act]{cursor:pointer;outline:none}
+.pchart g[data-act]:focus-visible rect.hit{stroke:var(--accent);stroke-width:2}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.legend i.line{height:0;border-top:2px solid var(--fg);border-radius:0;width:14px;vertical-align:3px}
+.funds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border-radius:var(--r);overflow:hidden;border:1px solid var(--line);margin-bottom:12px}
+.fund{background:var(--surface);padding:10px 12px;min-width:0;display:grid;gap:2px}
+.fund .who{font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;overflow-wrap:anywhere}
+.fund .who i{width:8px;height:8px;border-radius:50%;flex:none}
+.fund b{font-size:17px;font-weight:650}
+.palert{border-radius:12px;padding:10px 12px;font-size:15px;line-height:1.35;margin-bottom:4px}
+.palert.bad{background:var(--bad-soft);color:var(--bad)} .palert.warn{background:var(--warn-soft);color:#75590F} .palert.good{background:var(--good-soft);color:var(--good)}
+.ptrack{height:6px;border-radius:3px;background:var(--accent-soft);overflow:hidden;margin-top:6px;display:flex;gap:1px}
+.ptrack i{display:block;height:100%}
+.pdet{display:grid;grid-template-rows:0fr;transition:grid-template-rows .32s cubic-bezier(.2,.8,.2,1)}
+.item.open .pdet{grid-template-rows:1fr}
+.pdet>div{overflow:hidden}
+.prate{display:grid;padding:0 16px 14px}
+.pr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;padding:10px 0;border-top:1px dashed var(--line);font-size:15px}
+.pr:first-child{border-top:0}
+.pr .moves{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px}
+.pr .nm{background:none;border:0;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer;min-height:0}
+.pr .nm:hover{text-decoration:underline}
+.pcassa{font-size:13px;color:var(--muted);padding:8px 0 0;border-top:1px solid var(--line);display:grid;gap:2px}
+.pcassa div{display:flex;justify-content:space-between;gap:8px}
+@media (prefers-reduced-motion:reduce){.pdet{transition:none}}
+
 .prow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,8.5em) 44px;gap:6px;align-items:center}
 @media (max-width:460px){.prow{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 44px}.prow select{grid-column:1/3}}
 .grp{display:grid;gap:8px;min-width:0}
@@ -361,7 +398,7 @@ function defaultTasks(){
   const out = []; Object.entries(F).forEach(([fase, list]) => list.forEach(t => out.push({id:uid(), fase, testo:t, fatto:false}))); return out;
 }
 function defaultState(){ return {
-  settings:{nomeA:'Leo', nomeB:'', data:'', budget:30000, imprevisti:10, stimaAdulti:100, stimaBambini:8, usaLista:true, sposiInclusi:true, perTavolo:10, bustaMedia:120, listaNozze:0},
+  settings:{nomeA:'Leo', nomeB:'', data:'', budget:30000, imprevisti:10, stimaAdulti:100, stimaBambini:8, usaLista:true, sposiInclusi:true, perTavolo:10, bustaMedia:120, listaNozze:0, quotaMese:200, fondoComune:400, fondoA:4000, fondoB:4000},
   entrate:[], cats:defaultCats(), guests:[], tasks:defaultTasks()
 };}
 
@@ -436,13 +473,13 @@ const J = v => JSON.stringify(v === undefined ? null : v);
 const FLAB = {nome:'nome', stima:'stima', prev:'preventivo', pagato:'pagato', qty:'quantità', mode:'calcolo', fornitore:'fornitore', contatto:'contatto', stato:'stato', scadenza:'scadenza', paga:'chi paga', note:'note',
   adulti:'adulti', bambini:'bambini', neonati:'neonati', membri:'componenti', rsvp:'risposta', tavolo:'tavolo', allergie:'allergie', indirizzo:'indirizzo', lato:'lato', tipo:'tipo', gruppo:'gruppo', nucleo:'nucleo',
   importo:'importo', testo:'testo', fatto:'fatto', fase:'quando', nomeA:'primo sposo/a', nomeB:'secondo sposo/a', data:'data', budget:'budget', imprevisti:'imprevisti', stimaAdulti:'adulti stimati',
-  stimaBambini:'bambini stimati', usaLista:'calcolo dalla lista', sposiInclusi:'sposi a tavola', perTavolo:'posti per tavolo', bustaMedia:'busta media', listaNozze:'lista nozze', saluto:'saluto', messaggio:'messaggio', codice:'codice invito', persone:'persone dell\'invito', risposta:'risposta online', rsvpScadenza:'scadenza risposte'};
+  stimaBambini:'bambini stimati', usaLista:'calcolo dalla lista', sposiInclusi:'sposi a tavola', perTavolo:'posti per tavolo', bustaMedia:'busta media', listaNozze:'lista nozze', saluto:'saluto', messaggio:'messaggio', codice:'codice invito', persone:'persone dell\'invito', risposta:'risposta online', rsvpScadenza:'scadenza risposte', rate:'rate', nota:'nota', fondo:'fondo', pagata:'pagata', quotaMese:'quota mensile', fondoComune:'fondo comune', fondoA:'fondo personale 1', fondoB:'fondo personale 2'};
 const fmtV = v => v === true ? 'sì' : v === false ? 'no' : (v === '' || v == null) ? 'vuoto' : String(v);
 // Unisce campo per campo: vince chi ha cambiato; se hanno cambiato tutti e due, è un conflitto (per ora tiene il valore di qui)
 function mergeObj(b, l, r, where, conf, lists){
   const out = {}; const keys = new Set([...Object.keys(b || {}), ...Object.keys(l || {}), ...Object.keys(r || {})]);
   keys.forEach(k => {
-    if (lists && lists[k]) { out[k] = mergeList((b || {})[k] || [], (l || {})[k] || [], (r || {})[k] || [], lists[k], conf); return; }
+    if (lists && lists[k]) { if ([b, l, r].every(o => !o || o[k] === undefined)) return; out[k] = mergeList((b || {})[k] || [], (l || {})[k] || [], (r || {})[k] || [], lists[k], conf); return; }
     const bv = (b || {})[k], lv = (l || {})[k], rv = (r || {})[k];
     if (J(lv) === J(rv)) out[k] = lv;
     else if (J(lv) === J(bv)) out[k] = rv;
@@ -469,7 +506,7 @@ function mergeList(b, l, r, spec, conf){
   });
   return res;
 }
-const ITEMS = {label:x => x.nome || 'Voce'};
+const ITEMS = {label:x => x.nome || 'Voce', lists:{rate:{label:x => 'Rata ' + (x.nota || x.data || '')}}};
 const SPEC = {settings:null, entrate:{label:x => 'Entrata ' + (x.nome || '')}, guests:{label:x => x.nome || 'Ospite'}, tasks:{label:x => x.testo || 'Attività'},
   cats:{label:x => x.nome || 'Categoria', lists:{items:ITEMS}}};
 function merge3(b, l, r){
@@ -1054,8 +1091,7 @@ function itemRow(cat, it, c){
       <label class="f" for="p-${it.id}">Preventivo (€${it.mode === 'fisso' ? '' : ' cad.'})<input id="p-${it.id}" data-f="prev" data-item="${it.id}" type="number" inputmode="decimal" min="0" step="any" placeholder="Usa la stima" value="${esc(it.prev)}"></label>
       <label class="f" for="st-${it.id}">Stato<select id="st-${it.id}" data-f="stato" data-item="${it.id}">${Object.entries(STATI).map(([k, l]) => `<option value="${k}" ${k === it.stato ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
       <label class="f" for="py-${it.id}">Chi paga<select id="py-${it.id}" data-f="paga" data-item="${it.id}">${Object.entries(P).map(([k, l]) => `<option value="${k}" ${k === it.paga ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></label>
-      <label class="f" for="pg-${it.id}">Già pagato (€)<input id="pg-${it.id}" data-f="pagato" data-item="${it.id}" type="number" inputmode="decimal" min="0" step="any" value="${esc(it.pagato)}"></label>
-      <label class="f" for="sc-${it.id}">Scadenza del saldo<input id="sc-${it.id}" data-f="scadenza" data-item="${it.id}" type="date" value="${esc(it.scadenza)}"></label>
+      ${rateBlock(it, v)}
       <label class="f" for="fo-${it.id}">Fornitore<input id="fo-${it.id}" data-f="fornitore" data-item="${it.id}" value="${esc(it.fornitore)}"></label>
       <label class="f" for="co-${it.id}">Contatto<input id="co-${it.id}" data-f="contatto" data-item="${it.id}" value="${esc(it.contatto)}" placeholder="Telefono o email"></label>
       <label class="f full" for="no-${it.id}">Note<textarea id="no-${it.id}" data-f="note" data-item="${it.id}" placeholder="Cosa è incluso, extra, orari…">${esc(it.note)}</textarea></label>
@@ -1392,6 +1428,144 @@ function datalists(){
   return `<datalist id="nuclei">${nu.map(n => `<option value="${esc(n)}">`).join('')}</datalist><datalist id="gruppi">${gr.map(n => `<option value="${esc(n)}">`).join('')}</datalist>`;
 }
 
+/* ---------- rate e piano dei pagamenti ---------- */
+const wedDate = () => S().data || '2027-06-13';
+const FONDI = () => ({comune:'Fondo comune', A:'Fondo di ' + nome('A'), B:'Fondo di ' + nome('B'), buste:'Con le buste'});
+const FCOL = {comune:'var(--accent)', A:'var(--c-a)', B:'var(--c-b)'};
+const fondoOf = r => ['comune', 'A', 'B', 'buste'].includes(r.fondo) ? r.fondo : 'comune';
+// Le voci senza rate mostrano come rate i vecchi «già pagato» e «scadenza» (id fissi, così tutti i dispositivi li vedono uguali)
+function rateOf(it, c){
+  if (Array.isArray(it.rate)) return it.rate;
+  const out = [], p = num(it.pagato);
+  if (p > 0) out.push({id:'m-pag', data:'', importo:p, nota:'Già pagato', fondo:'comune', pagata:true});
+  if (it.scadenza) { const left = cost(it, c || counts()) - p; if (left > 0.5) out.push({id:'m-sca', data:it.scadenza, importo:Math.round(left * 100) / 100, nota:'Saldo', fondo:'comune', pagata:false}); }
+  return out;
+}
+function rateEdit(it){ if (!Array.isArray(it.rate)) it.rate = clone(rateOf(it)); return it.rate; }
+function rateSync(it){
+  const R = it.rate || [];
+  it.pagato = Math.round(R.filter(r => r.pagata).reduce((a, r) => a + num(r.importo), 0) * 100) / 100;
+  it.scadenza = R.filter(r => !r.pagata && r.data).map(r => r.data).sort()[0] || '';
+}
+const meseNome = mk => { const t = new Date(mk + '-15T12:00:00').toLocaleDateString('it-IT', {month:'long'}); return t[0].toUpperCase() + t.slice(1); };
+const meseBreve = mk => new Date(mk + '-15T12:00:00').toLocaleDateString('it-IT', {month:'short'}).replace('.', '');
+const meseA = mk => { const n = meseNome(mk).toLowerCase(); return (/^[aeiou]/.test(n) ? 'ad ' : 'a ') + n; };
+const Cap = t => t[0].toUpperCase() + t.slice(1);
+const giorno = d => new Date(d + 'T12:00:00').toLocaleDateString('it-IT', {day:'numeric', month:'short'});
+function rateBlock(it, v){
+  const R = rateOf(it); const F = FONDI(); const left = v - R.reduce((a, r) => a + num(r.importo), 0);
+  const famiglia = it.paga === 'famA' || it.paga === 'famB';
+  const row = r => { const k = it.id + '-' + r.id, fo = fondoOf(r);
+    return `<div class="rli ${r.pagata ? 'paid' : ''}">
+      <input id="rd-${k}" type="date" data-rate="${it.id}" data-ri="${r.id}" data-rf="data" value="${esc(r.data)}" aria-label="Data della rata">
+      <input id="ri-${k}" type="number" inputmode="decimal" min="0" step="any" data-rate="${it.id}" data-ri="${r.id}" data-rf="importo" value="${esc(r.importo)}" placeholder="€" aria-label="Importo della rata (€)">
+      <button class="x" type="button" data-act="rate-del" data-id="${it.id}" data-ri="${r.id}" aria-label="Togli la rata ${esc(r.nota || '')}">${ICON_X}</button>
+      <input id="rn-${k}" class="rn" data-rate="${it.id}" data-ri="${r.id}" data-rf="nota" value="${esc(r.nota)}" placeholder="Caparra, acconto, saldo…" aria-label="Nota della rata">
+      <select id="rf-${k}" data-rate="${it.id}" data-ri="${r.id}" data-rf="fondo" aria-label="Da quale fondo">${Object.entries(F).map(([key, l]) => `<option value="${key}" ${key === fo ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>
+      <label class="rp" for="rp-${k}"><input type="checkbox" id="rp-${k}" data-rate="${it.id}" data-ri="${r.id}" data-rf="pagata" ${r.pagata ? 'checked' : ''}>Pagata</label>
+    </div>`; };
+  return `<div class="full grp" id="rt-${it.id}" tabindex="-1"><span class="gl">Rate e acconti</span>
+    ${R.length ? `<div class="rl">${R.map(row).join('')}</div>` : ''}
+    <div class="row" style="flex-wrap:wrap;gap:4px 12px"><button class="btn plain" type="button" data-act="rate-add" data-id="${it.id}">+ Aggiungi rata</button><span class="small muted num grow" style="text-align:right">${left > 0.5 ? 'Da fissare ' + fmt(left) : left < -0.5 ? '<span style="color:#75590F">Le rate superano il totale di ' + fmt(-left) + '</span>' : (R.length ? 'Tutto fissato' : '')}</span></div>
+    ${famiglia ? '<p class="note" style="margin:0">La paga una famiglia: non entra nel piano dei vostri fondi.</p>' : ''}
+  </div>`;
+}
+function piano(){
+  const c = counts(), s = S(), wed = wedDate();
+  const q = Math.max(200, num(s.quotaMese));
+  const mesi = []; { let [y, m] = new Date().toISOString().slice(0, 7).split('-').map(Number);
+    for (;;) { const k = y + '-' + String(m).padStart(2, '0'); mesi.push(k); if (k >= wed.slice(0, 7) || mesi.length >= 36) break; if (++m > 12) { m = 1; y++; } } }
+  const rows = [], fix = [];
+  state.cats.forEach(cat => cat.items.forEach(it => {
+    if (it.paga === 'famA' || it.paga === 'famB') return;
+    const v = cost(it, c); if (v <= 0.5 && !Array.isArray(it.rate)) return;
+    const R = rateOf(it, c);
+    R.forEach(r => { if (!r.pagata && num(r.importo) > 0) rows.push({cat, it, r, f:fondoOf(r), m:r.data ? r.data.slice(0, 7) : ''}); });
+    const left = v - R.reduce((a, r) => a + num(r.importo), 0);
+    if (left > 0.5) fix.push({cat, it, left});
+  }));
+  const first = mesi[0], last = mesi[mesi.length - 1];
+  const buste = rows.filter(x => x.f === 'buste'), senza = rows.filter(x => x.f !== 'buste' && !x.m);
+  const cum = {comune:0, A:0, B:0};
+  const months = mesi.map((mk, k) => {
+    const rr = rows.filter(x => x.f !== 'buste' && x.m && (x.m === mk || (k === 0 && x.m < first) || (k === mesi.length - 1 && x.m > last)))
+      .sort((a, b) => a.r.data.localeCompare(b.r.data));
+    const per = {comune:0, A:0, B:0}; rr.forEach(x => per[x.f] += num(x.r.importo));
+    Object.keys(per).forEach(f => cum[f] += per[f]);
+    const fo = {comune:num(s.fondoComune) + q * k - cum.comune, A:num(s.fondoA) - cum.A, B:num(s.fondoB) - cum.B};
+    const tot = fo.comune + fo.A + fo.B, neg = Object.keys(fo).filter(f => fo[f] < -0.5);
+    return {mk, k, rr, per, out:per.comune + per.A + per.B, fo, tot, neg, state:tot < -0.5 ? 'bad' : neg.length ? 'warn' : ''};
+  });
+  const sum = a => a.reduce((t, x) => t + num(x.r.importo), 0);
+  return {q, mesi, months, rows, fix, buste, senza, busteTot:sum(buste), daPagare:sum(rows.filter(x => x.f !== 'buste')), fixTot:fix.reduce((t, x) => t + x.left, 0),
+    worst:months.reduce((a, x) => x.tot < a.tot ? x : a, months[0]), firstWarn:months.find(x => x.state === 'warn'), lastF:months[months.length - 1].fo};
+}
+function scadSeg(){ return `<div class="seg" role="tablist" aria-label="Scadenze">${[['elenco','Elenco'],['piano','Piano']].map(([k, l]) => `<button type="button" role="tab" data-act="sseg" data-id="${k}" aria-selected="${(ui.scadSeg || 'elenco') === k}">${l}</button>`).join('')}</div>`; }
+function vPiano(){
+  const P = piano(), s = S(), F = FONDI(), T = totals();
+  const open = ui.openMesi || (ui.openMesi = new Set());
+  const conRate = P.rows.length > 0;
+  // grafico di riepilogo: colonne = uscite del mese per fondo, linea = soldi nei tre fondi a fine mese
+  const W = 340, H = 170, top = 14, bot = 24, colW = W / P.months.length;
+  const hi = Math.max(1, ...P.months.flatMap(x => [x.out, x.tot])) * 1.08, lo = Math.min(0, ...P.months.map(x => x.tot)) * 1.1;
+  const y = v => top + (H - top - bot) * (hi - v) / (hi - lo);
+  const cols = P.months.map((x, i) => { const cx = i * colW, bw = colW * 0.5, bx = cx + (colW - bw) / 2; let acc = 0;
+    const segs = ['comune', 'A', 'B'].filter(f => x.per[f]).map(f => { const y1 = y(acc + x.per[f]), y0 = y(acc); acc += x.per[f]; return `<rect x="${bx.toFixed(1)}" y="${y1.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(1, y0 - y1 - 1).toFixed(1)}" rx="2" fill="${FCOL[f]}"/>`; }).join('');
+    return `<g data-act="pmese-open" data-id="${x.mk}" role="button" tabindex="0" aria-label="${meseNome(x.mk)}: uscite ${fmt(x.out)}, nei fondi ${fmt(x.tot)}${x.state === 'bad' ? ', mancano soldi' : x.state === 'warn' ? ', un fondo sotto zero' : ''}"><rect class="hit" x="${cx.toFixed(1)}" y="0" width="${colW.toFixed(1)}" height="${H}" rx="6" fill="transparent"/>${segs}
+      <text x="${(cx + colW / 2).toFixed(1)}" y="${H - 7}" text-anchor="middle" font-size="12" font-weight="${x.state ? 700 : 500}" fill="${x.state === 'bad' ? 'var(--bad)' : x.state === 'warn' ? '#75590F' : 'var(--muted)'}">${meseBreve(x.mk)}</text></g>`; }).join('');
+  const pts = P.months.map((x, i) => [i * colW + colW / 2, y(x.tot), x]);
+  const chart = `<div class="card pchart"><svg viewBox="0 0 ${W} ${H}" aria-label="Uscite di ogni mese e soldi rimasti nei fondi">
+    <line x1="0" x2="${W}" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}" stroke="var(--muted)" stroke-width="1" opacity=".5"/>${cols}
+    <polyline points="${pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}" fill="none" stroke="var(--fg)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pointer-events="none"/>
+    ${pts.map(p => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.5" fill="${p[2].tot < -0.5 ? 'var(--bad)' : 'var(--surface)'}" stroke="var(--fg)" stroke-width="1.5" pointer-events="none"/>`).join('')}</svg>
+    <div class="legend"><span><i style="background:var(--accent)"></i>Comune</span><span><i style="background:var(--c-a)"></i>${esc(nome('A'))}</span><span><i style="background:var(--c-b)"></i>${esc(nome('B'))}</span><span><i class="line"></i>Soldi nei tre fondi a fine mese</span></div></div>`;
+  const fund = (f, sub) => { const low = Math.min(...P.months.map(x => x.fo[f]));
+    return `<div class="fund"><span class="who"><i style="background:${FCOL[f]}"></i>${f === 'comune' ? 'Comune' : esc(nome(f))}</span><b class="num" style="color:${low < -0.5 ? 'var(--bad)' : 'var(--fg)'}">${fmt(P.lastF[f])}</b><span class="small muted">${sub}</span></div>`; };
+  const fine = meseA(P.mesi[P.mesi.length - 1]);
+  const funds = `<div class="funds">${fund('comune', fine + ' · ' + fmt(P.q) + ' al mese')}${fund('A', fine + ' · da ' + fmt(s.fondoA))}${fund('B', fine + ' · da ' + fmt(s.fondoB))}</div>`;
+  let alert = '';
+  if (conRate) {
+    const w = P.worst;
+    if (w.tot < -0.5) alert = `<div class="palert bad">${Cap(meseA(w.mk))} mancano <b class="num">${fmt(-w.tot)}</b> anche contando i fondi di ${esc(nome('A'))} e ${esc(nome('B'))}. ${w.k === P.months.length - 1 ? 'Mettete qualche saldo sulle buste' : 'Spostate qualche rata più avanti o sulle buste'}, oppure mettete da parte di più ogni mese.</div>`;
+    else if (P.firstWarn) { const x = P.firstWarn, f = x.neg[0], o = ['comune', 'A', 'B'].filter(k => k !== f).sort((a, b) => x.fo[b] - x.fo[a])[0];
+      alert = `<div class="palert warn">${Cap(meseA(x.mk))} il ${F[f].toLowerCase()} va a <b class="num">${fmt(x.fo[f])}</b>, ma in totale i soldi ci sono: fate pagare una rata di quel mese dal ${F[o].toLowerCase()}.</div>`; }
+    else alert = `<div class="palert good">I conti tornano: nessun fondo va sotto zero fino al matrimonio.</div>`;
+  }
+  const mOpts = (r, cur) => P.mesi.map(mk => `<option value="${mk}" ${mk === cur ? 'selected' : ''}>${meseNome(mk)} ${mk.slice(0, 4)}</option>`).join('') + `<option value="buste" ${fondoOf(r) === 'buste' ? 'selected' : ''}>Con le buste, ${giorno(wedDate())}</option>` + (cur ? '' : '<option value="" selected disabled>Scegli il mese</option>');
+  const fOpts = r => ['comune', 'A', 'B'].map(f => `<option value="${f}" ${fondoOf(r) === f ? 'selected' : ''}>${esc(F[f])}</option>`).join('');
+  const prow = (x, mk) => { const k = x.it.id + '-' + x.r.id, cur = x.f === 'buste' ? 'buste' : mk;
+    return `<div class="pr"><span><button class="nm" type="button" data-act="goto-item" data-cat="${x.cat.id}" data-id="${x.it.id}">${esc(x.it.nome)}${x.r.nota ? ' · ' + esc(x.r.nota) : ''}</button><br><span class="small muted">${x.r.data ? giorno(x.r.data) : 'Senza data'}${x.m && x.m < P.mesi[0] && x.f !== 'buste' ? ' · scaduta' : ''} · ${esc(F[x.f])}</span></span><b class="num">${fmt(x.r.importo)}</b>
+      <span class="moves"><select id="pmm-${k}" data-rate="${x.it.id}" data-ri="${x.r.id}" data-rf="mese" aria-label="Mese di ${esc(x.it.nome)}">${mOpts(x.r, cur)}</select><select id="pmf-${k}" data-rate="${x.it.id}" data-ri="${x.r.id}" data-rf="fondo" aria-label="Fondo di ${esc(x.it.nome)}" ${x.f === 'buste' ? 'disabled' : ''}>${fOpts(x.r)}</select></span></div>`; };
+  const max = Math.max(1, ...P.months.map(x => x.out));
+  const list = `<div class="card list">${P.months.map(x => { const o = open.has(x.mk);
+    const bar = ['comune', 'A', 'B'].filter(f => x.per[f]).map(f => `<i style="flex-basis:${(x.per[f] / max * 100).toFixed(1)}%;background:${FCOL[f]}"></i>`).join('');
+    const pill = x.state === 'bad' ? `<span class="pill bad">Mancano ${fmt(-x.tot)}</span>` : x.state === 'warn' ? `<span class="pill warn">${x.neg[0] === 'comune' ? 'Comune' : esc(nome(x.neg[0]))} ${fmt(x.fo[x.neg[0]])}</span>` : '';
+    return `<div class="item ${o ? 'open' : ''}" id="pm-${x.mk}"><div class="item-head"><button class="item-main" type="button" data-act="pmese" data-id="${x.mk}" aria-expanded="${o}">${CHEV}<span class="t"><span>${meseNome(x.mk)} ${x.mk.slice(0, 4)}</span><span class="meta">${x.rr.length} ${x.rr.length === 1 ? 'rata' : 'rate'} · nei fondi a fine mese ${fmt(x.tot)}</span><span class="ptrack" style="display:flex">${bar}</span></span><span style="text-align:right"><span class="amount num" style="display:block">${fmt(x.out)}</span>${pill}</span></button></div>
+      <div class="pdet"><div>${o ? `<div class="prate">${x.rr.length ? x.rr.map(r => prow(r, x.mk)).join('') : '<div class="small muted" style="padding:6px 0">Nessuna rata in questo mese.</div>'}
+        <div class="pcassa"><span class="eyebrow" style="font-size:12px">A fine mese</span>${['comune', 'A', 'B'].map(f => `<div><span>${esc(F[f])}</span><b class="num" style="color:${x.fo[f] < -0.5 ? 'var(--bad)' : 'var(--fg)'}">${fmt(x.fo[f])}</b></div>`).join('')}</div></div>` : ''}</div></div></div>`; }).join('')}</div>`;
+  const fixCard = P.fix.length ? `<h2>Da fissare</h2>
+    <p class="sub" style="margin-bottom:10px">${P.fix.length} ${P.fix.length === 1 ? 'voce non ha' : 'voci non hanno'} ancora rate per <b class="num">${fmt(P.fixTot)}</b>. «Metti nel piano» crea una rata ${meseA(P.mesi[P.mesi.length - 1])}: poi la sposti nel mese giusto dal menu.</p>
+    <div class="card list">${P.fix.map(x => `<div class="item"><div class="item-head" style="padding-right:8px"><button class="item-main" type="button" data-act="goto-item" data-cat="${x.cat.id}" data-id="${x.it.id}"><span class="t"><span>${esc(x.it.nome)}</span><span class="meta">${esc(x.cat.nome)}</span></span><span class="amount num">${fmt(x.left)}</span></button><button class="btn plain small" type="button" data-act="piano-fissa" data-id="${x.it.id}">Metti nel piano</button></div></div>`).join('')}</div>
+    ${P.fix.length > 1 ? `<div class="btns" style="margin-top:12px"><button class="btn" type="button" data-act="piano-fissa-tutte">Metti tutte nel piano (${P.fix.length})</button></div>` : ''}` : '';
+  const senzaCard = P.senza.length ? `<h2>Rate senza data</h2><div class="card"><div class="prate" style="padding-top:8px">${P.senza.map(x => prow(x, '')).join('')}</div></div>` : '';
+  const busteCard = `<h2>Con le buste, ${giorno(wedDate())}</h2>
+    <div class="card"><div class="item-head" style="padding-right:16px"><span class="grow">Buste stimate ${fmt(T.buste)}${P.busteTot ? (P.busteTot <= T.buste ? ' · ne restano ' + fmt(T.buste - P.busteTot) : ' · <b style="color:var(--bad)">mancano ' + fmt(P.busteTot - T.buste) + '</b>') : ''}</span><b class="num">${fmt(P.busteTot)}</b></div>
+    ${P.buste.length ? `<div class="prate">${P.buste.map(x => prow(x, '')).join('')}</div>` : '<p class="note" style="margin:0 16px 14px">Nessuna rata sulle buste. Per pagare un saldo con le buste scegli «Con le buste» nel menu del mese.</p>'}</div>`;
+  const setCard = `<h2>Fondi e quota</h2>
+    <div class="card pad editor" style="padding:16px">
+      <label class="f" for="pq">Messi da parte ogni mese nel fondo comune (€, minimo 200)<input id="pq" type="number" inputmode="decimal" min="200" step="50" data-s="quotaMese" value="${esc(s.quotaMese)}"></label>
+      <label class="f" for="pfc">Fondo comune oggi (€)<input id="pfc" type="number" inputmode="decimal" min="0" step="50" data-s="fondoComune" value="${esc(s.fondoComune)}"></label>
+      <label class="f" for="pfa">Fondo di ${esc(nome('A'))} oggi (€)<input id="pfa" type="number" inputmode="decimal" min="0" step="50" data-s="fondoA" value="${esc(s.fondoA)}"></label>
+      <label class="f" for="pfb">Fondo di ${esc(nome('B'))} oggi (€)<input id="pfb" type="number" inputmode="decimal" min="0" step="50" data-s="fondoB" value="${esc(s.fondoB)}"></label>
+    </div>
+    <p class="note">Quando pagate una rata, segnatela «Pagata» nella voce e aggiornate qui il fondo da cui è uscita. Le voci pagate dalle famiglie e gli imprevisti non entrano nel piano.</p>`;
+  return `<h1>Scadenze</h1>${scadSeg()}
+    <p class="sub">${conRate ? `Fino al ${giorno(wedDate())}: <b class="num">${fmt(P.daPagare)}</b> dai fondi${P.busteTot ? ', <b class="num">' + fmt(P.busteTot) + '</b> con le buste' : ''}${P.fixTot > 0.5 ? ', <b class="num">' + fmt(P.fixTot) + '</b> ancora da fissare' : ''}.` : 'Il piano mette in fila caparre, acconti e saldi mese per mese e li confronta con i vostri fondi.'}</p>
+    ${conRate ? chart + funds + alert : `<div class="card empty" style="margin-bottom:12px"><b>Nessuna rata ancora</b>Usa «Metti nel piano» qui sotto, oppure apri una voce in Spese e premi «Aggiungi rata».</div>` + funds}
+    ${conRate ? `<h2>Mese per mese</h2>${list}` : ''}
+    ${senzaCard}${fixCard}${busteCard}${setCard}`;
+}
+
 function vScadenze(){
   const c = counts(); const today = new Date().toISOString().slice(0, 10);
   const in30 = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
@@ -1406,11 +1580,12 @@ function vScadenze(){
   const row = x => { const d = x.it.scadenza; const cls = !d ? 'mute' : d < today ? 'bad' : d <= in30 ? 'warn' : '';
     const dTxt = d ? new Date(d + 'T12:00:00').toLocaleDateString('it-IT', {day:'numeric', month:'short', year:'numeric'}) : 'Senza data';
     return `<div class="item"><div class="item-head" style="padding-right:4px"><button class="item-main" type="button" data-act="goto-item" data-cat="${x.cat.id}" data-id="${x.it.id}"><span class="t"><span>${esc(x.it.nome)}</span><span class="meta">${esc(x.cat.nome)} · ${esc(P[x.it.paga])}${num(x.it.pagato) ? ' · pagato ' + fmt(x.it.pagato) : ''}</span></span><span style="text-align:right"><span class="amount num" style="display:block">${fmt(x.r)}</span><span class="pill ${cls}">${d && d < today ? 'Scaduta · ' : ''}${dTxt}</span></span></button><button class="btn plain small" type="button" data-act="paid" data-id="${x.it.id}" aria-label="Segna ${esc(x.it.nome)} come saldato">Saldato</button></div></div>`; };
-  return `<h1>Scadenze</h1><p class="sub">Restano da pagare <b class="num">${fmt(sum(rows))}</b>${late.length ? ` · <span style="color:var(--bad)">${late.length} scadute</span>` : ''}</p>
+  if (ui.scadSeg === 'piano') return vPiano();
+  return `<h1>Scadenze</h1>${scadSeg()}<p class="sub">Restano da pagare <b class="num">${fmt(sum(rows))}</b>${late.length ? ` · <span style="color:var(--bad)">${late.length} scadute</span>` : ''}</p>
   <div class="stats"><div class="stat"><span class="small muted">Scadute</span><b class="num" style="color:${late.length ? '#75590F' : 'var(--fg)'}">${fmt(sum(late))}</b></div><div class="stat"><span class="small muted">Entro 30 giorni</span><b class="num">${fmt(sum(soon))}</b></div><div class="stat"><span class="small muted">Senza data</span><b class="num">${fmt(sum(undated))}</b></div></div>
   <h2>Pagamenti in ordine di scadenza</h2>
   ${rows.length ? `<div class="card list">${rows.map(row).join('')}</div>` : '<div class="card empty"><b>Tutto saldato</b>Non ci sono pagamenti in sospeso.</div>'}
-  <p class="note">Imposta la data del saldo e l'importo già versato aprendo la voce nella scheda Spese. «Saldato» registra l'intero importo come pagato.</p>
+  <p class="note">Le date vengono dalle rate di ogni voce (scheda Spese). «Saldato» segna come pagato l'intero importo. Per vedere i pagamenti mese per mese, con i vostri fondi, apri «Piano».</p>
   ${Object.keys(perP).length ? `<h2>Da pagare per persona</h2><div class="card list">${Object.keys(perP).map(k => `<div class="item"><div class="item-head" style="padding-right:16px"><span class="grow">${esc(P[k])}</span><b class="num">${fmt(perP[k])}</b></div></div>`).join('')}</div>` : ''}
   <div class="btns" style="margin-top:20px"><button class="btn" type="button" data-act="exp-pay">Esporta le scadenze (CSV)</button></div>
   ${previewBox('pay')}`;
@@ -1682,7 +1857,7 @@ function importText(text, errMsg){
 }
 /* ---------- eventi ---------- */
 const findItem = id => { for (const c of state.cats) { const i = c.items.findIndex(x => x.id === id); if (i > -1) return {cat:c, idx:i, it:c.items[i]}; } return null; };
-const NUMF = new Set(['stima','pagato','qty','budget','imprevisti','stimaAdulti','stimaBambini','perTavolo','bustaMedia','listaNozze','importo']);
+const NUMF = new Set(['stima','pagato','qty','budget','imprevisti','stimaAdulti','stimaBambini','perTavolo','bustaMedia','listaNozze','importo','quotaMese','fondoComune','fondoA','fondoB']);
 
 document.addEventListener('click', e => {
   const tab = e.target.closest('[data-tab]');
@@ -1746,6 +1921,14 @@ document.addEventListener('click', e => {
     case 'cas-off-yes': casSet(null); ui.casOff = false; render(); toast('Cassetta scollegata da questo dispositivo'); break;
 
     case 'aseg': ui.altroSeg = id; ui.preview = null; render(); break;
+    case 'sseg': ui.scadSeg = id; ui.preview = null; render(); break;
+    case 'pmese': { const o = ui.openMesi || (ui.openMesi = new Set()); o.has(id) ? o.delete(id) : o.add(id); render(); break; }
+    case 'pmese-open': { (ui.openMesi || (ui.openMesi = new Set())).add(id); render(); const el = document.getElementById('pm-' + id); if (el) el.scrollIntoView({block:'nearest', behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}); break; }
+    case 'rate-add': { const f = findItem(id); const R = rateEdit(f.it); const left = cost(f.it, counts()) - R.reduce((a, r) => a + num(r.importo), 0); const r = {id:uid(), data:'', importo:left > 0.5 ? Math.round(left * 100) / 100 : '', nota:R.length ? '' : 'Caparra', fondo:'comune', pagata:false}; R.push(r); rateSync(f.it); save('spese'); render(); const el = document.getElementById('rd-' + f.it.id + '-' + r.id); if (el) el.focus(); break; }
+    case 'rate-del': { const f = findItem(id); const R = rateEdit(f.it); const i = R.findIndex(r => r.id === b.dataset.ri); if (i < 0) break; const old = R[i]; R.splice(i, 1); rateSync(f.it); save('spese'); render(); toast('Rata tolta', () => { R.splice(i, 0, old); rateSync(f.it); save('spese'); render(); }); break; }
+    case 'piano-fissa': case 'piano-fissa-tutte': { const P = piano(); const L = act === 'piano-fissa' ? P.fix.filter(x => x.it.id === id) : P.fix; if (!L.length) break; const before = L.map(x => ({it:x.it, rate:x.it.rate === undefined ? undefined : clone(x.it.rate)}));
+      L.forEach(x => { const R = rateEdit(x.it); R.push({id:uid(), data:P.mesi[P.mesi.length - 1] + '-01', importo:Math.round(x.left * 100) / 100, nota:R.length ? 'Saldo' : 'Da pagare', fondo:'comune', pagata:false}); rateSync(x.it); (ui.openMesi || (ui.openMesi = new Set())).add(P.mesi[P.mesi.length - 1]); });
+      save('spese'); render(); toast(L.length === 1 ? 'Rata messa a ' + meseNome(P.mesi[P.mesi.length - 1]).toLowerCase() : L.length + ' rate messe a ' + meseNome(P.mesi[P.mesi.length - 1]).toLowerCase(), () => { before.forEach(o => { if (o.rate === undefined) delete o.it.rate; else o.it.rate = o.rate; rateSync(o.it); }); save('spese'); render(); }); break; }
     case 'sito-foto': { ui.sitoKey = id; const f = $('#sitoFile'); if (f) f.click(); break; }
     case 'sito-riprova': sitoLoaded = false; sitoCarica(); render(); break;
     case 'add-guest': { const g = {id:uid(), nome:'', nucleo:'', gruppo:'', lato:'entrambi', tipo:'adulto', rsvp:'attesa', indirizzo:'', contatto:'', allergie:'', tavolo:''}; state.guests.unshift(g); ui.openGuest = g.id; ui.q = ''; save('ospiti'); render(); const el = document.getElementById('gn-' + g.id); if (el) el.focus(); break; }
@@ -1758,8 +1941,8 @@ document.addEventListener('click', e => {
         names.forEach(nm => { state.guests.push({id:uid(), nome:nm, nucleo, gruppo:'', lato:'entrambi', tipo:'adulto', rsvp:'attesa', indirizzo:'', contatto:'', allergie:'', tavolo:''}); n++; }); });
       ui.bulk = false; save('ospiti'); render(); toast(n + (n === 1 ? ' voce aggiunta' : ' voci aggiunte')); break; }
     case 'del-guest': { const i = state.guests.findIndex(g => g.id === id); const old = state.guests[i]; state.guests.splice(i, 1); save('ospiti'); render(); toast((old.nome || 'Ospite') + ' rimosso', () => { state.guests.splice(i, 0, old); save('ospiti'); render(); }); break; }
-    case 'goto-item': { ui.tab = 'spese'; ui.openCats.add(b.dataset.cat); ui.openItem = id; render(); const el = document.getElementById('sc-' + id); if (el) { el.scrollIntoView({block:'center'}); el.focus({preventScroll:true}); } break; }
-    case 'paid': { const f = findItem(id); const prevPaid = f.it.pagato, prevStato = f.it.stato; f.it.pagato = Math.round(cost(f.it, counts()) * 100) / 100; f.it.stato = 'saldato'; save('spese'); render(); toast('«' + f.it.nome + '» saldato', () => { f.it.pagato = prevPaid; f.it.stato = prevStato; save('spese'); render(); }); break; }
+    case 'goto-item': { ui.tab = 'spese'; ui.openCats.add(b.dataset.cat); ui.openItem = id; render(); const el = document.getElementById('rt-' + id); if (el) { el.scrollIntoView({block:'center'}); el.focus({preventScroll:true}); } break; }
+    case 'paid': { const f = findItem(id); const prevPaid = f.it.pagato, prevStato = f.it.stato, prevRate = f.it.rate === undefined ? undefined : clone(f.it.rate); if (Array.isArray(f.it.rate)) f.it.rate.forEach(r => r.pagata = true); f.it.pagato = Math.round(cost(f.it, counts()) * 100) / 100; f.it.stato = 'saldato'; save('spese'); render(); toast('«' + f.it.nome + '» saldato', () => { f.it.pagato = prevPaid; f.it.stato = prevStato; if (prevRate === undefined) delete f.it.rate; else f.it.rate = prevRate; save('spese'); render(); }); break; }
     case 'add-entrata': state.entrate.push({id:uid(), nome:'', importo:''}); save('base'); render(); { const el = document.getElementById('en-' + state.entrate[state.entrate.length - 1].id); if (el) el.focus(); } break;
     case 'del-entrata': { const i = state.entrate.findIndex(x => x.id === id); const old = state.entrate[i]; state.entrate.splice(i, 1); save('base'); render(); toast('Contributo rimosso', () => { state.entrate.splice(i, 0, old); save('base'); render(); }); break; }
     case 'del-task': { const i = state.tasks.findIndex(x => x.id === id); const old = state.tasks[i]; state.tasks.splice(i, 1); save('checklist'); render(); toast('Attività rimossa', () => { state.tasks.splice(i, 0, old); save('checklist'); render(); }); break; }
@@ -1783,6 +1966,7 @@ document.addEventListener('click', e => {
 
 document.addEventListener('input', e => {
   const t = e.target;
+  if (t.dataset.rate && t.dataset.rf !== 'pagata' && t.dataset.rf !== 'fondo' && t.dataset.rf !== 'mese') { const f = findItem(t.dataset.rate); if (!f) return; const r = rateEdit(f.it).find(x => x.id === t.dataset.ri); if (!r) return; r[t.dataset.rf] = t.dataset.rf === 'importo' ? (t.value === '' ? '' : num(t.value)) : t.value; rateSync(f.it); save('spese'); return; }
   if (t.id === 'ghRepo') { ui.ghRepo = t.value; return; }
   if (t.id === 'ghTok') { ui.ghTok = t.value; return; }
   if (t.id === 'casUrl') { ui.casUrl = t.value; return; }
@@ -1800,6 +1984,9 @@ document.addEventListener('input', e => {
 });
 document.addEventListener('change', e => {
   const t = e.target;
+  if (t.dataset.rate) { const f = findItem(t.dataset.rate); if (!f) return; const r = rateEdit(f.it).find(x => x.id === t.dataset.ri); if (!r) return; const k = t.dataset.rf;
+    if (k === 'pagata') r.pagata = t.checked; else if (k === 'fondo') r.fondo = t.value; else if (k === 'mese') { if (t.value === 'buste') { r.fondo = 'buste'; r.data = wedDate(); } else { if (r.fondo === 'buste') r.fondo = 'comune'; const d = r.data ? Math.min(28, +r.data.slice(8) || 15) : 15; r.data = t.value + '-' + String(d).padStart(2, '0'); (ui.openMesi || (ui.openMesi = new Set())).add(t.value); } }
+    rateSync(f.it); save('spese'); setTimeout(render, 0); return; }
   if (t.dataset.act === 'task') { const x = state.tasks.find(y => y.id === t.dataset.id); x.fatto = t.checked; save('checklist'); render(); return; }
   if (t.dataset.s && t.type === 'checkbox') { state.settings[t.dataset.s] = t.checked; save('base'); render(); return; }
   if (t.id === 'sitoFile') { const f = t.files && t.files[0]; t.value = ''; if (f && ui.sitoKey) sitoFoto(ui.sitoKey, f); return; }
@@ -1808,7 +1995,7 @@ document.addEventListener('change', e => {
     r.readAsText(file); return; }
   if (t.dataset.rencat || (t.matches('input,select,textarea') && (t.dataset.item || t.dataset.g || t.dataset.e || t.dataset.s || t.dataset.tv))) setTimeout(render, 0);
 });
-document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'ghTok') ghConnect(); if (e.key === 'Enter' && e.target.dataset && e.target.dataset.rencat) e.target.blur(); if (e.key === 'Enter' && e.target.id === 'ntxt') document.querySelector('[data-act="add-task"]').click(); });
+document.addEventListener('keydown', e => { const g = e.target.closest && e.target.closest('g[data-act]'); if (g && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); g.dispatchEvent(new MouseEvent('click', {bubbles:true})); return; } if (e.key === 'Enter' && e.target.id === 'ghTok') ghConnect(); if (e.key === 'Enter' && e.target.dataset && e.target.dataset.rencat) e.target.blur(); if (e.key === 'Enter' && e.target.id === 'ntxt') document.querySelector('[data-act="add-task"]').click(); });
 
 document.body.insertAdjacentHTML('beforeend', '<div id="dl"></div>');
 const renderDL = () => { $('#dl').innerHTML = datalists(); };

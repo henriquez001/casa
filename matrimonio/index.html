@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2ECDF">
-<meta name="app-version" content="20261122000000">
+<meta name="app-version" content="20261122003000">
 <title>Alice &amp; Leandro</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -605,6 +605,8 @@ function chiuso(titolo, testo){
   return '<div class="view"><header class="mh"><h1>' + titolo + '</h1></header><section class="card empty"><img class="sprig" src="' + RAMETTO + '" alt="" style="width:110px"><b>Si apre ' + esc(CONFIG.dataTesto) + ' alle 12</b><span class="sub">' + testo + '</span></section></div>';
 }
 function sfideFatte(){ var f = {}; M.mie.concat(M.coda).forEach(function(x){ if (x.s || x.sfida) f[x.s || x.sfida] = true; }); return f; }
+// Cose ancora aperte, visibili solo agli sposi in anteprima (regola di Leo: scriverle sulle pagine).
+var APERTE = '<div class="msg" style="font-size:14px"><b>Ancora aperto</b><br>· Serve la cassetta versione 5: senza, l’invio dà errore.<br>· La proiezione in sala delle foto non c’è ancora.<br>· I video oltre 35 secondi vengono rifiutati, non tagliati.<br>· Il caricamento su Drive va provato da voi: dal cloud non posso.</div>';
 function vScatta(){
   if (!S.inv.anteprima && !aperto()) return chiuso('Scatta', 'Il giorno delle nozze da qui scatti foto, video e vocali per noi, e partecipi alle sfide fotografiche.');
   if (S.inv.anteprima && !sposiCas()) return '<div class="view"><header class="mh"><h1>Scatta</h1></header><section class="card empty"><b>Per provare serve il tool degli sposi</b><span class="sub">Aprite l’app dal telefono o dal PC dove usate il tool con la cassetta collegata: le prove vanno nella vostra cartella su Drive.</span></section></div>';
@@ -617,7 +619,7 @@ function vScatta(){
     .concat(M.mie.slice(0, 12).map(function(x){ var u = x.th || (x.t === 'foto' || x.t === 'video' ? thumbUrl(x.id, 160) : ''); return '<i class="' + (u ? '' : x.t) + '"' + (u ? ' style="background-image:url(\'' + esc(u) + '\')"' : '') + '></i>'; }));
   return '<div class="view"><header class="mh"><h1>Scatta</h1>' +
     (p.length > 1 ? '' : '<p>' + esc(au) + '</p>') + '</header>' +
-    (S.inv.anteprima ? '<div class="msg ok">Prova degli sposi: quello che mandate va nella cartella delle prove su Drive, gli invitati non lo vedono.</div>' : '') +
+    (S.inv.anteprima ? '<div class="msg ok">Prova degli sposi: quello che mandate va nella cartella delle prove su Drive, gli invitati non lo vedono.</div>' + APERTE : '') +
     (p.length > 1 ? '<div class="chi" role="group" aria-label="Chi sta scattando"><span>Scatta come</span>' + p.map(function(x){ return '<button type="button" class="chip" data-act="autore" data-v="' + esc(x.nome) + '" aria-pressed="' + (x.nome === au) + '">' + esc(x.nome) + '</button>'; }).join('') + '</div>' : '') +
     '<section class="card shoot">' +
       (M.rec ? '<div class="rec" role="status"><span class="dot" aria-hidden="true"></span><b id="recT">' + durTxt((Date.now() - M.rec.t0) / 1000) + '</b><span class="sub">Registro… al massimo 1 minuto</span></div>' +

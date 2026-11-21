@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png?v=4">
 <link rel="icon" type="image/png" href="icon-192.png?v=4">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="app-version" content="20261120140000">
+<meta name="app-version" content="20261122000000">
 <title>Conti del Matrimonio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -253,6 +253,7 @@ input[type=range]{padding:0;border:0;background:none;accent-color:var(--accent)}
 .sito-ph{width:72px;height:72px;border-radius:10px;border:1px solid var(--line);padding:0 0 6px;cursor:pointer;background:linear-gradient(160deg,#B9C2A6 0%,#CDB898 55%,#9FAA8C 100%) center/cover no-repeat;display:grid;place-items:end center;color:#FFFCF5;font:inherit;font-size:12px;font-weight:600;transition:transform .1s ease-out}
 .sito-ph.busy{opacity:.55}
 .sito-f{display:grid;gap:8px;min-width:0}.sito-row{display:flex;gap:8px}.sito-row .yr{width:84px;flex:none}.sito-row input:not(.yr){flex:1}
+.sito-sf{display:grid}.sito-sfr{display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:center;padding:6px 12px;border-top:1px solid var(--line)}.sito-sfr:first-child{border-top:0}.sito-sfr span{font-size:13px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
 .sito-stato{font-size:14px;color:var(--muted);text-align:center;margin:12px 0}.sito-stato.bad{color:var(--bad)}
 .fast-cta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
 .fast-cta .grow{min-width:180px}
@@ -1664,12 +1665,14 @@ function sitoVuoto(){
   const st = t => ({anno:'', titolo:t, testo:'', foto:''}), pr = (cosa, icona) => ({ora:'', cosa, dove:'', icona}), lo = titolo => ({titolo, nome:'', indirizzo:'', ora:'', note:'', cerca:''});
   return {copertina:'', storia:[st('Come ci siamo conosciuti'), st('Il primo viaggio'), st('La proposta')],
     programma:[pr('Arrivo degli invitati','pin'), pr('Cerimonia','chiesa'), pr('Aperitivo e brindisi','calici'), pr('Cena','cena'), pr('Taglio della torta e festa','musica')],
-    luoghi:[lo('Cerimonia'), lo('Ricevimento')]};
+    luoghi:[lo('Cerimonia'), lo('Ricevimento')],
+    sfide:['Una foto con gli sposi', 'Il tavolo più scatenato', 'Un brindisi con chi non conosci', 'Il dettaglio più bello della festa', 'Una foto con la persona più anziana', 'Il momento della torta', 'Un selfie con il tuo tavolo', 'Il ballo più strano', 'Una foto con chi è arrivato da più lontano', 'Il tramonto alle Case']};
 }
 function sitoNorm(c){
   const v = sitoVuoto(); c = c || {};
   const fondi = (a, b) => a.map((x, i) => Object.assign({}, x, (b || [])[i] || {}));
-  return {copertina:String(c.copertina || ''), storia:fondi(v.storia, c.storia), programma:fondi(v.programma, c.programma), luoghi:fondi(v.luoghi, c.luoghi)};
+  const sf = Array.isArray(c.sfide) && c.sfide.length ? c.sfide.map(String) : v.sfide;
+  return {copertina:String(c.copertina || ''), storia:fondi(v.storia, c.storia), programma:fondi(v.programma, c.programma), luoghi:fondi(v.luoghi, c.luoghi), sfide:sf.concat(Array(Math.max(0, 12 - sf.length)).fill('')).slice(0, 12)};
 }
 let sito = null; try { const x = JSON.parse(localStorage.getItem(SITOK) || 'null'); if (x) sito = sitoNorm(x); } catch (e) {}
 let sitoT = null, sitoLoaded = false, sitoDirty = false;
@@ -1693,7 +1696,7 @@ async function sitoCarica(){
 }
 function sitoSet(path, val){
   const [k, i, f] = path.split('.'); if (!sito) return;
-  if (f) sito[k][+i][f] = val; else sito[k] = val;
+  if (f) sito[k][+i][f] = val; else if (i != null) sito[k][+i] = val; else sito[k] = val;
   if (k === 'luoghi') { const l = sito.luoghi[+i]; l.cerca = [l.nome, l.indirizzo].filter(Boolean).join(' '); }
   sitoCache(); sitoDirty = true; clearTimeout(sitoT); sitoStatoTxt('Modifiche da pubblicare…'); sitoT = setTimeout(sitoSalva, 2500);
 }
@@ -1760,6 +1763,12 @@ function vSito(){
       <input ${v('luoghi.' + i + '.nome', x.nome, 'placeholder="Nome del luogo" aria-label="Nome del luogo: ' + esc(x.titolo) + '"')}>
       <input ${v('luoghi.' + i + '.indirizzo', x.indirizzo, 'placeholder="Indirizzo" aria-label="Indirizzo: ' + esc(x.titolo) + '" autocomplete="off"')}>
       <div class="sito-row"><input class="yr" ${v('luoghi.' + i + '.ora', x.ora, 'placeholder="Ora" aria-label="Ora: ' + esc(x.titolo) + '"')}><input ${v('luoghi.' + i + '.note', x.note, 'placeholder="Note, es. parcheggio" aria-label="Note: ' + esc(x.titolo) + '"')}></div></div>`).join('')}</div>
+    <h2>Sfide fotografiche</h2>
+    <p class="sub" style="margin-top:-4px">Compaiono in Scatta il giorno delle nozze. Fino a 12; le righe vuote non si vedono.</p>
+    <div class="card sito-sf">${sito.sfide.map((x, i) => `<label class="sito-sfr"><span>${i + 1}</span><input ${v('sfide.' + i, x, 'placeholder="Nuova sfida" aria-label="Sfida ' + (i + 1) + '"')}></label>`).join('')}</div>
+    <h2>Foto degli invitati</h2>
+    <div class="card pad" style="display:grid;gap:10px"><p class="small" style="margin:0">Arrivano nel Drive dell'account della cassetta: cartella «Matrimonio · foto degli invitati», con una sottocartella per persona. Le vostre prove dall'anteprima stanno in «Matrimonio · prove degli sposi».</p>
+      <div class="btns"><button class="btn" type="button" data-act="sito-cartella" data-id="url">Apri le foto degli invitati</button><button class="btn plain" type="button" data-act="sito-cartella" data-id="prove">Apri le prove</button></div></div>
     <p class="small muted" style="margin:12px 4px 0">🔒 Testi, orari e luoghi non vanno su GitHub: restano nella cassetta Google. Le foto stanno sul sito.</p>
     <p id="sitoStato" class="sito-stato${st.startsWith('err:') ? ' bad' : ''}" role="status">${esc(st.replace(/^(err|txt):/, '').replace(/^carico$/, 'Carico…'))}</p>
     <div class="btns"><a class="btn plain" href="${/github\.io$/.test(location.hostname) ? 'index.html' : SITO_WEB}?invitato" target="_blank" rel="noopener">Vedi la home come un invitato</a></div>
@@ -1931,6 +1940,12 @@ document.addEventListener('click', e => {
       save('spese'); render(); toast(L.length === 1 ? 'Rata messa a ' + meseNome(P.mesi[P.mesi.length - 1]).toLowerCase() : L.length + ' rate messe a ' + meseNome(P.mesi[P.mesi.length - 1]).toLowerCase(), () => { before.forEach(o => { if (o.rate === undefined) delete o.it.rate; else o.it.rate = o.rate; rateSync(o.it); }); save('spese'); render(); }); break; }
     case 'sito-foto': { ui.sitoKey = id; const f = $('#sitoFile'); if (f) f.click(); break; }
     case 'sito-riprova': sitoLoaded = false; sitoCarica(); render(); break;
+    case 'sito-cartella': {
+      // La finestra si apre subito (Safari blocca quelle aperte dopo un'attesa), poi riceve l'indirizzo dalla cassetta.
+      const cas = casGet(); if (!cas) break; const w = window.open('', '_blank');
+      casCall(cas, {a:'cartella'}).then(r => { if (r && r.ok) { if (w) w.location = r[id]; else location.href = r[id]; } else { if (w) w.close(); toast(r && r.motivo === 'azione' ? 'Serve la cassetta nuova (versione 5)' : 'La cassetta non ha risposto'); } })
+        .catch(() => { if (w) w.close(); toast('Non riesco a raggiungere la cassetta'); });
+      break; }
     case 'add-guest': { const g = {id:uid(), nome:'', nucleo:'', gruppo:'', lato:'entrambi', tipo:'adulto', rsvp:'attesa', indirizzo:'', contatto:'', allergie:'', tavolo:''}; state.guests.unshift(g); ui.openGuest = g.id; ui.q = ''; save('ospiti'); render(); const el = document.getElementById('gn-' + g.id); if (el) el.focus(); break; }
     case 'add-fam': { const g = {id:uid(), kind:'famiglia', nome:'Famiglia ', adulti:2, bambini:0, neonati:0, membri:'', nucleo:'', gruppo:'', lato:'entrambi', tipo:'adulto', rsvp:'attesa', indirizzo:'', contatto:'', allergie:'', tavolo:''}; state.guests.unshift(g); ui.openGuest = g.id; ui.q = ''; save('ospiti'); render(); const el = document.getElementById('gn-' + g.id); if (el) { el.focus(); try { el.setSelectionRange(el.value.length, el.value.length); } catch (_) {} } break; }
     case 'bulk': ui.bulk = !ui.bulk; render(); if (ui.bulk) $('#bulkTxt').focus(); break;

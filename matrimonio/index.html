@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2ECDF">
-<meta name="app-version" content="20261121223500">
+<meta name="app-version" content="20261122000000">
 <title>Alice &amp; Leandro</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -38,6 +38,8 @@ var CONFIG = {
     {anno: '[anno]', titolo: 'Il primo viaggio', testo: '[Un ricordo, un posto, una foto.]', foto: ''},
     {anno: '[anno]', titolo: 'La proposta', testo: '[Com’è andata.]', foto: ''}
   ],
+  // Sfide fotografiche del giorno delle nozze: si cambiano dal tool (Altro › Sito).
+  sfide: ['Una foto con gli sposi', 'Il tavolo più scatenato', 'Un brindisi con chi non conosci', 'Il dettaglio più bello della festa', 'Una foto con la persona più anziana', 'Il momento della torta', 'Un selfie con il tuo tavolo', 'Il ballo più strano', 'Una foto con chi è arrivato da più lontano', 'Il tramonto alle Case'],
   programma: [
     {ora: '[ore]', cosa: 'Arrivo degli invitati', dove: '[Nome della chiesa o del luogo]', icona: 'pin'},
     {ora: '[ore]', cosa: 'Cerimonia', dove: '[Nome della chiesa o del luogo]', icona: 'chiesa'},
@@ -140,6 +142,55 @@ label.f{display:grid;gap:4px;font-size:13px;color:var(--muted);font-weight:500}
 .tab[aria-current=page]{color:var(--accent)}
 .pillw{width:40px;height:30px;border-radius:15px;background:var(--accent);color:var(--accent-fg);display:flex;align-items:center;justify-content:center}
 .pillw svg{width:21px;height:21px}
+/* Scatta e Galleria (design 4 e 5) */
+.mh{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:16px 4px 0}
+.mh h1{margin:0;font-family:var(--font-script);font-weight:400;font-size:42px;line-height:1.2}.mh p{margin:0 0 6px;font-size:13px;color:var(--muted)}
+.chi{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:13px;color:var(--muted)}.chi span{margin-right:2px}
+.chi .chip{min-height:40px}
+.shoot{padding:22px 20px 18px;display:flex;flex-direction:column;align-items:center;gap:14px;border-radius:20px}
+.big{width:112px;height:112px;border-radius:56px;border:6px solid #E4E8DC;background:var(--accent);color:var(--accent-fg);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .1s ease-out;-webkit-tap-highlight-color:transparent}
+.big svg{width:44px;height:44px;stroke-width:1.5}.big:active,.opt:active,.cam:active,.tile:active{transform:scale(.97)}
+.bl{font-size:17px}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%}.three.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.opt{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:64px;border-radius:14px;border:1px solid #C9BFA8;background:#fff;color:var(--fg);font:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:transform .1s ease-out;text-align:center}
+.opt svg{width:22px;height:22px}.opt.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.stat{display:flex;align-items:center;gap:8px;width:100%;padding:10px 12px;border-radius:12px;background:var(--bg);font-size:14px}.stat svg{width:18px;height:18px;color:var(--accent);flex:none}.stat .w{color:var(--copper);font-weight:600}
+.shoot .msg{width:100%}
+.thumbs{display:flex;gap:6px;width:100%;overflow-x:auto;padding-bottom:2px}
+.thumbs i{flex:none;width:48px;height:48px;border-radius:8px;background:#CDB898 center/cover no-repeat;position:relative}
+.thumbs i.video,.thumbs i.vocale{background:#C4CCB2}.thumbs i.up::after{content:"";position:absolute;inset:0;border-radius:8px;background:rgba(255,252,245,.55)}
+.rec{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0}.rec b{font-size:34px;font-variant-numeric:tabular-nums}
+.rec .dot{width:14px;height:14px;border-radius:7px;background:var(--bad);animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+.sfide{padding:18px 20px;display:flex;flex-direction:column;gap:10px;border-radius:20px}
+.sfide .sfh{display:flex;align-items:baseline;justify-content:space-between}.sfide .sfh b{font-size:17px}.sfide .sfh span{font-family:var(--font-display);font-style:italic;font-weight:600;font-size:20px;color:var(--copper)}
+.pbar{height:6px;border-radius:3px;background:#EFE7D6;overflow:hidden}.pbar i{display:block;height:6px;background:var(--accent);transition:width .3s ease-out}
+.ch{display:flex;align-items:center;gap:12px;min-height:44px;border-top:1px solid #EFE7D6;padding-top:6px}.sfide .pbar + .ch{border-top:0}
+.ck{width:28px;height:28px;border-radius:14px;border:1.5px solid #C9BFA8;flex:none;display:flex;align-items:center;justify-content:center}.ck.on{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}.ck svg{width:16px;height:16px}
+.ch p{margin:0;flex:1;font-size:15px}.ch p.done{color:var(--muted)}
+.cam{width:44px;height:44px;border-radius:22px;border:1px solid var(--accent);color:var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;transition:transform .1s ease-out}.cam svg{width:20px;height:20px}
+.flt{display:flex;gap:8px;flex-wrap:wrap}
+.flt button{min-height:40px;padding:0 14px;border-radius:20px;border:1px solid #C9BFA8;background:var(--surface);color:var(--fg);font:inherit;font-size:14px;font-weight:500;cursor:pointer}
+.flt button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:600}
+.nuove{align-self:center;min-height:36px;padding:0 14px;border-radius:18px;border:0;background:var(--accent);color:var(--accent-fg);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.gal{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;border-radius:16px;overflow:hidden}
+.tile{position:relative;aspect-ratio:1;border:0;padding:0;margin:0;background:#CDB898;cursor:pointer;overflow:hidden;transition:transform .1s ease-out;font:inherit}
+.tile:nth-child(3n+2){background:#B9C2A6}.tile:nth-child(3n){background:#D9C9A8}
+.tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.tile.vocale{background:var(--surface)}.voc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--accent)}.voc svg{width:24px;height:24px}.voc b{font-size:11px}
+.tile .au{position:absolute;left:6px;bottom:5px;right:6px;text-align:left;font-size:11px;font-weight:600;color:#FFFCF5;text-shadow:0 1px 2px rgba(0,0,0,.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile.vocale .au{color:var(--muted);text-shadow:none}
+.tile .vd{position:absolute;top:6px;right:6px;font-size:10px;font-weight:700;color:#FFFCF5;background:rgba(46,53,40,.6);border-radius:9px;padding:2px 6px}
+.tile .pv{position:absolute;top:6px;left:6px;font-size:10px;font-weight:700;color:#75590F;background:rgba(244,234,208,.94);border-radius:9px;padding:2px 6px}
+#viewer{position:fixed;inset:0;z-index:50;background:rgba(20,22,18,.96);color:#FFFCF5;display:flex;flex-direction:column;animation:vwIn .2s ease-out}
+@keyframes vwIn{from{opacity:0}to{opacity:1}}
+.vw-top,.vw-bot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 8px) 12px 8px}
+.vw-bot{padding:8px 12px calc(env(safe-area-inset-bottom,0px) + 12px)}.vw-bot p{margin:0;flex:1;text-align:center;font-size:15px;font-weight:600}.vw-bot p span{font-weight:400;opacity:.8;font-size:13px}
+.vw-top span{font-size:14px;opacity:.85}
+.vw-b{width:44px;height:44px;border-radius:22px;border:0;background:rgba(255,252,245,.14);color:#FFFCF5;display:flex;align-items:center;justify-content:center;cursor:pointer}.vw-b svg{width:22px;height:22px}.vw-b:disabled{opacity:.3}
+.vw-m{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:0 8px}
+.vw-m img{max-width:100%;max-height:100%;object-fit:contain}.vw-m iframe{width:100%;max-width:720px;height:100%;max-height:80vh;border:0;border-radius:12px;background:#000}
+@media (prefers-reduced-motion: reduce){.big,.opt,.cam,.tile{transition:none}.rec .dot{animation:none}.pbar i{transition:none}}
 #antep{border:0;font:inherit;font-size:12px;font-weight:600;min-height:32px;cursor:pointer}
 .demo{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);right:max(10px,env(safe-area-inset-right,0px));z-index:30;font-size:12px;font-weight:600;background:var(--copper);color:#FFFCF5;padding:4px 10px;border-radius:999px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
@@ -239,8 +290,8 @@ function fetchRip(u, opt){
 }
 function jsonp(params){
   return new Promise(function(res, rej){
-    var cb = '_cas' + (++JP) + '_' + Date.now().toString(36), s = document.createElement('script'), fatto = false;
-    var fine = function(){ fatto = true; clearTimeout(t); try { delete window[cb]; } catch (e) { window[cb] = undefined; } s.remove(); };
+    var cb = '_cas' + (++JP) + '_' + Math.floor(Date.now()).toString(36), s = document.createElement('script'), fatto = false;
+    var fine = function(){ fatto = true; clearTimeout(t); window[cb] = function(){}; s.remove(); }; // resta una funzione vuota: se la risposta arriva tardi non dà errore
     var t = setTimeout(function(){ if (!fatto) { fine(); rej(new Error('nessuna risposta in 12 secondi')); } }, 12000);
     window[cb] = function(o){ if (!fatto) { fine(); res(o); } };
     s.onerror = function(){ if (!fatto) { fine(); rej(new Error('canale di riserva bloccato')); } };
@@ -398,6 +449,279 @@ function vArrivare(){
     CONFIG.luoghi.map(function(l){ return '<section class="card place"><span class="eyebrow">' + esc(l.titolo) + '</span><span class="when">' + esc(l.ora) + '</span><p class="what">' + esc(l.nome) + '</p>' +
       (l.indirizzo ? '<p class="sub">' + esc(l.indirizzo) + '</p>' : '') + (l.note ? '<p class="sub">' + esc(l.note) + '</p>' : '') + maps(l) + '</section>'; }).join('') + '</div>';
 }
+/* ---------- Scatta e Galleria: foto, video e vocali del giorno delle nozze ---------- */
+// Agli invitati si aprono domenica 13 giugno alle 12 (ora italiana); gli sposi in anteprima le provano sempre.
+var NOZZE_T = Date.parse(CONFIG.data + 'T12:00:00+02:00');
+function aperto(){ return Date.now() >= NOZZE_T; }
+function dopoNozze(){ return Date.now() >= NOZZE_T + 12 * 3600e3; }
+function sposiCas(){ try { var c = JSON.parse(store.get('conti-matrimonio-cassetta') || 'null'); return c && c.segreto ? c : null; } catch (e) { return null; } }
+function puoMandare(){ return !!S.inv && (S.inv.anteprima ? !!sposiCas() : (!DEMO && !!S.inv.c && aperto())); }
+function vistaIniziale(inv){
+  if (!inv || inv.anteprima) return 'home';
+  var r = inv.risposta;
+  if (aperto()) return dopoNozze() || (r && r.presenza === 'no') ? 'galleria' : 'scatta';
+  return r && r.presenza === 'si' ? 'arrivare' : 'home';
+}
+var M = {coda:[], mie:[], inviate:+(store.get('media-inviate') || 0), busy:false, err:'', info:'', items:null, nuovi:[], filtro:'tutte', viewer:-1, rec:null, tutteSfide:false, sfida:'', galErr:'', galT:null, retryT:null};
+try { M.mie = JSON.parse(store.get('media-mie') || '[]'); } catch (e) { M.mie = []; }
+function salvaMie(){ store.set('media-inviate', String(M.inviate)); store.set('media-mie', JSON.stringify(M.mie.slice(0, 40))); }
+function autore(){
+  var a = store.get('media-autore'), p = (S.inv && S.inv.persone) || [];
+  if (a && (S.inv && S.inv.anteprima ? CONFIG.sposi.indexOf(a) >= 0 : p.some(function(x){ return x.nome === a; }))) return a;
+  return S.inv && S.inv.anteprima ? CONFIG.sposi[0] : (p[0] ? p[0].nome : (S.inv && S.inv.saluto) || '');
+}
+function durTxt(s){ s = Math.round(s || 0); return Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2); }
+
+// Coda sul telefono (IndexedDB): se manca la rete i file restano qui e partono da soli appena torna.
+var idbP = null;
+function idb(){
+  if (!idbP) idbP = new Promise(function(ok, ko){
+    if (!window.indexedDB) return ko(new Error('no idb'));
+    var r = indexedDB.open('matrimonio-media', 1);
+    r.onupgradeneeded = function(){ r.result.createObjectStore('coda', {keyPath:'k'}); };
+    r.onsuccess = function(){ ok(r.result); }; r.onerror = function(){ ko(r.error); };
+  });
+  return idbP;
+}
+function idbDo(mode, fn){ return idb().then(function(db){ return new Promise(function(ok, ko){ var tx = db.transaction('coda', mode), st = tx.objectStore('coda'), req = fn(st); tx.oncomplete = function(){ ok(req && req.result); }; tx.onerror = function(){ ko(tx.error); }; }); }); }
+function codaSalva(it){ return idbDo('readwrite', function(st){ return st.put(it); }).catch(function(){}); }
+function codaTogli(k){ return idbDo('readwrite', function(st){ return st.delete(k); }).catch(function(){}); }
+function codaCarica(){ return idbDo('readonly', function(st){ return st.getAll(); }).then(function(l){ M.coda = (l || []).sort(function(a, b){ return a.k < b.k ? -1 : 1; }); }).catch(function(){}); }
+
+// Foto ridotta sul telefono: 2048 px sul lato lungo, JPEG 0,85 (circa 400–700 KB).
+function apriImg(file){
+  if (window.createImageBitmap) return createImageBitmap(file, {imageOrientation:'from-image'}).catch(function(){ return imgEl(file); });
+  return imgEl(file);
+}
+function imgEl(file){ return new Promise(function(ok, ko){ var i = new Image(), u = URL.createObjectURL(file); i.onload = function(){ ok(i); }; i.onerror = function(){ ko(new Error('foto')); }; i.src = u; }); }
+function disegna(img, lato, q){
+  var w = img.width, h = img.height, k = Math.min(1, lato / Math.max(w, h)), c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k)); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  return c;
+}
+function inBlob(c, q){ return new Promise(function(ok){ c.toBlob(function(b){ ok(b); }, 'image/jpeg', q); }); }
+function durataVideo(file){ return new Promise(function(ok){ var v = document.createElement('video'), u = URL.createObjectURL(file), fatto = false; var fine = function(d){ if (!fatto) { fatto = true; URL.revokeObjectURL(u); ok(d); } };
+  v.preload = 'metadata'; v.muted = true; v.onloadedmetadata = function(){ fine(isFinite(v.duration) ? v.duration : 0); }; v.onerror = function(){ fine(0); }; setTimeout(function(){ fine(0); }, 4000); v.src = u; }); }
+function mimeDi(file, tipo){
+  var m = String(file.type || '').split(';')[0].toLowerCase(), n = String(file.name || '').toLowerCase();
+  if (m) return m === 'video/x-m4v' ? 'video/mp4' : m === 'audio/x-m4a' ? 'audio/mp4' : m;
+  if (/\.mov$/.test(n)) return 'video/quicktime'; if (/\.(mp4|m4v)$/.test(n)) return 'video/mp4'; if (/\.webm$/.test(n)) return tipo === 'vocale' ? 'audio/webm' : 'video/webm';
+  if (/\.(heic|heif)$/.test(n)) return 'image/heic'; return tipo === 'video' ? 'video/mp4' : 'image/jpeg';
+}
+function aggiungi(file, tipo, extra){
+  extra = extra || {};
+  var k = Math.floor(Date.now()).toString(36) + Math.random().toString(36).slice(2, 7);
+  var au = autore(), pp = ((S.inv && S.inv.persone) || []).filter(function(x){ return x.nome === au; })[0];
+  var base = {k:k, tipo:tipo, sfida:extra.sfida || '', autore:au, pid:pp && !S.inv.anteprima ? pp.id : '', durata:extra.durata || 0, tries:0, prova:!!S.inv.anteprima, c:S.inv.anteprima ? '' : S.inv.c};
+  M.err = '';
+  var pronto;
+  if (tipo === 'foto') pronto = apriImg(file).then(function(img){
+    return Promise.all([inBlob(disegna(img, 2048), 0.85), Promise.resolve(disegna(img, 160).toDataURL('image/jpeg', 0.7))]);
+  }).then(function(x){ return Object.assign(base, {blob:x[0], mime:'image/jpeg', nome:'foto-' + k + '.jpg', th:x[1]}); },
+    function(){ var m = mimeDi(file, 'foto'); if (!/^image\/(jpeg|png|heic|heif|webp)$/.test(m)) throw new Error('Questo file non è una foto che riesco a mandare.'); return Object.assign(base, {blob:file, mime:m, nome:'foto-' + k + '.' + (m.split('/')[1] || 'jpg'), th:''}); });
+  else if (tipo === 'video') pronto = durataVideo(file).then(function(d){
+    if (d > 35) throw new Error('Il video dura ' + durTxt(d) + ': mandane uno fino a 30 secondi. Puoi accorciarlo dal rullino e poi sceglierlo con «Dal rullino».');
+    if (file.size > 400 * 1048576) throw new Error('Il video è troppo pesante (oltre 400 MB): prova con uno più corto.');
+    var m = mimeDi(file, 'video'); return Object.assign(base, {blob:file, mime:m, durata:Math.round(d), nome:'video-' + k + (m === 'video/quicktime' ? '.mov' : m === 'video/webm' ? '.webm' : '.mp4'), th:''});
+  });
+  else pronto = Promise.resolve(Object.assign(base, {blob:file, mime:mimeDi(file, 'vocale'), nome:'vocale-' + k + (/mp4/.test(file.type) ? '.m4a' : '.webm'), th:''}));
+  return pronto.then(function(it){ M.coda.push(it); codaSalva(it); if (S.view === 'scatta') render(); processa(); },
+    function(e){ M.err = e && e.message || 'Non riesco ad aprire questo file.'; if (S.view === 'scatta') render(); });
+}
+
+function postM(body, lungo){
+  var cred = body.prova ? {segreto:(sposiCas() || {}).segreto} : {c:body.c};
+  var b = Object.assign({}, body, cred); delete b.prova;
+  if (lungo) { // per i file mandati dentro la richiesta: niente limite dei 12 secondi
+    var ac = window.AbortController ? new AbortController() : null, t = ac ? setTimeout(function(){ ac.abort(); }, 120000) : 0;
+    return fetch(CONFIG.cassetta, {method:'POST', redirect:'follow', signal:ac ? ac.signal : undefined, headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(b)}).then(leggiTesto).then(function(o){ clearTimeout(t); return o; }, function(e){ clearTimeout(t); throw e; });
+  }
+  var diretto = fetchRip(CONFIG.cassetta, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(b)});
+  if (body.prova || (b.a !== 'sessione' && b.a !== 'registra')) return diretto;
+  return diretto.catch(function(){ return jsonp({a:'media', d:JSON.stringify(b)}); }); // canale di riserva, solo per gli invitati
+}
+function b64(blob){ return new Promise(function(ok, ko){ var r = new FileReader(); r.onload = function(){ ok(String(r.result).split(',')[1]); }; r.onerror = function(){ ko(r.error); }; r.readAsDataURL(blob); }); }
+function carica(it){
+  var base = {prova:it.prova, c:it.c, pid:it.pid || '', tipo:it.tipo, nome:it.nome, sfida:it.sfida, autore:it.autore, durata:it.durata};
+  var riserva = function(){
+    if (it.tipo === 'video' || it.blob.size > 9 * 1048576) throw new Error('rete');
+    return b64(it.blob).then(function(d){ return postM(Object.assign({a:'caricab64', mime:it.mime, dati:d}, base), true); });
+  };
+  return postM(Object.assign({a:'sessione', mime:it.mime, size:it.blob.size, origin:location.origin}, base)).then(function(s){
+    if (!s || !s.ok) { if (s && (s.motivo === 'chiuso' || s.motivo === 'codice' || s.motivo === 'segreto' || s.motivo === 'grande' || s.motivo === 'formato')) return s; return riserva(); }
+    return fetch(s.url, {method:'PUT', body:it.blob}).then(function(r){ return r.ok ? r.json().catch(function(){ return {}; }) : Promise.reject(new Error('HTTP ' + r.status)); })
+      .then(function(f){ return f && f.id ? f.id : ''; }, function(){ return ''; }) // se il browser non legge la risposta, il file può essere arrivato lo stesso
+      .then(function(id){ return postM(Object.assign({a:'registra', id:id}, base)); })
+      .then(function(r){ return r && r.ok ? r : (r && r.motivo === 'nonarrivato' ? riserva() : r); });
+  }, function(){ return riserva(); });
+}
+var MOTIVI = {chiuso:'Si potrà mandare da domenica 13 giugno alle 12.', codice:'Il tuo invito non risulta più: rientra con il link che ti abbiamo mandato.', segreto:'La cassetta non riconosce questo telefono degli sposi: controllate il segreto nel tool.', grande:'Questo file è troppo pesante per essere mandato.', formato:'Questo tipo di file non si può mandare.'};
+function processa(){
+  if (M.busy || !M.coda.length || !S.inv) return;
+  M.busy = true; clearTimeout(M.retryT);
+  var it = M.coda[0];
+  carica(it).then(function(r){
+    if (r && r.ok) {
+      M.coda.shift(); codaTogli(it.k); M.inviate++; M.info = '';
+      M.mie.unshift({id:r.item.id, th:it.th, t:it.tipo, s:it.sfida, d:it.durata}); salvaMie();
+      if (M.items && !M.items.some(function(x){ return x.id === r.item.id; })) M.items.unshift(r.item);
+    } else if (r && MOTIVI[r.motivo]) {
+      M.coda.shift(); codaTogli(it.k); M.err = MOTIVI[r.motivo];
+    } else throw new Error((r && r.motivo) || 'rete');
+  }).catch(function(){
+    it.tries++; codaSalva(it);
+    M.info = 'Manca la rete o Google è lento: riprovo da solo.';
+    M.retryT = setTimeout(processa, Math.min(60000, 4000 * Math.pow(2, Math.min(it.tries, 4))));
+    M.busy = false; if (S.view === 'scatta') render(); return 'stop';
+  }).then(function(x){ if (x === 'stop') return; M.busy = false; if (S.view === 'scatta' || S.view === 'galleria') render(); processa(); });
+}
+addEventListener('online', function(){ clearTimeout(M.retryT); processa(); });
+document.addEventListener('visibilitychange', function(){ if (!document.hidden) { processa(); if (S.view === 'galleria') caricaGal(true); } });
+
+// Vocale: fino a 1 minuto, con il microfono del telefono.
+function vocaleInizia(){
+  if (!navigator.mediaDevices || !window.MediaRecorder) { M.err = 'Questo telefono non permette di registrare dalla pagina.'; render(); return; }
+  navigator.mediaDevices.getUserMedia({audio:true}).then(function(st){
+    var tipo = ['audio/webm', 'audio/mp4', 'audio/ogg'].filter(function(t){ return MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t); })[0];
+    var mr = new MediaRecorder(st, tipo ? {mimeType:tipo} : undefined), pezzi = [];
+    M.rec = {mr:mr, st:st, t0:Date.now(), annulla:false};
+    mr.ondataavailable = function(e){ if (e.data && e.data.size) pezzi.push(e.data); };
+    mr.onstop = function(){
+      st.getTracks().forEach(function(t){ t.stop(); }); clearInterval(M.rec.tick); var d = (Date.now() - M.rec.t0) / 1000, ann = M.rec.annulla; M.rec = null;
+      if (!ann && pezzi.length) aggiungi(new Blob(pezzi, {type:(mr.mimeType || tipo || 'audio/webm').split(';')[0]}), 'vocale', {sfida:M.sfida, durata:Math.round(d)}); else render();
+    };
+    mr.start(1000);
+    M.rec.tick = setInterval(function(){ var el = $('#recT'); var s = (Date.now() - M.rec.t0) / 1000; if (el) el.textContent = durTxt(s); if (s >= 60) vocaleFine(false); }, 250);
+    render();
+  }, function(){ M.err = 'Per il vocale serve il permesso del microfono.'; render(); });
+}
+function vocaleFine(annulla){ if (M.rec) { M.rec.annulla = annulla; try { M.rec.mr.stop(); } catch (e) {} } }
+
+var ICAM = '<path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/>';
+var IVID = '<rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3z"/>';
+var IMIC = '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>';
+var IRUL = '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/>';
+function chiuso(titolo, testo){
+  return '<div class="view"><header class="mh"><h1>' + titolo + '</h1></header><section class="card empty"><img class="sprig" src="' + RAMETTO + '" alt="" style="width:110px"><b>Si apre ' + esc(CONFIG.dataTesto) + ' alle 12</b><span class="sub">' + testo + '</span></section></div>';
+}
+function sfideFatte(){ var f = {}; M.mie.concat(M.coda).forEach(function(x){ if (x.s || x.sfida) f[x.s || x.sfida] = true; }); return f; }
+function vScatta(){
+  if (!S.inv.anteprima && !aperto()) return chiuso('Scatta', 'Il giorno delle nozze da qui scatti foto, video e vocali per noi, e partecipi alle sfide fotografiche.');
+  if (S.inv.anteprima && !sposiCas()) return '<div class="view"><header class="mh"><h1>Scatta</h1></header><section class="card empty"><b>Per provare serve il tool degli sposi</b><span class="sub">Aprite l’app dal telefono o dal PC dove usate il tool con la cassetta collegata: le prove vanno nella vostra cartella su Drive.</span></section></div>';
+  var p = S.inv.anteprima ? CONFIG.sposi.map(function(n){ return {nome:n}; }) : (S.inv.persone || []), au = autore();
+  var fatte = sfideFatte(), sf = CONFIG.sfide || [], nf = sf.filter(function(x){ return fatte[x]; }).length;
+  var lista = sf.map(function(x, i){ return {x:x, i:i, f:!!fatte[x]}; });
+  var vis = M.tutteSfide ? lista : lista.filter(function(o){ return o.f; }).slice(0, 1).concat(lista.filter(function(o){ return !o.f; }).slice(0, 2));
+  var attesa = M.coda.length;
+  var thumbs = M.coda.map(function(x){ return '<i class="up' + (x.th ? '' : ' ' + x.tipo) + '"' + (x.th ? ' style="background-image:url(\'' + x.th + '\')"' : '') + '></i>'; }).reverse()
+    .concat(M.mie.slice(0, 12).map(function(x){ var u = x.th || (x.t === 'foto' || x.t === 'video' ? thumbUrl(x.id, 160) : ''); return '<i class="' + (u ? '' : x.t) + '"' + (u ? ' style="background-image:url(\'' + esc(u) + '\')"' : '') + '></i>'; }));
+  return '<div class="view"><header class="mh"><h1>Scatta</h1>' +
+    (p.length > 1 ? '' : '<p>' + esc(au) + '</p>') + '</header>' +
+    (S.inv.anteprima ? '<div class="msg ok">Prova degli sposi: quello che mandate va nella cartella delle prove su Drive, gli invitati non lo vedono.</div>' : '') +
+    (p.length > 1 ? '<div class="chi" role="group" aria-label="Chi sta scattando"><span>Scatta come</span>' + p.map(function(x){ return '<button type="button" class="chip" data-act="autore" data-v="' + esc(x.nome) + '" aria-pressed="' + (x.nome === au) + '">' + esc(x.nome) + '</button>'; }).join('') + '</div>' : '') +
+    '<section class="card shoot">' +
+      (M.rec ? '<div class="rec" role="status"><span class="dot" aria-hidden="true"></span><b id="recT">' + durTxt((Date.now() - M.rec.t0) / 1000) + '</b><span class="sub">Registro… al massimo 1 minuto</span></div>' +
+        '<div class="three two"><button class="opt" type="button" data-act="rec-annulla">Annulla</button><button class="opt pri" type="button" data-act="rec-fine">Ferma e manda</button></div>'
+      : '<label class="big" for="mFoto" data-act="nosfida" aria-label="Scatta una foto">' + svg(ICAM) + '</label><b class="bl">Scatta una foto</b>' +
+        '<div class="three"><label class="opt" for="mVideo" data-act="nosfida">' + svg(IVID) + '<span>Video</span></label><button class="opt" type="button" data-act="vocale">' + svg(IMIC) + '<span>Vocale</span></button><label class="opt" for="mRull" data-act="nosfida">' + svg(IRUL) + '<span>Dal rullino</span></label></div>') +
+      '<div class="stat" role="status">' + svg('<path d="M20 6 9 17l-5-5"/>') + '<span>' + M.inviate + (M.inviate === 1 ? ' inviato' : ' inviati') + (attesa ? ' · <span class="w">' + attesa + (M.busy ? ' in invio' : ' in attesa di rete') + '</span>' : '') + '</span></div>' +
+      (M.err ? '<div class="msg err" role="alert">' + esc(M.err) + '</div>' : M.info && attesa ? '<p class="tiny" style="margin:0">' + esc(M.info) + '</p>' : '') +
+      (thumbs.length ? '<div class="thumbs" aria-label="Gli ultimi che hai mandato">' + thumbs.join('') + '</div>' : '') +
+      '<input type="file" id="mFoto" accept="image/*" capture="environment" hidden><input type="file" id="mVideo" accept="video/*" capture="environment" hidden><input type="file" id="mRull" accept="image/*,video/*" multiple hidden><input type="file" id="mSfida" accept="image/*" capture="environment" hidden>' +
+    '</section>' +
+    (sf.length ? '<section class="card sfide"><div class="sfh"><b>Sfide fotografiche</b><span>' + nf + ' di ' + sf.length + '</span></div><div class="pbar" role="progressbar" aria-valuemin="0" aria-valuemax="' + sf.length + '" aria-valuenow="' + nf + '"><i style="width:' + (sf.length ? nf / sf.length * 100 : 0) + '%"></i></div>' +
+      vis.map(function(o){ return '<div class="ch"><span class="ck' + (o.f ? ' on' : '') + '" aria-hidden="true">' + (o.f ? svg('<path d="M20 6 9 17l-5-5"/>') : '') + '</span><p' + (o.f ? ' class="done"' : '') + '>' + esc(o.x) + (o.f ? '<span class="sr"> (fatta)</span>' : '') + '</p>' +
+        (o.f ? '' : '<label class="cam" for="mSfida" data-act="sfida" data-i="' + o.i + '" aria-label="Scatta per la sfida: ' + esc(o.x) + '">' + svg(ICAM) + '</label>') + '</div>'; }).join('') +
+      (sf.length > vis.length || M.tutteSfide ? '<button class="linkb" type="button" data-act="tutte-sfide" aria-expanded="' + M.tutteSfide + '">' + (M.tutteSfide ? 'Mostra meno' : 'Vedi tutte le sfide ›') + '</button>' : '') + '</section>' : '') +
+  '</div>';
+}
+
+// Galleria
+function thumbUrl(id, w){ return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(id) + '&sz=w' + w; }
+function fullUrl(id){ return 'https://lh3.googleusercontent.com/d/' + encodeURIComponent(id) + '=w1600'; }
+function caricaGal(silenzioso){
+  if (!S.inv || (!S.inv.anteprima && (!aperto() || DEMO))) return;
+  var req = S.inv.anteprima ? (sposiCas() ? postM({a:'galleria', prova:true}) : Promise.resolve({ok:false, motivo:'nocas'})) : viaRete({a:'galleria', c:S.inv.c});
+  req.then(function(r){
+    if (!r || !r.ok) { if (!silenzioso || !M.items) { M.galErr = r && r.motivo === 'nocas' ? 'Per vedere le prove aprite l’app dal telefono o dal PC dove usate il tool.' : 'Non riesco a caricare la galleria.'; if (S.view === 'galleria') render(); } return; }
+    M.galErr = '';
+    var l = (r.items || []).slice().sort(function(a, b){ return a.q < b.q ? 1 : -1; });
+    var mieIds = {}; M.mie.forEach(function(x){ mieIds[x.id] = true; }); l.forEach(function(x){ if (mieIds[x.id]) x.m = true; });
+    if (!M.items || !silenzioso) { M.items = l; M.nuovi = []; }
+    else { var c = {}; M.items.concat(M.nuovi).forEach(function(x){ c[x.id] = true; }); var n = l.filter(function(x){ return !c[x.id]; }); if (n.length) M.nuovi = n.concat(M.nuovi); }
+    if (S.view === 'galleria' && M.viewer < 0) render();
+  }, function(){ if (!silenzioso) { M.galErr = errTxt('Non riesco a caricare la galleria. Controlla la connessione.', function(){ caricaGal(false); }); if (S.view === 'galleria') render(); } });
+}
+function galFiltrati(){
+  var l = M.items || [];
+  return l.filter(function(x){ return M.filtro === 'tutte' || (M.filtro === 'mie' && x.m) || (M.filtro === 'sfide' && x.s) || (M.filtro === 'video' && (x.t === 'video' || x.t === 'vocale')); });
+}
+function vGalleria(){
+  if (!S.inv.anteprima && !aperto()) return chiuso('Galleria', 'Dal giorno delle nozze qui trovate tutte le foto, i video e i vocali mandati dagli invitati.');
+  clearInterval(M.galT); M.galT = setInterval(function(){ if (S.view === 'galleria' && !document.hidden) caricaGal(true); else clearInterval(M.galT); }, 30000);
+  if (!M.items && !M.galErr) { setTimeout(function(){ caricaGal(false); }, 0); return '<div class="view"><header class="mh"><h1>Galleria</h1></header><section class="card empty"><b>Un attimo…</b></section></div>'; }
+  var l = M.items || [], nf = l.filter(function(x){ return x.t === 'foto'; }).length, nv = l.filter(function(x){ return x.t === 'video'; }).length, na = l.filter(function(x){ return x.t === 'vocale'; }).length;
+  var cnt = [nf + ' foto', nv ? nv + (nv === 1 ? ' video' : ' video') : '', na ? na + (na === 1 ? ' vocale' : ' vocali') : ''].filter(Boolean).join(' · ');
+  var fl = [['tutte', 'Tutte'], ['mie', 'Le mie'], ['sfide', 'Sfide'], ['video', 'Video']];
+  var g = galFiltrati();
+  return '<div class="view"><header class="mh"><h1>Galleria</h1><p>' + esc(cnt) + '</p></header>' +
+    (S.inv.anteprima ? '<div class="msg ok">Anteprima degli sposi: vedete anche le vostre prove (con il bollino «prova»), gli invitati no.</div>' : '') +
+    (M.galErr ? '<div class="msg err" role="alert">' + M.galErr + '</div>' : '') +
+    '<div class="flt" role="group" aria-label="Filtra">' + fl.map(function(f){ return '<button type="button" data-act="filtro" data-v="' + f[0] + '" aria-pressed="' + (M.filtro === f[0]) + '">' + f[1] + '</button>'; }).join('') + '</div>' +
+    (M.nuovi.length ? '<button class="nuove" type="button" data-act="nuove">' + M.nuovi.length + (M.nuovi.length === 1 ? ' nuova' : ' nuove') + '</button>' : '') +
+    (g.length ? '<div class="gal">' + g.map(function(x, i){
+      var vis = x.t === 'vocale' ? '<span class="voc">' + svg(IMIC) + '<b>' + durTxt(x.d) + '</b></span>' : '<img src="' + esc(thumbUrl(x.id, 400)) + '" alt="" loading="lazy" onerror="this.remove()">';
+      return '<button type="button" class="tile ' + esc(x.t) + '" data-act="vedi" data-i="' + i + '" aria-label="' + esc((x.t === 'foto' ? 'Foto' : x.t === 'video' ? 'Video' : 'Vocale') + (x.a ? ' di ' + x.a : '') + (x.s ? ', sfida: ' + x.s : '')) + '">' + vis +
+        (x.t === 'video' && x.d ? '<span class="vd">' + durTxt(x.d) + '</span>' : '') + (x.p ? '<span class="pv">prova</span>' : '') + (x.a ? '<span class="au">' + esc(x.a) + '</span>' : '') + '</button>'; }).join('') + '</div>'
+      : '<section class="card empty"><b>' + (l.length ? 'Niente con questo filtro' : 'Ancora nessuna foto') + '</b><span class="sub">' + (l.length ? 'Prova con «Tutte».' : 'Le prime arriveranno da Scatta.') + '</span></section>') +
+  '</div>';
+}
+function vViewer(){
+  var g = galFiltrati(), x = g[M.viewer]; if (!x) return '';
+  var media = x.t === 'foto' ? '<img src="' + esc(fullUrl(x.id)) + '" alt="' + esc('Foto' + (x.a ? ' di ' + x.a : '')) + '" onerror="this.onerror=null;this.src=\'' + esc(thumbUrl(x.id, 1600)) + '\'">'
+    : '<iframe src="https://drive.google.com/file/d/' + encodeURIComponent(x.id) + '/preview" title="' + (x.t === 'video' ? 'Video' : 'Vocale') + '" allow="autoplay; fullscreen" allowfullscreen></iframe>';
+  return '<div class="vw-top"><button type="button" class="vw-b" data-act="vw-chiudi" aria-label="Chiudi">' + svg('<path d="M6 6l12 12M18 6 6 18"/>') + '</button><span>' + (M.viewer + 1) + ' di ' + g.length + '</span>' +
+    '<a class="vw-b" href="https://drive.google.com/file/d/' + encodeURIComponent(x.id) + '/view" target="_blank" rel="noopener" aria-label="Apri su Drive per scaricare">' + svg('<path d="M12 4v11m-5-5 5 5 5-5M5 20h14"/>') + '</a></div>' +
+    '<div class="vw-m">' + media + '</div>' +
+    '<div class="vw-bot"><button type="button" class="vw-b" data-act="vw-prev" aria-label="Precedente"' + (M.viewer ? '' : ' disabled') + '>' + svg('<path d="m15 6-6 6 6 6"/>') + '</button>' +
+    '<p>' + esc(x.a || '') + (x.s ? '<br><span>' + esc(x.s) + '</span>' : '') + '</p>' +
+    '<button type="button" class="vw-b" data-act="vw-next" aria-label="Successiva"' + (M.viewer < g.length - 1 ? '' : ' disabled') + '>' + svg('<path d="m9 6 6 6-6 6"/>') + '</button></div>';
+}
+function mostraViewer(){
+  var v = $('#viewer');
+  if (M.viewer < 0) { if (v) { v.remove(); document.body.style.overflow = ''; } return; }
+  if (!v) { v = document.createElement('div'); v.id = 'viewer'; v.setAttribute('role', 'dialog'); v.setAttribute('aria-modal', 'true'); v.setAttribute('aria-label', 'Foto a schermo intero'); document.body.appendChild(v); document.body.style.overflow = 'hidden'; }
+  v.innerHTML = vViewer(); var c = v.querySelector('[data-act=vw-chiudi]'); if (c) c.focus();
+}
+function vwVai(d){ var n = galFiltrati().length, i = M.viewer + d; if (i < 0 || i >= n) return; M.viewer = i; mostraViewer(); }
+document.addEventListener('keydown', function(e){ if (M.viewer < 0) return; if (e.key === 'Escape') { M.viewer = -1; mostraViewer(); render(); } else if (e.key === 'ArrowRight') vwVai(1); else if (e.key === 'ArrowLeft') vwVai(-1); });
+(function(){ var x0 = null, y0 = 0;
+  document.addEventListener('touchstart', function(e){ if (M.viewer < 0 || !e.target.closest('#viewer .vw-m')) return; x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, {passive:true});
+  document.addEventListener('touchend', function(e){ if (x0 == null) return; var dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null; if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) vwVai(dx < 0 ? 1 : -1); }, {passive:true});
+})();
+function mediaClick(a, t){
+  if (a === 'nosfida') { M.sfida = ''; return true; }
+  if (a === 'sfida') { M.sfida = (CONFIG.sfide || [])[+t.dataset.i] || ''; return true; }
+  if (a === 'autore') { store.set('media-autore', t.dataset.v); render(); return true; }
+  if (a === 'vocale') { M.sfida = ''; vocaleInizia(); return true; }
+  if (a === 'rec-fine') { vocaleFine(false); return true; }
+  if (a === 'rec-annulla') { vocaleFine(true); return true; }
+  if (a === 'tutte-sfide') { M.tutteSfide = !M.tutteSfide; render(); return true; }
+  if (a === 'filtro') { M.filtro = t.dataset.v; render(); return true; }
+  if (a === 'nuove') { M.items = M.nuovi.concat(M.items || []); M.nuovi = []; render(); window.scrollTo(0, 0); return true; }
+  if (a === 'vedi') { M.viewer = +t.dataset.i; mostraViewer(); return true; }
+  if (a === 'vw-chiudi') { M.viewer = -1; mostraViewer(); return true; }
+  if (a === 'vw-prev') { vwVai(-1); return true; }
+  if (a === 'vw-next') { vwVai(1); return true; }
+  return false;
+}
+document.addEventListener('change', function(e){
+  var t = e.target; if (!/^m(Foto|Video|Rull|Sfida)$/.test(t.id || '')) return;
+  var files = [].slice.call(t.files || []), sf = t.id === 'mFoto' || t.id === 'mSfida' ? M.sfida : '';
+  t.value = '';
+  files.reduce(function(p, f){ return p.then(function(){ return aggiungi(f, /^video\//.test(f.type) || /\.(mov|mp4|m4v|webm)$/i.test(f.name) ? 'video' : 'foto', {sfida:sf}); }); }, Promise.resolve());
+});
+
 function vSoon(t, txt){ return '<div class="view"><header style="padding-top:24px"><h1 class="t">' + t + '</h1></header><section class="card empty"><img class="sprig" src="' + RAMETTO + '" alt="" style="width:110px"><b>Dal ' + esc(CONFIG.dataTesto.replace(/^\w+ /, '')) + '</b><span class="sub">' + txt + '</span></section></div>'; }
 
 
@@ -445,8 +769,7 @@ function render(){
   var ab = $('#antep'); if (S.inv.anteprima && !ab) { ab = document.createElement('button'); ab.id = 'antep'; ab.type = 'button'; ab.className = 'demo'; ab.dataset.act = 'esci'; ab.textContent = 'Anteprima sposi · Esci'; document.body.appendChild(ab); }
   if (!S.inv.anteprima && ab) ab.remove();
   app.innerHTML = ({home:vHome, rsvp:vRsvp, arrivare:vArrivare,
-    scatta:function(){ return vSoon('Scatta', 'Il giorno delle nozze da qui scatti foto e video per noi, e partecipi alle sfide fotografiche.'); },
-    galleria:function(){ return vSoon('Galleria', 'Dopo la festa qui trovi tutte le foto scattate dagli invitati.'); }})[S.view]();
+    scatta:vScatta, galleria:vGalleria})[S.view]();
 }
 
 // L'invito si salva sul telefono: chi è già entrato lo ritrova anche senza rete, e intanto si aggiorna in silenzio.
@@ -460,7 +783,7 @@ function load(c, silenzioso){
   if (!silenzioso) { S.loading = true; S.err = ''; render(); }
   return api({a:'invito', c:c}).then(function(r){
     S.loading = false;
-    if (r && r.ok) { entra(r.invito, !silenzioso || S.view !== 'rsvp'); }
+    if (r && r.ok) { entra(r.invito, !silenzioso || S.view !== 'rsvp'); if (!silenzioso) S.view = vistaIniziale(r.invito); }
     else if (r && r.motivo === 'codice') { esci(); S.err = 'Questo link d’invito non funziona più. Scrivi nome e cognome per entrare.'; }
     render();
   }).catch(function(){ S.loading = false; if (silenzioso) return; S.err = errTxt('Non riesco a collegarmi. Controlla la connessione e riprova.', function(){ load(c); }); render(); });
@@ -476,7 +799,7 @@ document.addEventListener('submit', function(e){
   S.loading = true; S.err = ''; render();
   api({a:'cerca', nome:n, cognome:c}).then(function(r){
     S.loading = false;
-    if (r && r.ok) { entra(r.invito, true); S.view = 'home'; window.scrollTo(0, 0); }
+    if (r && r.ok) { entra(r.invito, true); S.view = vistaIniziale(r.invito); window.scrollTo(0, 0); }
     else S.err = r && r.motivo === 'ambiguo' ? (c ? 'Ci sono più invitati con questo nome. Usa il link che ti abbiamo mandato, oppure scrivici.' : 'Ci sono più invitati che si chiamano così: aggiungi il cognome.') : 'Non troviamo questo nome. Controlla come è scritto sull’invito o usa il link che ti abbiamo mandato. Abbiamo avvisato gli sposi.';
     render();
     var el = $('#wn'); if (el && !S.inv) { el.value = n; $('#wc').value = c; }
@@ -487,6 +810,7 @@ document.addEventListener('click', function(e){
   var t = e.target.closest('[data-go],[data-act]'); if (!t) return;
   if (t.dataset.go) { S.view = t.dataset.go; S.err = ''; S.sent = false; render(); window.scrollTo(0, 0); return; }
   var a = t.dataset.act, dr = S.draft;
+  if (mediaClick(a, t)) return;
   if (a === 'pres') { dr.presenza = t.dataset.v; S.sent = false; render(); }
   else if (a === 'viene') { var x = dr.persone[+t.dataset.i]; x.viene = !x.viene; if (!x.viene && S.open === S.inv.persone[+t.dataset.i].id) S.open = null; S.sent = false; render(); }
   else if (a === 'open') { S.open = S.open === t.dataset.id ? null : t.dataset.id; render(); var b = document.querySelector('[data-act="open"][data-id="' + t.dataset.id + '"]'); if (b) b.focus(); }
@@ -525,6 +849,7 @@ function applicaContenuti(c){
   if (!c || typeof c !== 'object') return;
   if (typeof c.copertina === 'string') CONFIG.copertina = c.copertina;
   if (Array.isArray(c.storia)) CONFIG.storia = c.storia.filter(function(x){ return x && (x.titolo || x.testo || x.foto); });
+  if (Array.isArray(c.sfide) && c.sfide.length) CONFIG.sfide = c.sfide.filter(Boolean);
   ['programma', 'luoghi'].forEach(function(k){ if (Array.isArray(c[k]) && c[k].length) CONFIG[k] = c[k].filter(function(x){ return x && (x.cosa || x.nome || x.ora); }); });
 }
 try { applicaContenuti(JSON.parse(store.get('contenuti-copia') || 'null')); } catch (e) {}
@@ -537,8 +862,9 @@ if (!DEMO) (useJP ? jsonp({a:'contenuti'}) : fetchRip(CONFIG.cassetta + '?a=cont
     if (S.landing || (S.inv && (S.view === 'home' || S.view === 'arrivare'))) render();
   }).catch(function(){});
 (function(){ var copia = null; try { copia = JSON.parse(store.get('invito-copia') || 'null'); } catch (e) {}
-  if (codice && copia && copia.c === codice) { S.loading = false; entra(copia, true); render(); load(codice, true); }
+  if (codice && copia && copia.c === codice) { S.loading = false; entra(copia, true); S.view = vistaIniziale(copia); render(); load(codice, true); }
   else if (codice) load(codice); else { S.loading = false; render(); } })();
+codaCarica().then(function(){ if (M.coda.length) processa(); });
 if ('serviceWorker' in navigator && !DEMO && location.protocol === 'https:') navigator.serviceWorker.register('sw-invitati.js').catch(function(){});
 })();
 </script>

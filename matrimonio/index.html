@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2ECDF">
-<meta name="app-version" content="20261119223000">
+<meta name="app-version" content="20261121223500">
 <title>Alice &amp; Leandro</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -140,6 +140,7 @@ label.f{display:grid;gap:4px;font-size:13px;color:var(--muted);font-weight:500}
 .tab[aria-current=page]{color:var(--accent)}
 .pillw{width:40px;height:30px;border-radius:15px;background:var(--accent);color:var(--accent-fg);display:flex;align-items:center;justify-content:center}
 .pillw svg{width:21px;height:21px}
+#antep{border:0;font:inherit;font-size:12px;font-weight:600;min-height:32px;cursor:pointer}
 .demo{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);right:max(10px,env(safe-area-inset-right,0px));z-index:30;font-size:12px;font-weight:600;background:var(--copper);color:#FFFCF5;padding:4px 10px;border-radius:999px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
@@ -437,10 +438,12 @@ function render(){
   var key = (S.landing ? 'land:' : '') + (S.inv ? 'in:' : 'out:') + S.view + (S.loading && !S.inv ? ':l' : '');
   var enter = key !== lastKey; lastKey = key;
   setTimeout(function(){ var v = app.firstElementChild; if (v && enter) { v.classList.add('enter'); } }, 0);
-  if (S.landing) { app.className = 'land'; $('#bar').hidden = true; app.innerHTML = vLanding(); setTimeout(entraBar, 0); return; }
+  if (S.landing) { var ab1 = $('#antep'); if (ab1) ab1.remove(); app.className = 'land'; $('#bar').hidden = true; app.innerHTML = vLanding(); setTimeout(entraBar, 0); return; }
   if (S.loading && !S.inv && codice) { app.className = 'nobar'; $('#bar').hidden = true; app.innerHTML = '<div class="view"><section class="card empty"><img class="sprig" src="' + RAMETTO + '" alt="" style="width:110px"><b>Un attimo…</b></section></div>'; return; }
-  if (!S.inv) { app.className = 'nobar'; $('#bar').hidden = true; app.innerHTML = vWho(); return; }
+  if (!S.inv) { var ab0 = $('#antep'); if (ab0) ab0.remove(); app.className = 'nobar'; $('#bar').hidden = true; app.innerHTML = vWho(); return; }
   app.className = ''; $('#bar').hidden = false; renderTabs();
+  var ab = $('#antep'); if (S.inv.anteprima && !ab) { ab = document.createElement('button'); ab.id = 'antep'; ab.type = 'button'; ab.className = 'demo'; ab.dataset.act = 'esci'; ab.textContent = 'Anteprima sposi · Esci'; document.body.appendChild(ab); }
+  if (!S.inv.anteprima && ab) ab.remove();
   app.innerHTML = ({home:vHome, rsvp:vRsvp, arrivare:vArrivare,
     scatta:function(){ return vSoon('Scatta', 'Il giorno delle nozze da qui scatti foto e video per noi, e partecipi alle sfide fotografiche.'); },
     galleria:function(){ return vSoon('Galleria', 'Dopo la festa qui trovi tutte le foto scattate dagli invitati.'); }})[S.view]();
@@ -450,6 +453,8 @@ function render(){
 function entra(inv, nuovaBozza){ S.inv = inv; if (nuovaBozza || !S.draft) S.draft = mkDraft(inv); codice = inv.c; store.set('invito-codice', codice); store.set('invito-copia', JSON.stringify(inv)); segnaCodice(); }
 function esci(){ store.set('invito-codice', null); store.set('invito-copia', null); codice = ''; S.inv = null; S.draft = null; S.view = 'home'; segnaCodice(); }
 // Il codice resta nell'indirizzo: l'icona sulla schermata Home riapre lo stesso invito.
+function anteprimaInv(){ return {c:'', anteprima:true, saluto:CONFIG.sposi.join(' e '), messaggio:'Questa è l’anteprima degli sposi: vedete l’app come un invitato. Le risposte qui non vengono mandate.', scadenza:'', piuUno:false, risposta:null,
+  persone:CONFIG.sposi.map(function(x, i){ return {id:'sp' + i, nome:x, cognome:'', tipo:'adulto'}; })}; }
 function segnaCodice(){ try { var u = new URL(location.href); if (codice) u.searchParams.set('i', codice); else u.searchParams.delete('i'); if (u.href !== location.href) history.replaceState(null, '', u.href); } catch (e) {} }
 function load(c, silenzioso){
   if (!silenzioso) { S.loading = true; S.err = ''; render(); }
@@ -466,7 +471,8 @@ document.addEventListener('submit', function(e){
   var n = $('#wn').value.trim(), c = $('#wc').value.trim();
   S.sposi = false;
   if (!n) { S.err = 'Scrivi almeno il nome.'; render(); return; }
-  if (CONFIG.firmaSposi.indexOf((n + ' ' + c).toLowerCase().replace(/\s+/g, ' ')) >= 0) { S.sposi = true; S.err = ''; render(); return; }
+  // Gli sposi entrano in anteprima: vedono tutto come un invitato, ma la risposta non viene mandata a nessuno.
+  if (CONFIG.firmaSposi.indexOf((n + ' ' + c).toLowerCase().replace(/\s+/g, ' ')) >= 0) { S.err = ''; entra(anteprimaInv(), true); store.set('invito-copia', null); S.view = 'home'; render(); window.scrollTo(0, 0); return; }
   S.loading = true; S.err = ''; render();
   api({a:'cerca', nome:n, cognome:c}).then(function(r){
     S.loading = false;
@@ -494,6 +500,7 @@ document.addEventListener('click', function(e){
   else if (a === 'send') {
     if (S.sending) return;
     if (dr.presenza === 'si' && !dr.persone.some(function(p){ return p.viene; })) { S.err = 'Hai risposto sì ma nessuno risulta presente: segna chi viene, oppure scegli «No».'; render(); return; }
+    if (S.inv.anteprima) { S.inv.risposta = {presenza:dr.presenza, persone:dr.persone, messaggio:dr.messaggio, piuUno:dr.piuUno, quando:new Date().toISOString()}; S.sent = true; S.err = ''; render(); return; }
     S.sending = true; S.err = ''; render();
     var body = {a:'rispondi', c:S.inv.c, risposta:{presenza:dr.presenza, messaggio:dr.presenza === 'no' ? dr.messaggio : '', piuUno:dr.piuUno,
       persone: dr.presenza === 'si' ? dr.persone : dr.persone.map(function(p){ return {id:p.id, viene:false, allergie:[], note:''}; })}};

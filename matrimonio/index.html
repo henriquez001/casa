@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2ECDF">
-<meta name="app-version" content="20261122181500">
+<meta name="app-version" content="20261122191500">
 <title>Alice &amp; Leandro</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -591,7 +591,7 @@ function processa(){
   }).then(function(x){ if (x === 'stop') return; M.busy = false; if (S.view === 'scatta' || S.view === 'galleria') render(); processa(); });
 }
 addEventListener('online', function(){ clearTimeout(M.retryT); processa(); });
-document.addEventListener('visibilitychange', function(){ if (!document.hidden) { processa(); if (S.view === 'galleria') caricaGal(true); } });
+document.addEventListener('visibilitychange', function(){ if (!document.hidden) { processa(); if (S.view === 'galleria') caricaGal(!M.galErr); } });
 
 // Vocale: fino a 1 minuto, con il microfono del telefono.
 function vocaleInizia(){
@@ -665,7 +665,7 @@ function vScatta(){
 // Galleria
 function thumbUrl(id, w){ return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(id) + '&sz=w' + w; }
 function fullUrl(id){ return 'https://lh3.googleusercontent.com/d/' + encodeURIComponent(id) + '=w1600'; }
-function caricaGal(silenzioso){
+function caricaGal(silenzioso, ritento){
   if (!S.inv || (!S.inv.anteprima && (!aperto() || DEMO))) return;
   // Con le prove aperte la Galleria si legge come l'invito (lettura semplice, nuovi tentativi e canale di riserva): niente segreto in giro.
   lastErr = '';
@@ -678,7 +678,12 @@ function caricaGal(silenzioso){
     if (!M.items || !silenzioso) { M.items = l; M.nuovi = []; }
     else { var c = {}; M.items.concat(M.nuovi).forEach(function(x){ c[x.id] = true; }); var n = l.filter(function(x){ return !c[x.id]; }); if (n.length) M.nuovi = n.concat(M.nuovi); }
     if (S.view === 'galleria' && M.viewer < 0) render();
-  }, function(){ if (!silenzioso) { M.galErr = errTxt('Non riesco a caricare la galleria. Controlla la connessione.', function(){ caricaGal(false); }); if (S.view === 'galleria') render(); } });
+  }, function(){
+    // Come per l'invito: se la rete perde la richiesta riprovo da solo dopo 3 secondi prima di mostrare l'errore.
+    if (!silenzioso && !ritento) { setTimeout(function(){ caricaGal(false, true); }, 3000); return; }
+    // Nel testo piccolo aggiungo da che strada è passata la richiesta e la versione: serve a capire il guasto dagli screenshot.
+    lastErr = (lastErr || 'errore') + ' · ' + (S.inv.anteprima ? (proveAperte() ? 'prova' : sposiCas() ? 'segreto' : 'senza chiave') : 'invito') + ' · ' + (document.querySelector('meta[name=app-version]') || {}).content;
+    if (!silenzioso) { M.galErr = errTxt('Non riesco a caricare la galleria. Controlla la connessione.', function(){ caricaGal(false); }); if (S.view === 'galleria') render(); } });
 }
 function galFiltrati(){
   var l = M.items || [];

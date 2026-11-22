@@ -17,6 +17,7 @@ button{font:inherit;padding:12px 16px;border-radius:12px;border:0;background:var
 <script>
 var CAS='https://script.google.com/macros/s/AKfycbzBNubgdd7Y0-zgVBfgS5tp0MdBGjLNshge0Q72UxszQ-GgqXxGZccSO2C8arja4yCyfQ/exec';
 var out=document.getElementById('out');
+function COD(){try{return (localStorage.getItem('invito-codice')||'').toUpperCase();}catch(e){return '';}}
 function riga(t,ok,d){var e=document.createElement('div');e.className='r '+(ok?'ok':'ko');e.innerHTML='<b></b><span></span>';e.firstChild.textContent=t;e.lastChild.textContent=d;out.appendChild(e);}
 function tempo(t0){return ' · '+Math.round(performance.now()-t0)+' ms';}
 function conLimite(p,ms){return Promise.race([p,new Promise(function(_,ko){setTimeout(function(){ko(new Error('nessuna risposta in '+ms/1000+' s'))},ms)})]);}
@@ -26,7 +27,7 @@ function jsonp(q){return new Promise(function(ok,ko){var cb='_d'+Math.floor(Math
 function img(u){return new Promise(function(ok,ko){var i=new Image();i.onload=function(){ok('raggiungibile');};i.onerror=function(){ko(new Error('non raggiungibile'));};i.src=u+'?t='+Date.now();});}
 function tutto(){
   out.innerHTML='';
-  riga('Telefono',true,navigator.userAgent+' · in linea: '+navigator.onLine+' · '+new Date().toLocaleString('it-IT'));
+  riga('Telefono',true,'codice: '+(COD()?COD().slice(0,2)+'…':'nessuno')+' · '+navigator.userAgent+' · in linea: '+navigator.onLine+' · '+new Date().toLocaleString('it-IT'));
   var c=Promise.resolve();
   [['1. Google raggiungibile',function(){return img('https://www.google.com/favicon.ico');}],
    ['2. Cassetta, versione (lettura normale)',function(){return fetch(CAS+'?a=stato',{redirect:'follow',cache:'no-store'}).then(leggi);}],
@@ -38,6 +39,9 @@ function tutto(){
    ['8. Galleria in prova (lettura normale)',function(){return fetch(CAS+'?a=galleria&anteprima=1',{redirect:'follow',cache:'no-store'}).then(leggi);}],
    ['9. Galleria in prova (canale di riserva)',function(){return jsonp('a=galleria&anteprima=1');}],
    ['10. Invio diretto (come foto e Galleria degli sposi)',function(){return fetch(CAS,{method:'POST',redirect:'follow',cache:'no-store',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({a:'galleria',anteprima:true})}).then(leggi);}],
+   ['12. Invito con il codice salvato su questo telefono',function(){var c=COD();if(!c)return Promise.reject(new Error('nessun codice salvato: apri prima l\u2019app da un link d\u2019invito'));return fetch(CAS+'?a=invito&c='+encodeURIComponent(c),{redirect:'follow',cache:'no-store'}).then(leggi);}],
+   ['13. Galleria con quel codice (lettura normale)',function(){var c=COD();if(!c)return Promise.reject(new Error('nessun codice'));return fetch(CAS+'?a=galleria&c='+encodeURIComponent(c),{redirect:'follow',cache:'no-store'}).then(leggi);}],
+   ['14. Galleria con quel codice (canale di riserva)',function(){var c=COD();if(!c)return Promise.reject(new Error('nessun codice'));return jsonp('a=galleria&c='+encodeURIComponent(c));}],
    ['11. Versione dell\u2019app sul telefono',function(){return fetch('index.html',{cache:'no-store'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/app-version" content="(\d+)/);return m?m[1]:'non trovata';});}]
   ].forEach(function(x){c=c.then(function(){return prova(x[0],x[1]);});});
   c.then(function(){riga('Fine delle prove',true,'Fai lo screenshot e mandalo a Claude.');});

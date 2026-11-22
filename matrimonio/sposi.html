@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png?v=4">
 <link rel="icon" type="image/png" href="icon-192.png?v=4">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="app-version" content="20261122093000">
+<meta name="app-version" content="20261122110000">
 <title>Conti del Matrimonio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1687,6 +1687,7 @@ async function sitoCarica(){
   try {
     const r = await fetch(cas.url + '?a=contenuti', {redirect:'follow', cache:'no-store'}).then(x => x.json());
     if (r && r.ok) {
+      if (typeof r.aperte === 'boolean') ui.proveAperte = r.aperte;
       if (r.contenuti && !sitoDirty) { sito = sitoNorm(r.contenuti); sitoCache(); }
       if (!sito) sito = sitoVuoto();
       ui.sitoStato = r.contenuti ? 'txt:✓ Online sul sito' : 'txt:Ancora niente sul sito: quello che scrivi qui si pubblica da solo';
@@ -1729,7 +1730,7 @@ async function sitoFoto(key, file){
     const nome = (key === 'copertina' ? 'copertina' : 'storia' + (+key.split('.')[1] + 1)) + '-' + Date.now().toString(36) + '.jpg';
     let r; try { r = await casCall(cas, {a:'sitofoto', nome, mime:'image/jpeg', dati:dataUrl.split(',')[1]}); }
     catch (e) { throw 'Foto non caricata: controlla la connessione'; }
-    if (!r || !r.ok) throw r && r.motivo === 'azione' ? 'Serve la cassetta nuova (versione 6): passi nel messaggio di Claude' : r && r.motivo === 'segreto' ? 'Il segreto della cassetta non è giusto' : r && r.motivo === 'grande' ? 'Foto troppo grande' : 'Foto non caricata: la cassetta non ha risposto';
+    if (!r || !r.ok) throw r && r.motivo === 'azione' ? 'Serve la cassetta nuova (versione 7): passi nel messaggio di Claude' : r && r.motivo === 'segreto' ? 'Il segreto della cassetta non è giusto' : r && r.motivo === 'grande' ? 'Foto troppo grande' : 'Foto non caricata: la cassetta non ha risposto';
     const path = 'drive:' + r.id;
     if (key === 'copertina') sito.copertina = path; else sito.storia[+key.split('.')[1]].foto = path;
     sitoCache(); sitoDirty = true; await sitoSalva();
@@ -1765,6 +1766,10 @@ function vSito(){
     <h2>Sfide fotografiche</h2>
     <p class="sub" style="margin-top:-4px">Compaiono in Scatta il giorno delle nozze. Fino a 12; le righe vuote non si vedono.</p>
     <div class="card sito-sf">${sito.sfide.map((x, i) => `<label class="sito-sfr"><span>${i + 1}</span><input ${v('sfide.' + i, x, 'placeholder="Nuova sfida" aria-label="Sfida ' + (i + 1) + '"')}></label>`).join('')}</div>
+    <h2>Prove di Scatta e Galleria</h2>
+    <div class="card pad" style="display:grid;gap:10px">${ui.proveAperte == null ? `<p class="small" style="margin:0">Serve la cassetta versione 7 per aprirle prima delle nozze.</p>`
+      : ui.proveAperte ? `<p class="small" style="margin:0"><b>Aperte per le prove.</b> Chiunque abbia un link, o entri con i vostri nomi da qualsiasi telefono, può già mandare foto e vedere la Galleria. Chiudetele prima di mandare i link agli invitati.</p><div class="btns"><button class="btn" type="button" data-act="sito-prove" data-id="0">Chiudi fino al 13 giugno</button></div>`
+      : `<p class="small" style="margin:0">Chiuse: per gli invitati si aprono il 13 giugno alle 12. Voi potete provarle da qui, con il tool sullo stesso dispositivo.</p><div class="btns"><button class="btn plain" type="button" data-act="sito-prove" data-id="1">Riapri per le prove</button></div>`}</div>
     <h2>Foto degli invitati</h2>
     <div class="card pad" style="display:grid;gap:10px"><p class="small" style="margin:0">Arrivano nel Drive dell'account della cassetta: cartella «Matrimonio · foto degli invitati», con una sottocartella per persona. Le vostre prove dall'anteprima stanno in «Matrimonio · prove degli sposi».</p>
       <div class="btns"><button class="btn" type="button" data-act="sito-cartella" data-id="url">Apri le foto degli invitati</button><button class="btn plain" type="button" data-act="sito-cartella" data-id="prove">Apri le prove</button><button class="btn plain" type="button" data-act="sito-cartella" data-id="sito">Apri le foto del sito</button></div></div>
@@ -1945,10 +1950,15 @@ document.addEventListener('click', e => {
         f.addEventListener('change', () => { const x = f.files && f.files[0], k = f.dataset.k; f.value = ''; if (x && k) sitoFoto(k, x); }); }
       f.dataset.k = id; ui.sitoKey = id; f.click(); break; }
     case 'sito-riprova': sitoLoaded = false; sitoCarica(); render(); break;
+    case 'sito-prove': {
+      const cas = casGet(); if (!cas) break; const ap = id === '1';
+      casCall(cas, {a:'prove', aperte:ap}).then(r => { if (r && r.ok) { ui.proveAperte = r.aperte; toast(r.aperte ? 'Scatta e Galleria aperte per le prove' : 'Scatta e Galleria chiuse fino al 13 giugno'); } else toast(r && r.motivo === 'azione' ? 'Serve la cassetta nuova (versione 7)' : 'La cassetta non ha risposto'); render(); })
+        .catch(() => toast('Non riesco a raggiungere la cassetta'));
+      break; }
     case 'sito-cartella': {
       // La finestra si apre subito (Safari blocca quelle aperte dopo un'attesa), poi riceve l'indirizzo dalla cassetta.
       const cas = casGet(); if (!cas) break; const w = window.open('', '_blank');
-      casCall(cas, {a:'cartella'}).then(r => { if (r && r.ok && !r[id]) r = {ok:false, motivo:'azione'}; if (r && r.ok) { if (w) w.location = r[id]; else location.href = r[id]; } else { if (w) w.close(); toast(r && r.motivo === 'azione' ? 'Serve la cassetta nuova (versione 6)' : 'La cassetta non ha risposto'); } })
+      casCall(cas, {a:'cartella'}).then(r => { if (r && r.ok && !r[id]) r = {ok:false, motivo:'azione'}; if (r && r.ok) { if (w) w.location = r[id]; else location.href = r[id]; } else { if (w) w.close(); toast(r && r.motivo === 'azione' ? 'Serve la cassetta nuova (versione 7)' : 'La cassetta non ha risposto'); } })
         .catch(() => { if (w) w.close(); toast('Non riesco a raggiungere la cassetta'); });
       break; }
     case 'add-guest': { const g = {id:uid(), nome:'', nucleo:'', gruppo:'', lato:'entrambi', tipo:'adulto', rsvp:'attesa', indirizzo:'', contatto:'', allergie:'', tavolo:''}; state.guests.unshift(g); ui.openGuest = g.id; ui.q = ''; save('ospiti'); render(); const el = document.getElementById('gn-' + g.id); if (el) el.focus(); break; }

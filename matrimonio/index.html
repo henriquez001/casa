@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2ECDF">
-<meta name="app-version" content="20261122093000">
+<meta name="app-version" content="20261122110000">
 <title>Alice &amp; Leandro</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -453,10 +453,12 @@ function vArrivare(){
 /* ---------- Scatta e Galleria: foto, video e vocali del giorno delle nozze ---------- */
 // Agli invitati si aprono domenica 13 giugno alle 12 (ora italiana); gli sposi in anteprima le provano sempre.
 var NOZZE_T = Date.parse(CONFIG.data + 'T12:00:00+02:00');
-function aperto(){ return Date.now() >= NOZZE_T; }
+// Prove: finché gli sposi le tengono aperte (dal tool), Scatta e Galleria funzionano subito, anche in anteprima senza chiave.
+function proveAperte(){ return store.get('prove-aperte') === '1'; }
+function aperto(){ return proveAperte() || Date.now() >= NOZZE_T; }
 function dopoNozze(){ return Date.now() >= NOZZE_T + 12 * 3600e3; }
 function sposiCas(){ try { var c = JSON.parse(store.get('conti-matrimonio-cassetta') || 'null'); return c && c.segreto ? c : null; } catch (e) { return null; } }
-function puoMandare(){ return !!S.inv && (S.inv.anteprima ? !!sposiCas() : (!DEMO && !!S.inv.c && aperto())); }
+function puoMandare(){ return !!S.inv && (S.inv.anteprima ? !!sposiCas() || proveAperte() : (!DEMO && !!S.inv.c && aperto())); }
 function vistaIniziale(inv){
   if (!inv || inv.anteprima) return 'home';
   var r = inv.risposta;
@@ -531,7 +533,7 @@ function aggiungi(file, tipo, extra){
 }
 
 function postM(body, lungo){
-  var cred = body.prova ? {segreto:(sposiCas() || {}).segreto} : {c:body.c};
+  var cred = body.prova ? (sposiCas() ? {segreto:sposiCas().segreto} : {anteprima:true}) : {c:body.c};
   var b = Object.assign({}, body, cred); delete b.prova;
   if (lungo) { // per i file mandati dentro la richiesta: niente limite dei 12 secondi
     var ac = window.AbortController ? new AbortController() : null, t = ac ? setTimeout(function(){ ac.abort(); }, 120000) : 0;
@@ -607,7 +609,7 @@ function chiuso(titolo, testo){
 }
 function sfideFatte(){ var f = {}; M.mie.concat(M.coda).forEach(function(x){ if (x.s || x.sfida) f[x.s || x.sfida] = true; }); return f; }
 // Cose ancora aperte, visibili solo agli sposi in anteprima (regola di Leo: scriverle sulle pagine).
-var APERTE = '<div class="msg" style="font-size:14px"><b>Ancora aperto</b><br>· Serve la cassetta versione 6: senza, l’invio dà errore.<br>· La proiezione in sala delle foto non c’è ancora.<br>· I video oltre 35 secondi vengono rifiutati, non tagliati.<br>· Il caricamento su Drive va provato da voi: dal cloud non posso.</div>';
+function aperteTxt(){ return '<div class="msg" style="font-size:14px"><b>Ancora aperto</b><br>· Serve la cassetta versione 7.<br>' + (proveAperte() ? '· <b>Scatta e Galleria sono aperte per le prove</b>: chiudetele dal tool (Altro › Sito) prima di mandare i link.<br>' : '') + '· La proiezione in sala delle foto non c’è ancora.<br>· I video oltre 35 secondi vengono rifiutati, non tagliati.<br>· Il caricamento su Drive va provato da voi: dal cloud non posso.</div>'; }
 // I campi file stanno fuori dalla pagina disegnata: su iPhone la fotocamera manda l'app in secondo piano e,
 // se al ritorno la pagina si ridisegna, un campo dentro la vista verrebbe sostituito e la foto andrebbe persa.
 function campiFile(){
@@ -619,7 +621,7 @@ function campiFile(){
 function vScatta(){
   campiFile();
   if (!S.inv.anteprima && !aperto()) return chiuso('Scatta', 'Il giorno delle nozze da qui scatti foto, video e vocali per noi, e partecipi alle sfide fotografiche.');
-  if (S.inv.anteprima && !sposiCas()) return '<div class="view"><header class="mh"><h1>Scatta</h1></header><section class="card empty"><b>Per provare serve il tool degli sposi</b><span class="sub">Aprite l’app dal telefono o dal PC dove usate il tool con la cassetta collegata: le prove vanno nella vostra cartella su Drive.</span></section></div>';
+  if (S.inv.anteprima && !sposiCas() && !proveAperte()) return '<div class="view"><header class="mh"><h1>Scatta</h1></header><section class="card empty"><b>Per provare serve il tool degli sposi</b><span class="sub">Aprite l’app dal telefono o dal PC dove usate il tool con la cassetta collegata: le prove vanno nella vostra cartella su Drive.</span></section></div>';
   var p = S.inv.anteprima ? CONFIG.sposi.map(function(n){ return {nome:n}; }) : (S.inv.persone || []), au = autore();
   var fatte = sfideFatte(), sf = CONFIG.sfide || [], nf = sf.filter(function(x){ return fatte[x]; }).length;
   var lista = sf.map(function(x, i){ return {x:x, i:i, f:!!fatte[x]}; });
@@ -629,7 +631,8 @@ function vScatta(){
     .concat(M.mie.slice(0, 12).map(function(x){ var u = x.th || (x.t === 'foto' || x.t === 'video' ? thumbUrl(x.id, 160) : ''); return '<i class="' + (u ? '' : x.t) + '"' + (u ? ' style="background-image:url(\'' + esc(u) + '\')"' : '') + '></i>'; }));
   return '<div class="view"><header class="mh"><h1>Scatta</h1>' +
     (p.length > 1 ? '' : '<p>' + esc(au) + '</p>') + '</header>' +
-    (S.inv.anteprima ? '<div class="msg ok">Prova degli sposi: quello che mandate va nella cartella delle prove su Drive, gli invitati non lo vedono.</div>' + APERTE : '') +
+    (proveAperte() && !S.inv.anteprima ? '<div class="msg ok">Aperto per le prove degli sposi: dal 13 giugno sarà così per tutti.</div>' : '') +
+    (S.inv.anteprima ? '<div class="msg ok">Prova degli sposi: quello che mandate va nella cartella delle prove su Drive, gli invitati non lo vedono.</div>' + aperteTxt() : '') +
     (p.length > 1 ? '<div class="chi" role="group" aria-label="Chi sta scattando"><span>Scatta come</span>' + p.map(function(x){ return '<button type="button" class="chip" data-act="autore" data-v="' + esc(x.nome) + '" aria-pressed="' + (x.nome === au) + '">' + esc(x.nome) + '</button>'; }).join('') + '</div>' : '') +
     '<section class="card shoot">' +
       (M.rec ? '<div class="rec" role="status"><span class="dot" aria-hidden="true"></span><b id="recT">' + durTxt((Date.now() - M.rec.t0) / 1000) + '</b><span class="sub">Registro… al massimo 1 minuto</span></div>' +
@@ -652,7 +655,7 @@ function thumbUrl(id, w){ return 'https://drive.google.com/thumbnail?id=' + enco
 function fullUrl(id){ return 'https://lh3.googleusercontent.com/d/' + encodeURIComponent(id) + '=w1600'; }
 function caricaGal(silenzioso){
   if (!S.inv || (!S.inv.anteprima && (!aperto() || DEMO))) return;
-  var req = S.inv.anteprima ? (sposiCas() ? postM({a:'galleria', prova:true}) : Promise.resolve({ok:false, motivo:'nocas'})) : viaRete({a:'galleria', c:S.inv.c});
+  var req = S.inv.anteprima ? (sposiCas() || proveAperte() ? postM({a:'galleria', prova:true}) : Promise.resolve({ok:false, motivo:'nocas'})) : viaRete({a:'galleria', c:S.inv.c});
   req.then(function(r){
     if (!r || !r.ok) { if (!silenzioso || !M.items) { M.galErr = r && r.motivo === 'nocas' ? 'Per vedere le prove aprite l’app dal telefono o dal PC dove usate il tool.' : 'Non riesco a caricare la galleria.'; if (S.view === 'galleria') render(); } return; }
     M.galErr = '';
@@ -860,6 +863,7 @@ function applicaContenuti(c){
   if (!c || typeof c !== 'object') return;
   // Le foto della home stanno nel Drive degli sposi («drive:ID»); le vecchie («foto/…») restano sul sito.
   var fotoUrl = function(x){ x = String(x || ''); return /^drive:[\w-]+$/.test(x) ? 'https://lh3.googleusercontent.com/d/' + x.slice(6) + '=w1600' : x; };
+  if (typeof c.aperte === 'boolean') store.set('prove-aperte', c.aperte ? '1' : null);
   if (typeof c.copertina === 'string') CONFIG.copertina = fotoUrl(c.copertina);
   if (Array.isArray(c.storia)) CONFIG.storia = c.storia.filter(function(x){ return x && (x.titolo || x.testo || x.foto); }).map(function(x){ return Object.assign({}, x, {foto: fotoUrl(x.foto)}); });
   if (Array.isArray(c.sfide) && c.sfide.length) CONFIG.sfide = c.sfide.filter(Boolean);
@@ -868,6 +872,10 @@ function applicaContenuti(c){
 try { applicaContenuti(JSON.parse(store.get('contenuti-copia') || 'null')); } catch (e) {}
 if (!DEMO) (useJP ? jsonp({a:'contenuti'}) : fetchRip(CONFIG.cassetta + '?a=contenuti').catch(function(){ return jsonp({a:'contenuti'}); }))
   .then(function(r){
+    if (r && r.ok && typeof r.aperte === 'boolean' && r.aperte !== proveAperte()) {
+      store.set('prove-aperte', r.aperte ? '1' : null);
+      if (S.inv && (S.view === 'scatta' || S.view === 'galleria')) render();
+    }
     if (!r || !r.ok || !r.contenuti) return;
     var nuovo = JSON.stringify(r.contenuti); if (nuovo === store.get('contenuti-copia')) return;
     store.set('contenuti-copia', nuovo); applicaContenuti(r.contenuti);

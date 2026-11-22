@@ -27,7 +27,7 @@ function jsonp(q){return new Promise(function(ok,ko){var cb='_d'+Math.floor(Math
 function img(u){return new Promise(function(ok,ko){var i=new Image();i.onload=function(){ok('raggiungibile');};i.onerror=function(){ko(new Error('non raggiungibile'));};i.src=u+'?t='+Date.now();});}
 function tutto(){
   out.innerHTML='';
-  riga('Telefono',true,'codice: '+(COD()?COD().slice(0,2)+'…':'nessuno')+' · '+navigator.userAgent+' · in linea: '+navigator.onLine+' · '+new Date().toLocaleString('it-IT'));
+  riga('Telefono',true,'codice salvato: «'+(COD()||'nessuno')+'» ('+COD().length+' caratteri)'+' · '+navigator.userAgent+' · in linea: '+navigator.onLine+' · '+new Date().toLocaleString('it-IT'));
   var c=Promise.resolve();
   [['1. Google raggiungibile',function(){return img('https://www.google.com/favicon.ico');}],
    ['2. Cassetta, versione (lettura normale)',function(){return fetch(CAS+'?a=stato',{redirect:'follow',cache:'no-store'}).then(leggi);}],
@@ -42,6 +42,8 @@ function tutto(){
    ['12. Invito con il codice salvato su questo telefono',function(){var c=COD();if(!c)return Promise.reject(new Error('nessun codice salvato: apri prima l\u2019app da un link d\u2019invito'));return fetch(CAS+'?a=invito&c='+encodeURIComponent(c),{redirect:'follow',cache:'no-store'}).then(leggi);}],
    ['13. Galleria con quel codice (lettura normale)',function(){var c=COD();if(!c)return Promise.reject(new Error('nessun codice'));return fetch(CAS+'?a=galleria&c='+encodeURIComponent(c),{redirect:'follow',cache:'no-store'}).then(leggi);}],
    ['14. Galleria con quel codice (canale di riserva)',function(){var c=COD();if(!c)return Promise.reject(new Error('nessun codice'));return jsonp('a=galleria&c='+encodeURIComponent(c));}],
+   ['15. Invito con un codice finto (confronto)',function(){return fetch(CAS+'?a=invito&c=ZZZZZZ',{redirect:'follow',cache:'no-store'}).then(leggi);}],
+   ['16. Invito con il codice, senza controlli del browser',function(){var c=COD();if(!c)return Promise.reject(new Error('nessun codice'));return fetch(CAS+'?a=invito&c='+encodeURIComponent(c),{mode:'no-cors',cache:'no-store'}).then(function(r){return 'arrivata una risposta (tipo '+r.type+')';});}],
    ['11. Versione dell\u2019app sul telefono',function(){return fetch('index.html',{cache:'no-store'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/app-version" content="(\d+)/);return m?m[1]:'non trovata';});}]
   ].forEach(function(x){c=c.then(function(){return prova(x[0],x[1]);});});
   c.then(function(){riga('Fine delle prove',true,'Fai lo screenshot e mandalo a Claude.');});

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2ECDF">
-<meta name="app-version" content="20261122131000">
+<meta name="app-version" content="20261122181500">
 <title>Alice &amp; Leandro</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -667,7 +667,9 @@ function thumbUrl(id, w){ return 'https://drive.google.com/thumbnail?id=' + enco
 function fullUrl(id){ return 'https://lh3.googleusercontent.com/d/' + encodeURIComponent(id) + '=w1600'; }
 function caricaGal(silenzioso){
   if (!S.inv || (!S.inv.anteprima && (!aperto() || DEMO))) return;
-  var req = S.inv.anteprima ? (sposiCas() || proveAperte() ? postM({a:'galleria', prova:true}) : Promise.resolve({ok:false, motivo:'nocas'})) : viaRete({a:'galleria', c:S.inv.c});
+  // Con le prove aperte la Galleria si legge come l'invito (lettura semplice, nuovi tentativi e canale di riserva): niente segreto in giro.
+  lastErr = '';
+  var req = S.inv.anteprima ? (proveAperte() ? viaRete({a:'galleria', anteprima:'1'}) : sposiCas() ? postM({a:'galleria', prova:true}).catch(function(e){ lastErr = e && e.message || String(e); throw e; }) : Promise.resolve({ok:false, motivo:'nocas'})) : viaRete({a:'galleria', c:S.inv.c});
   req.then(function(r){
     if (!r || !r.ok) { if (!silenzioso || !M.items) { M.galErr = r && r.motivo === 'nocas' ? 'Per vedere le prove aprite l’app dal telefono o dal PC dove usate il tool.' : 'Non riesco a caricare la galleria.'; if (S.view === 'galleria') render(); } return; }
     M.galErr = '';

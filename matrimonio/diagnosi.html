@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Diagnosi collegamento</title>
+<style>
+:root{--bg:#F2ECDF;--card:#FFFCF5;--fg:#2E3528;--ok:#56654A;--bad:#A0472F;--muted:#6B6F63}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 -apple-system,system-ui,Roboto,sans-serif;padding:16px}
+h1{font-size:22px;margin:8px 0 4px}p{margin:0 0 12px;color:var(--muted)}
+.r{background:var(--card);border-radius:12px;padding:12px 14px;margin:8px 0;display:grid;gap:2px}
+.r b{font-weight:600}.r span{font-size:13px;color:var(--muted);word-break:break-all}
+.ok b::before{content:"✓ ";color:var(--ok)}.ko b::before{content:"✗ ";color:var(--bad)}.ko span{color:var(--bad)}
+button{font:inherit;padding:12px 16px;border-radius:12px;border:0;background:var(--ok);color:#fff;width:100%;margin-top:12px}
+</style></head><body>
+<h1>Diagnosi del collegamento</h1>
+<p>Prova a raggiungere la cassetta in vari modi. Alla fine fai uno screenshot di tutta la pagina e mandalo a Claude.</p>
+<div id="out"></div>
+<button id="rif" type="button">Rifai le prove</button>
+<script>
+var CAS='https://script.google.com/macros/s/AKfycbzBNubgdd7Y0-zgVBfgS5tp0MdBGjLNshge0Q72UxszQ-GgqXxGZccSO2C8arja4yCyfQ/exec';
+var out=document.getElementById('out');
+function riga(t,ok,d){var e=document.createElement('div');e.className='r '+(ok?'ok':'ko');e.innerHTML='<b></b><span></span>';e.firstChild.textContent=t;e.lastChild.textContent=d;out.appendChild(e);}
+function tempo(t0){return ' · '+Math.round(performance.now()-t0)+' ms';}
+function conLimite(p,ms){return Promise.race([p,new Promise(function(_,ko){setTimeout(function(){ko(new Error('nessuna risposta in '+ms/1000+' s'))},ms)})]);}
+function prova(nome,fn){var t0=performance.now();return conLimite(fn(),15000).then(function(d){riga(nome,true,String(d).slice(0,160)+tempo(t0));},function(e){riga(nome,false,(e&&e.message||String(e)).slice(0,160)+tempo(t0));});}
+function leggi(r){return r.text().then(function(t){return 'HTTP '+r.status+' · '+(r.redirected?'reindirizzato · ':'')+t.replace(/\s+/g,' ').slice(0,120);});}
+function jsonp(q){return new Promise(function(ok,ko){var cb='_d'+Math.floor(Math.random()*1e9),s=document.createElement('script');window[cb]=function(o){ok(JSON.stringify(o).slice(0,120));};s.onerror=function(){ko(new Error('script non caricato (errore di rete o risposta di errore)'));};s.onload=function(){setTimeout(function(){ko(new Error('caricato ma non sono dati (pagina di Google)'));},50);};s.src=CAS+'?'+q+'&callback='+cb;document.head.appendChild(s);});}
+function img(u){return new Promise(function(ok,ko){var i=new Image();i.onload=function(){ok('raggiungibile');};i.onerror=function(){ko(new Error('non raggiungibile'));};i.src=u+'?t='+Date.now();});}
+function tutto(){
+  out.innerHTML='';
+  riga('Telefono',true,navigator.userAgent+' · in linea: '+navigator.onLine+' · '+new Date().toLocaleString('it-IT'));
+  var c=Promise.resolve();
+  [['1. Google raggiungibile',function(){return img('https://www.google.com/favicon.ico');}],
+   ['2. Cassetta, versione (lettura normale)',function(){return fetch(CAS+'?a=stato',{redirect:'follow',cache:'no-store'}).then(leggi);}],
+   ['3. Cassetta, ricerca di un nome (come fa l’app)',function(){return fetch(CAS+'?a=cerca&nome=Prova&cognome=Diagnosi',{redirect:'follow',cache:'no-store'}).then(leggi);}],
+   ['4. Cassetta, contenuti della home',function(){return fetch(CAS+'?a=contenuti',{redirect:'follow',cache:'no-store'}).then(leggi);}],
+   ['5. Cassetta senza controlli del browser (no-cors)',function(){return fetch(CAS+'?a=stato',{mode:'no-cors',cache:'no-store'}).then(function(r){return 'arrivata una risposta (tipo '+r.type+')';});}],
+   ['6. Canale di riserva (script)',function(){return jsonp('a=stato');}],
+   ['7. Canale di riserva, ricerca di un nome',function(){return jsonp('a=cerca&nome=Prova&cognome=Diagnosi');}]
+  ].forEach(function(x){c=c.then(function(){return prova(x[0],x[1]);});});
+  c.then(function(){riga('Fine delle prove',true,'Fai lo screenshot e mandalo a Claude.');});
+}
+document.getElementById('rif').onclick=tutto;tutto();
+</script></body></html>

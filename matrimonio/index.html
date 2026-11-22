@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2ECDF">
-<meta name="app-version" content="20261122130000">
+<meta name="app-version" content="20261122131000">
 <title>Alice &amp; Leandro</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -799,8 +799,8 @@ function render(){
 }
 
 // L'invito si salva sul telefono: chi è già entrato lo ritrova anche senza rete, e intanto si aggiorna in silenzio.
-function entra(inv, nuovaBozza){ S.err = ''; S.retry = null; S.inv = inv; if (nuovaBozza || !S.draft) S.draft = mkDraft(inv); codice = inv.c; store.set('invito-codice', codice); store.set('invito-copia', JSON.stringify(inv)); segnaCodice(); }
-function esci(){ S.err = ''; S.retry = null; store.set('invito-codice', null); store.set('invito-copia', null); codice = ''; S.inv = null; S.draft = null; S.view = 'home'; segnaCodice(); }
+function entra(inv, nuovaBozza){ S.err = ''; S.retry = null; if (!inv.anteprima) store.set('anteprima-sposi', null); S.inv = inv; if (nuovaBozza || !S.draft) S.draft = mkDraft(inv); codice = inv.c; store.set('invito-codice', codice); store.set('invito-copia', JSON.stringify(inv)); segnaCodice(); }
+function esci(){ S.err = ''; S.retry = null; store.set('anteprima-sposi', null); store.set('invito-codice', null); store.set('invito-copia', null); codice = ''; S.inv = null; S.draft = null; S.view = 'home'; segnaCodice(); }
 // Il codice resta nell'indirizzo: l'icona sulla schermata Home riapre lo stesso invito.
 function anteprimaInv(){ return {c:'', anteprima:true, saluto:CONFIG.sposi.join(' e '), messaggio:'Questa è l’anteprima degli sposi: vedete l’app come un invitato. Le risposte qui non vengono mandate.', scadenza:'', piuUno:false, risposta:null,
   persone:CONFIG.sposi.map(function(x, i){ return {id:'sp' + i, nome:x, cognome:'', tipo:'adulto'}; })}; }
@@ -824,7 +824,7 @@ document.addEventListener('submit', function(e){
   S.sposi = false;
   if (!n) { S.err = 'Scrivi almeno il nome.'; render(); return; }
   // Gli sposi entrano in anteprima: vedono tutto come un invitato, ma la risposta non viene mandata a nessuno.
-  if (CONFIG.firmaSposi.indexOf((n + ' ' + c).toLowerCase().replace(/\s+/g, ' ')) >= 0) { S.err = ''; entra(anteprimaInv(), true); store.set('invito-copia', null); S.view = 'home'; render(); window.scrollTo(0, 0); return; }
+  if (CONFIG.firmaSposi.indexOf((n + ' ' + c).toLowerCase().replace(/\s+/g, ' ')) >= 0) { S.err = ''; entra(anteprimaInv(), true); store.set('invito-copia', null); store.set('anteprima-sposi', '1'); S.view = 'home'; render(); window.scrollTo(0, 0); return; }
   S.loading = true; S.err = ''; render();
   api({a:'cerca', nome:n, cognome:c}).then(function(r){
     S.loading = false;
@@ -898,7 +898,9 @@ if (!DEMO) (useJP ? jsonp({a:'contenuti'}) : fetchRip(CONFIG.cassetta + '?a=cont
     if (S.landing || (S.inv && (S.view === 'home' || S.view === 'arrivare'))) render();
   }).catch(function(){});
 (function(){ var copia = null; try { copia = JSON.parse(store.get('invito-copia') || 'null'); } catch (e) {}
-  if (codice && copia && copia.c === codice) { S.loading = false; entra(copia, true); S.view = vistaIniziale(copia); render(); load(codice, true); }
+  // Gli sposi in anteprima restano dentro anche alla riapertura, come un invitato (finché non premono Esci).
+  if (!q.has('i') && store.get('anteprima-sposi') === '1') { S.loading = false; entra(anteprimaInv(), true); store.set('invito-copia', null); S.view = 'home'; render(); }
+  else if (codice && copia && copia.c === codice) { S.loading = false; entra(copia, true); S.view = vistaIniziale(copia); render(); load(codice, true); }
   else if (codice) load(codice); else { S.loading = false; render(); } })();
 codaCarica().then(function(){ if (M.coda.length) processa(); });
 if ('serviceWorker' in navigator && !DEMO && location.protocol === 'https:') navigator.serviceWorker.register('sw-invitati.js').catch(function(){});

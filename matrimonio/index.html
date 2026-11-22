@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2ECDF">
-<meta name="app-version" content="20261122191500">
+<meta name="app-version" content="20261122203000">
 <title>Alice &amp; Leandro</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -275,7 +275,7 @@ function errSpiega(x){
 function errTxt(base, retry){ S.retry = retry || null; var sp = lastErr ? errSpiega(lastErr) : ''; return base + (sp ? '<br><span style="font-size:14px">' + esc(sp) + '</span>' : '') + (lastErr ? ' <span style="opacity:.6;font-size:12px">(' + esc(lastErr.replace('canale di riserva bloccato', 'secondo tentativo non riuscito')) + ')</span>' : '') + (retry ? '<button class="btn retry" type="button" data-act="riprova">Riprova</button>' : ''); }
 function api(params){
   if (DEMO) return new Promise(function(res){ setTimeout(function(){
-    if (params.a === 'invito') res(params.c === 'PROVA1' ? {ok:true, invito:demoGet()} : {ok:false, motivo:'codice'});
+    if (params.a === 'invito') res(params.codice === 'PROVA1' ? {ok:true, invito:demoGet()} : {ok:false, motivo:'codice'});
     else if (params.a === 'cerca') res(/^carla$|^mario$|^luca$/i.test(params.nome.trim()) && /^(rossi)?$/i.test((params.cognome || '').trim()) ? {ok:true, invito:demoGet()} : {ok:false, motivo:'nontrovato'});
     else res({ok:false}); }, 350); });
   // Se la rete del telefono perde la richiesta (succede appena l'app si apre o torna in primo piano),
@@ -669,7 +669,7 @@ function caricaGal(silenzioso, ritento){
   if (!S.inv || (!S.inv.anteprima && (!aperto() || DEMO))) return;
   // Con le prove aperte la Galleria si legge come l'invito (lettura semplice, nuovi tentativi e canale di riserva): niente segreto in giro.
   lastErr = '';
-  var req = S.inv.anteprima ? (proveAperte() ? viaRete({a:'galleria', anteprima:'1'}) : sposiCas() ? postM({a:'galleria', prova:true}).catch(function(e){ lastErr = e && e.message || String(e); throw e; }) : Promise.resolve({ok:false, motivo:'nocas'})) : viaRete({a:'galleria', c:S.inv.c});
+  var req = S.inv.anteprima ? (proveAperte() ? viaRete({a:'galleria', anteprima:'1'}) : sposiCas() ? postM({a:'galleria', prova:true}).catch(function(e){ lastErr = e && e.message || String(e); throw e; }) : Promise.resolve({ok:false, motivo:'nocas'})) : viaRete({a:'galleria', codice:S.inv.c});
   req.then(function(r){
     if (!r || !r.ok) { if (!silenzioso || !M.items) { M.galErr = r && r.motivo === 'nocas' ? 'Per vedere le prove aprite l’app dal telefono o dal PC dove usate il tool.' : 'Non riesco a caricare la galleria.'; if (S.view === 'galleria') render(); } return; }
     M.galErr = '';
@@ -817,7 +817,8 @@ function riprovaVecchio(){ if (S.inv || !S.err || !S.retry || S.loading || S.sen
 document.addEventListener('visibilitychange', function(){ if (!document.hidden) riprovaVecchio(); });
 function load(c, silenzioso){
   if (!silenzioso) { S.loading = true; S.err = ''; render(); }
-  return api({a:'invito', c:c}).then(function(r){
+  // «c» è un nome riservato da Google negli indirizzi degli script: il codice viaggia come «codice».
+  return api({a:'invito', codice:c}).then(function(r){
     S.loading = false;
     if (r && r.ok) { entra(r.invito, !silenzioso || S.view !== 'rsvp'); if (!silenzioso) S.view = vistaIniziale(r.invito); }
     else if (r && r.motivo === 'codice') { esci(); S.err = 'Questo link d’invito non funziona più. Scrivi nome e cognome per entrare.'; }

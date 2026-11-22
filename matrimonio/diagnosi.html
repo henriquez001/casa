@@ -39,11 +39,11 @@ function tutto(){
    ['8. Galleria in prova (lettura normale)',function(){return fetch(CAS+'?a=galleria&anteprima=1',{redirect:'follow',cache:'no-store'}).then(leggi);}],
    ['9. Galleria in prova (canale di riserva)',function(){return jsonp('a=galleria&anteprima=1');}],
    ['10. Invio diretto (come foto e Galleria degli sposi)',function(){return fetch(CAS,{method:'POST',redirect:'follow',cache:'no-store',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({a:'galleria',anteprima:true})}).then(leggi);}],
-   ['12. Invito con il codice salvato su questo telefono',function(){var c=COD();if(!c)return Promise.reject(new Error('nessun codice salvato: apri prima l\u2019app da un link d\u2019invito'));return fetch(CAS+'?a=invito&c='+encodeURIComponent(c),{redirect:'follow',cache:'no-store'}).then(leggi);}],
-   ['13. Galleria con quel codice (lettura normale)',function(){var c=COD();if(!c)return Promise.reject(new Error('nessun codice'));return fetch(CAS+'?a=galleria&c='+encodeURIComponent(c),{redirect:'follow',cache:'no-store'}).then(leggi);}],
-   ['14. Galleria con quel codice (canale di riserva)',function(){var c=COD();if(!c)return Promise.reject(new Error('nessun codice'));return jsonp('a=galleria&c='+encodeURIComponent(c));}],
-   ['15. Invito con un codice finto (confronto)',function(){return fetch(CAS+'?a=invito&c=ZZZZZZ',{redirect:'follow',cache:'no-store'}).then(leggi);}],
-   ['16. Invito con il codice, senza controlli del browser',function(){var c=COD();if(!c)return Promise.reject(new Error('nessun codice'));return fetch(CAS+'?a=invito&c='+encodeURIComponent(c),{mode:'no-cors',cache:'no-store'}).then(function(r){return 'arrivata una risposta (tipo '+r.type+')';});}],
+   ['12. Invito con il codice salvato su questo telefono',function(){var c=COD();if(!c)return Promise.reject(new Error('nessun codice salvato: apri prima l\u2019app da un link d\u2019invito'));return fetch(CAS+'?a=invito&codice='+encodeURIComponent(c),{redirect:'follow',cache:'no-store'}).then(leggi);}],
+   ['13. Galleria con quel codice (lettura normale)',function(){var c=COD();if(!c)return Promise.reject(new Error('nessun codice'));return fetch(CAS+'?a=galleria&codice='+encodeURIComponent(c),{redirect:'follow',cache:'no-store'}).then(leggi);}],
+   ['14. Galleria con quel codice (canale di riserva)',function(){var c=COD();if(!c)return Promise.reject(new Error('nessun codice'));return jsonp('a=galleria&codice='+encodeURIComponent(c));}],
+   ['15. Invito con un codice finto (confronto)',function(){return fetch(CAS+'?a=invito&codice=ZZZZZZ',{redirect:'follow',cache:'no-store'}).then(leggi);}],
+   ['16. Invito con il codice, senza controlli del browser',function(){var c=COD();if(!c)return Promise.reject(new Error('nessun codice'));return fetch(CAS+'?a=invito&codice='+encodeURIComponent(c),{mode:'no-cors',cache:'no-store'}).then(function(r){return 'arrivata una risposta (tipo '+r.type+')';});}],
    ['11. Versione dell\u2019app sul telefono',function(){return fetch('index.html',{cache:'no-store'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/app-version" content="(\d+)/);return m?m[1]:'non trovata';});}]
   ].forEach(function(x){c=c.then(function(){return prova(x[0],x[1]);});});
   c.then(function(){riga('Fine delle prove',true,'Fai lo screenshot e mandalo a Claude.');});

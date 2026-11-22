@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png?v=4">
 <link rel="icon" type="image/png" href="icon-192.png?v=4">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="app-version" content="20261122000000">
+<meta name="app-version" content="20261122090000">
 <title>Conti del Matrimonio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -830,7 +830,7 @@ function vInviti(){
       <label class="f" for="rsvpScad">Rispondere entro il<input id="rsvpScad" type="date" data-s="rsvpScadenza" value="${esc(S().rsvpScadenza || '')}"></label></div>
     <h2>Link da mandare</h2>
     <div class="card pad" style="display:grid;gap:10px"><p class="small muted" style="margin:0">Un link per invito, da mandare su WhatsApp o da stampare come QR sul cartoncino. I link senza codice si creano qui.</p>
-      <div class="btns"><button class="btn" type="button" data-act="inv-all">Crea i link mancanti e copiali tutti</button><a class="btn plain" href="index.html?invitato" target="_blank" rel="noopener">Vedi l'app come un invitato</a></div></div>
+      <div class="btns"><button class="btn" type="button" data-act="inv-all">Crea i link mancanti e copiali tutti</button><a class="btn plain" href="index.html?invitato&home" target="_blank" rel="noopener">Vedi l'app come un invitato</a></div></div>
     ${probl.length ? `<h2>Da sistemare <span class="small muted">(${probl.length})</span></h2><div class="card rlist">${probl.sort((a, b) => b.blocchi.length - a.blocchi.length).slice(0, ui.allProbl ? probl.length : 6).map(u => `<div class="ri"><b>${esc(u.titolo)}</b><span class="small" style="color:var(--${u.blocchi.length ? 'bad' : 'warn'})">${esc(u.blocchi.concat(u.avvisi).join(' · '))}</span><button class="btn plain" type="button" data-act="goto-guest" data-id="${u.list[0].id}" style="justify-self:start;padding-inline:0">Apri la scheda</button></div>`).join('')}${probl.length > 6 ? `<div class="ri"><button class="btn plain" type="button" data-act="probl-all" style="justify-self:start;padding-inline:0" aria-expanded="${!!ui.allProbl}">${ui.allProbl ? 'Mostra meno' : 'Mostra tutti e ' + probl.length}</button></div>` : ''}</div>` : ''}
     ${reg.length ? `<h2>Nomi non trovati</h2><div class="card rlist">${reg.slice(-30).reverse().map(r => `<div class="ri"><b>${esc(r.nome + ' ' + r.cognome)}</b><span class="small muted">${esc(r.esito)}${r.quando ? ' · ' + esc(new Date(r.quando).toLocaleString('it-IT', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'})) : ''}</span></div>`).join('')}</div>` : ''}
     ${msgs.length ? `<h2>Messaggi degli invitati</h2><div class="card rlist">${msgs.map(u => `<div class="ri"><b>${esc(u.titolo)}</b><span>«${esc(u.risposta.messaggio)}»</span></div>`).join('')}</div>` : ''}`;
@@ -1678,7 +1678,7 @@ let sito = null; try { const x = JSON.parse(localStorage.getItem(SITOK) || 'null
 let sitoT = null, sitoLoaded = false, sitoDirty = false;
 const sitoPrev = {}, sitoBusy = {};
 const sitoCache = () => { try { localStorage.setItem(SITOK, JSON.stringify(sito)); } catch (e) {} };
-const sitoImg = (key, path) => sitoPrev[key] || (path ? (/github\.io$/.test(location.hostname) ? path : SITO_WEB + path) : '');
+const sitoImg = (key, path) => sitoPrev[key] || (!path ? '' : /^drive:/.test(path) ? 'https://lh3.googleusercontent.com/d/' + path.slice(6) + '=w1600' : (/github\.io$/.test(location.hostname) ? path : SITO_WEB + path));
 function sitoStatoTxt(t, err){ ui.sitoStato = (err ? 'err:' : 'txt:') + t; const el = $('#sitoStato'); if (el) { el.textContent = t; el.classList.toggle('bad', !!err); } }
 const sitoMotivo = r => r && r.motivo === 'azione' ? 'La cassetta è ancora la versione vecchia: incolla quella nuova (versione 4)' : r && r.motivo === 'segreto' ? 'Il segreto della cassetta non è giusto: controllalo in Ospiti › Inviti' : 'La cassetta non ha risposto bene: riprovo alla prossima modifica';
 async function sitoCarica(){
@@ -1721,20 +1721,19 @@ async function sitoRiduci(file){
   return cv.toDataURL('image/jpeg', 0.8);
 }
 async function sitoFoto(key, file){
-  if (!gh || !gh.token) { toast('Per caricare le foto serve la chiave GitHub su questo dispositivo'); return; }
-  if (!sito) return;
+  // Le foto della home vanno nel Drive degli sposi, attraverso la cassetta (cartella «Matrimonio · foto del sito»).
+  const cas = casGet(); if (!cas || !sito) return;
   sitoBusy[key] = true; render();
   try {
     const dataUrl = await sitoRiduci(file); sitoPrev[key] = dataUrl; render();
     const nome = (key === 'copertina' ? 'copertina' : 'storia' + (+key.split('.')[1] + 1)) + '-' + Date.now().toString(36) + '.jpg';
-    let r; try { r = await ghFetch('https://api.github.com/repos/' + SITO_REPO + '/contents/' + SITO_DIR + nome, gh.token, {method:'PUT', body:{message:'Matrimonio: foto della home (' + nome + ')', content:dataUrl.split(',')[1]}}); }
+    let r; try { r = await casCall(cas, {a:'sitofoto', nome, mime:'image/jpeg', dati:dataUrl.split(',')[1]}); }
     catch (e) { throw 'Foto non caricata: controlla la connessione'; }
-    if (r.status === 403 || r.status === 404) throw 'La chiave GitHub non può scrivere nel sito: aggiungi il repository casa alla chiave (passi nel messaggio di Claude)';
-    if (!r.ok) throw 'Foto non caricata: GitHub ha risposto ' + r.status;
-    const path = 'foto/' + nome;
+    if (!r || !r.ok) throw r && r.motivo === 'azione' ? 'Serve la cassetta nuova (versione 6): passi nel messaggio di Claude' : r && r.motivo === 'segreto' ? 'Il segreto della cassetta non è giusto' : r && r.motivo === 'grande' ? 'Foto troppo grande' : 'Foto non caricata: la cassetta non ha risposto';
+    const path = 'drive:' + r.id;
     if (key === 'copertina') sito.copertina = path; else sito.storia[+key.split('.')[1]].foto = path;
     sitoCache(); sitoDirty = true; await sitoSalva();
-    toast('Foto caricata: sul sito compare entro un minuto');
+    toast('Foto caricata nel vostro Drive: sul sito compare subito');
   } catch (e) { delete sitoPrev[key]; toast(typeof e === 'string' ? e : 'Foto non caricata'); }
   delete sitoBusy[key]; render();
 }
@@ -1768,8 +1767,8 @@ function vSito(){
     <div class="card sito-sf">${sito.sfide.map((x, i) => `<label class="sito-sfr"><span>${i + 1}</span><input ${v('sfide.' + i, x, 'placeholder="Nuova sfida" aria-label="Sfida ' + (i + 1) + '"')}></label>`).join('')}</div>
     <h2>Foto degli invitati</h2>
     <div class="card pad" style="display:grid;gap:10px"><p class="small" style="margin:0">Arrivano nel Drive dell'account della cassetta: cartella «Matrimonio · foto degli invitati», con una sottocartella per persona. Le vostre prove dall'anteprima stanno in «Matrimonio · prove degli sposi».</p>
-      <div class="btns"><button class="btn" type="button" data-act="sito-cartella" data-id="url">Apri le foto degli invitati</button><button class="btn plain" type="button" data-act="sito-cartella" data-id="prove">Apri le prove</button></div></div>
-    <p class="small muted" style="margin:12px 4px 0">🔒 Testi, orari e luoghi non vanno su GitHub: restano nella cassetta Google. Le foto stanno sul sito.</p>
+      <div class="btns"><button class="btn" type="button" data-act="sito-cartella" data-id="url">Apri le foto degli invitati</button><button class="btn plain" type="button" data-act="sito-cartella" data-id="prove">Apri le prove</button><button class="btn plain" type="button" data-act="sito-cartella" data-id="sito">Apri le foto del sito</button></div></div>
+    <p class="small muted" style="margin:12px 4px 0">🔒 Testi, orari e luoghi non vanno su GitHub: restano nella cassetta Google. Anche le foto della home: stanno nel vostro Drive, in «Matrimonio · foto del sito».</p>
     <p id="sitoStato" class="sito-stato${st.startsWith('err:') ? ' bad' : ''}" role="status">${esc(st.replace(/^(err|txt):/, '').replace(/^carico$/, 'Carico…'))}</p>
     <div class="btns"><a class="btn plain" href="${/github\.io$/.test(location.hostname) ? 'index.html' : SITO_WEB}?invitato" target="_blank" rel="noopener">Vedi la home come un invitato</a></div>
     <input type="file" id="sitoFile" accept="image/*" hidden>`;
@@ -1943,7 +1942,7 @@ document.addEventListener('click', e => {
     case 'sito-cartella': {
       // La finestra si apre subito (Safari blocca quelle aperte dopo un'attesa), poi riceve l'indirizzo dalla cassetta.
       const cas = casGet(); if (!cas) break; const w = window.open('', '_blank');
-      casCall(cas, {a:'cartella'}).then(r => { if (r && r.ok) { if (w) w.location = r[id]; else location.href = r[id]; } else { if (w) w.close(); toast(r && r.motivo === 'azione' ? 'Serve la cassetta nuova (versione 5)' : 'La cassetta non ha risposto'); } })
+      casCall(cas, {a:'cartella'}).then(r => { if (r && r.ok && !r[id]) r = {ok:false, motivo:'azione'}; if (r && r.ok) { if (w) w.location = r[id]; else location.href = r[id]; } else { if (w) w.close(); toast(r && r.motivo === 'azione' ? 'Serve la cassetta nuova (versione 6)' : 'La cassetta non ha risposto'); } })
         .catch(() => { if (w) w.close(); toast('Non riesco a raggiungere la cassetta'); });
       break; }
     case 'add-guest': { const g = {id:uid(), nome:'', nucleo:'', gruppo:'', lato:'entrambi', tipo:'adulto', rsvp:'attesa', indirizzo:'', contatto:'', allergie:'', tavolo:''}; state.guests.unshift(g); ui.openGuest = g.id; ui.q = ''; save('ospiti'); render(); const el = document.getElementById('gn-' + g.id); if (el) el.focus(); break; }

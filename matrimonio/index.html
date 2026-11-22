@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2ECDF">
-<meta name="app-version" content="20261122003000">
+<meta name="app-version" content="20261122090000">
 <title>Alice &amp; Leandro</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -324,7 +324,8 @@ var lastKey = '';
 var S = {view:'home', inv:null, loading:true, err:'', draft:null, open:null, more:{}, sending:false, sent:false, sposi:false};
 var codice = (q.get('i') || store.get('invito-codice') || '').toUpperCase();
 // Landing: la prima volta, oppure riaperta da Benvenuto. Dal QR del giorno delle nozze (?qr) non si mostra.
-S.landing = !store.get('landing-vista') && !q.has('qr');
+// ?home (dal tool, «Vedi l'app come un invitato») mostra sempre la presentazione con le foto.
+S.landing = q.has('home') || (!store.get('landing-vista') && !q.has('qr'));
 if (q.get('i')) store.set('invito-codice', codice);
 
 function daysLeft(){ var d = new Date(CONFIG.data + 'T12:00:00'), n = new Date(); n.setHours(12,0,0,0); return Math.round((d - n) / 864e5); }
@@ -606,7 +607,7 @@ function chiuso(titolo, testo){
 }
 function sfideFatte(){ var f = {}; M.mie.concat(M.coda).forEach(function(x){ if (x.s || x.sfida) f[x.s || x.sfida] = true; }); return f; }
 // Cose ancora aperte, visibili solo agli sposi in anteprima (regola di Leo: scriverle sulle pagine).
-var APERTE = '<div class="msg" style="font-size:14px"><b>Ancora aperto</b><br>· Serve la cassetta versione 5: senza, l’invio dà errore.<br>· La proiezione in sala delle foto non c’è ancora.<br>· I video oltre 35 secondi vengono rifiutati, non tagliati.<br>· Il caricamento su Drive va provato da voi: dal cloud non posso.</div>';
+var APERTE = '<div class="msg" style="font-size:14px"><b>Ancora aperto</b><br>· Serve la cassetta versione 6: senza, l’invio dà errore.<br>· La proiezione in sala delle foto non c’è ancora.<br>· I video oltre 35 secondi vengono rifiutati, non tagliati.<br>· Il caricamento su Drive va provato da voi: dal cloud non posso.</div>';
 function vScatta(){
   if (!S.inv.anteprima && !aperto()) return chiuso('Scatta', 'Il giorno delle nozze da qui scatti foto, video e vocali per noi, e partecipi alle sfide fotografiche.');
   if (S.inv.anteprima && !sposiCas()) return '<div class="view"><header class="mh"><h1>Scatta</h1></header><section class="card empty"><b>Per provare serve il tool degli sposi</b><span class="sub">Aprite l’app dal telefono o dal PC dove usate il tool con la cassetta collegata: le prove vanno nella vostra cartella su Drive.</span></section></div>';
@@ -849,8 +850,10 @@ if (DEMO) { var b = document.createElement('div'); b.className = 'demo'; b.textC
 // Contenuti della home dalla cassetta: prima la copia sul telefono, poi la versione aggiornata in silenzio.
 function applicaContenuti(c){
   if (!c || typeof c !== 'object') return;
-  if (typeof c.copertina === 'string') CONFIG.copertina = c.copertina;
-  if (Array.isArray(c.storia)) CONFIG.storia = c.storia.filter(function(x){ return x && (x.titolo || x.testo || x.foto); });
+  // Le foto della home stanno nel Drive degli sposi («drive:ID»); le vecchie («foto/…») restano sul sito.
+  var fotoUrl = function(x){ x = String(x || ''); return /^drive:[\w-]+$/.test(x) ? 'https://lh3.googleusercontent.com/d/' + x.slice(6) + '=w1600' : x; };
+  if (typeof c.copertina === 'string') CONFIG.copertina = fotoUrl(c.copertina);
+  if (Array.isArray(c.storia)) CONFIG.storia = c.storia.filter(function(x){ return x && (x.titolo || x.testo || x.foto); }).map(function(x){ return Object.assign({}, x, {foto: fotoUrl(x.foto)}); });
   if (Array.isArray(c.sfide) && c.sfide.length) CONFIG.sfide = c.sfide.filter(Boolean);
   ['programma', 'luoghi'].forEach(function(k){ if (Array.isArray(c[k]) && c[k].length) CONFIG[k] = c[k].filter(function(x){ return x && (x.cosa || x.nome || x.ora); }); });
 }

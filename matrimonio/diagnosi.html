@@ -34,7 +34,11 @@ function tutto(){
    ['4. Cassetta, contenuti della home',function(){return fetch(CAS+'?a=contenuti',{redirect:'follow',cache:'no-store'}).then(leggi);}],
    ['5. Cassetta senza controlli del browser (no-cors)',function(){return fetch(CAS+'?a=stato',{mode:'no-cors',cache:'no-store'}).then(function(r){return 'arrivata una risposta (tipo '+r.type+')';});}],
    ['6. Canale di riserva (script)',function(){return jsonp('a=stato');}],
-   ['7. Canale di riserva, ricerca di un nome',function(){return jsonp('a=cerca&nome=Prova&cognome=Diagnosi');}]
+   ['7. Canale di riserva, ricerca di un nome',function(){return jsonp('a=cerca&nome=Prova&cognome=Diagnosi');}],
+   ['8. Galleria in prova (lettura normale)',function(){return fetch(CAS+'?a=galleria&anteprima=1',{redirect:'follow',cache:'no-store'}).then(leggi);}],
+   ['9. Galleria in prova (canale di riserva)',function(){return jsonp('a=galleria&anteprima=1');}],
+   ['10. Invio diretto (come foto e Galleria degli sposi)',function(){return fetch(CAS,{method:'POST',redirect:'follow',cache:'no-store',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({a:'galleria',anteprima:true})}).then(leggi);}],
+   ['11. Versione dell\u2019app sul telefono',function(){return fetch('index.html',{cache:'no-store'}).then(function(r){return r.text();}).then(function(t){var m=t.match(/app-version" content="(\d+)/);return m?m[1]:'non trovata';});}]
   ].forEach(function(x){c=c.then(function(){return prova(x[0],x[1]);});});
   c.then(function(){riga('Fine delle prove',true,'Fai lo screenshot e mandalo a Claude.');});
 }

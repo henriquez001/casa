@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2ECDF">
-<meta name="app-version" content="20261122090000">
+<meta name="app-version" content="20261122093000">
 <title>Alice &amp; Leandro</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -608,7 +608,16 @@ function chiuso(titolo, testo){
 function sfideFatte(){ var f = {}; M.mie.concat(M.coda).forEach(function(x){ if (x.s || x.sfida) f[x.s || x.sfida] = true; }); return f; }
 // Cose ancora aperte, visibili solo agli sposi in anteprima (regola di Leo: scriverle sulle pagine).
 var APERTE = '<div class="msg" style="font-size:14px"><b>Ancora aperto</b><br>· Serve la cassetta versione 6: senza, l’invio dà errore.<br>· La proiezione in sala delle foto non c’è ancora.<br>· I video oltre 35 secondi vengono rifiutati, non tagliati.<br>· Il caricamento su Drive va provato da voi: dal cloud non posso.</div>';
+// I campi file stanno fuori dalla pagina disegnata: su iPhone la fotocamera manda l'app in secondo piano e,
+// se al ritorno la pagina si ridisegna, un campo dentro la vista verrebbe sostituito e la foto andrebbe persa.
+function campiFile(){
+  if (document.getElementById('mFoto')) return;
+  var d = document.createElement('div'); d.hidden = true;
+  d.innerHTML = '<input type="file" id="mFoto" accept="image/*" capture="environment" hidden><input type="file" id="mVideo" accept="video/*" capture="environment" hidden><input type="file" id="mRull" accept="image/*,video/*" multiple hidden><input type="file" id="mSfida" accept="image/*" capture="environment" hidden>';
+  document.body.appendChild(d);
+}
 function vScatta(){
+  campiFile();
   if (!S.inv.anteprima && !aperto()) return chiuso('Scatta', 'Il giorno delle nozze da qui scatti foto, video e vocali per noi, e partecipi alle sfide fotografiche.');
   if (S.inv.anteprima && !sposiCas()) return '<div class="view"><header class="mh"><h1>Scatta</h1></header><section class="card empty"><b>Per provare serve il tool degli sposi</b><span class="sub">Aprite l’app dal telefono o dal PC dove usate il tool con la cassetta collegata: le prove vanno nella vostra cartella su Drive.</span></section></div>';
   var p = S.inv.anteprima ? CONFIG.sposi.map(function(n){ return {nome:n}; }) : (S.inv.persone || []), au = autore();
@@ -630,7 +639,6 @@ function vScatta(){
       '<div class="stat" role="status">' + svg('<path d="M20 6 9 17l-5-5"/>') + '<span>' + M.inviate + (M.inviate === 1 ? ' inviato' : ' inviati') + (attesa ? ' · <span class="w">' + attesa + (M.busy ? ' in invio' : ' in attesa di rete') + '</span>' : '') + '</span></div>' +
       (M.err ? '<div class="msg err" role="alert">' + esc(M.err) + '</div>' : M.info && attesa ? '<p class="tiny" style="margin:0">' + esc(M.info) + '</p>' : '') +
       (thumbs.length ? '<div class="thumbs" aria-label="Gli ultimi che hai mandato">' + thumbs.join('') + '</div>' : '') +
-      '<input type="file" id="mFoto" accept="image/*" capture="environment" hidden><input type="file" id="mVideo" accept="video/*" capture="environment" hidden><input type="file" id="mRull" accept="image/*,video/*" multiple hidden><input type="file" id="mSfida" accept="image/*" capture="environment" hidden>' +
     '</section>' +
     (sf.length ? '<section class="card sfide"><div class="sfh"><b>Sfide fotografiche</b><span>' + nf + ' di ' + sf.length + '</span></div><div class="pbar" role="progressbar" aria-valuemin="0" aria-valuemax="' + sf.length + '" aria-valuenow="' + nf + '"><i style="width:' + (sf.length ? nf / sf.length * 100 : 0) + '%"></i></div>' +
       vis.map(function(o){ return '<div class="ch"><span class="ck' + (o.f ? ' on' : '') + '" aria-hidden="true">' + (o.f ? svg('<path d="M20 6 9 17l-5-5"/>') : '') + '</span><p' + (o.f ? ' class="done"' : '') + '>' + esc(o.x) + (o.f ? '<span class="sr"> (fatta)</span>' : '') + '</p>' +

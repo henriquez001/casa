@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png?v=4">
 <link rel="icon" type="image/png" href="icon-192.png?v=4">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="app-version" content="20261122090000">
+<meta name="app-version" content="20261122093000">
 <title>Conti del Matrimonio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1937,7 +1937,13 @@ document.addEventListener('click', e => {
     case 'piano-fissa': case 'piano-fissa-tutte': { const P = piano(); const L = act === 'piano-fissa' ? P.fix.filter(x => x.it.id === id) : P.fix; if (!L.length) break; const before = L.map(x => ({it:x.it, rate:x.it.rate === undefined ? undefined : clone(x.it.rate)}));
       L.forEach(x => { const R = rateEdit(x.it); R.push({id:uid(), data:P.mesi[P.mesi.length - 1] + '-01', importo:Math.round(x.left * 100) / 100, nota:R.length ? 'Saldo' : 'Da pagare', fondo:'comune', pagata:false}); rateSync(x.it); (ui.openMesi || (ui.openMesi = new Set())).add(P.mesi[P.mesi.length - 1]); });
       save('spese'); render(); toast(L.length === 1 ? 'Rata messa a ' + meseNome(P.mesi[P.mesi.length - 1]).toLowerCase() : L.length + ' rate messe a ' + meseNome(P.mesi[P.mesi.length - 1]).toLowerCase(), () => { before.forEach(o => { if (o.rate === undefined) delete o.it.rate; else o.it.rate = o.rate; rateSync(o.it); }); save('spese'); render(); }); break; }
-    case 'sito-foto': { ui.sitoKey = id; const f = $('#sitoFile'); if (f) f.click(); break; }
+    case 'sito-foto': {
+      // Il campo file sta fuori dalla pagina disegnata: su iPhone la scelta della foto manda il tool in secondo piano,
+      // al ritorno la pagina si ridisegna e un campo dentro la pagina verrebbe sostituito, perdendo la foto scelta.
+      let f = document.getElementById('sitoPick');
+      if (!f) { f = document.createElement('input'); f.type = 'file'; f.accept = 'image/*'; f.id = 'sitoPick'; f.hidden = true; document.body.appendChild(f);
+        f.addEventListener('change', () => { const x = f.files && f.files[0], k = f.dataset.k; f.value = ''; if (x && k) sitoFoto(k, x); }); }
+      f.dataset.k = id; ui.sitoKey = id; f.click(); break; }
     case 'sito-riprova': sitoLoaded = false; sitoCarica(); render(); break;
     case 'sito-cartella': {
       // La finestra si apre subito (Safari blocca quelle aperte dopo un'attesa), poi riceve l'indirizzo dalla cassetta.

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2ECDF">
-<meta name="app-version" content="20261122124500">
+<meta name="app-version" content="20261122130000">
 <title>Alice &amp; Leandro</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -799,12 +799,15 @@ function render(){
 }
 
 // L'invito si salva sul telefono: chi è già entrato lo ritrova anche senza rete, e intanto si aggiorna in silenzio.
-function entra(inv, nuovaBozza){ S.inv = inv; if (nuovaBozza || !S.draft) S.draft = mkDraft(inv); codice = inv.c; store.set('invito-codice', codice); store.set('invito-copia', JSON.stringify(inv)); segnaCodice(); }
-function esci(){ store.set('invito-codice', null); store.set('invito-copia', null); codice = ''; S.inv = null; S.draft = null; S.view = 'home'; segnaCodice(); }
+function entra(inv, nuovaBozza){ S.err = ''; S.retry = null; S.inv = inv; if (nuovaBozza || !S.draft) S.draft = mkDraft(inv); codice = inv.c; store.set('invito-codice', codice); store.set('invito-copia', JSON.stringify(inv)); segnaCodice(); }
+function esci(){ S.err = ''; S.retry = null; store.set('invito-codice', null); store.set('invito-copia', null); codice = ''; S.inv = null; S.draft = null; S.view = 'home'; segnaCodice(); }
 // Il codice resta nell'indirizzo: l'icona sulla schermata Home riapre lo stesso invito.
 function anteprimaInv(){ return {c:'', anteprima:true, saluto:CONFIG.sposi.join(' e '), messaggio:'Questa è l’anteprima degli sposi: vedete l’app come un invitato. Le risposte qui non vengono mandate.', scadenza:'', piuUno:false, risposta:null,
   persone:CONFIG.sposi.map(function(x, i){ return {id:'sp' + i, nome:x, cognome:'', tipo:'adulto'}; })}; }
 function segnaCodice(){ try { var u = new URL(location.href); if (codice) u.searchParams.set('i', codice); else u.searchParams.delete('i'); if (u.href !== location.href) history.replaceState(null, '', u.href); } catch (e) {} }
+// Un errore di collegamento rimasto a schermo è vecchio: quando si torna sulla pagina riprovo subito invece di mostrarlo.
+function riprovaVecchio(){ if (S.inv || !S.err || !S.retry || S.loading || S.sending) return false; var f = S.retry; S.err = ''; S.retry = null; f(); return true; }
+document.addEventListener('visibilitychange', function(){ if (!document.hidden) riprovaVecchio(); });
 function load(c, silenzioso){
   if (!silenzioso) { S.loading = true; S.err = ''; render(); }
   return api({a:'invito', c:c}).then(function(r){
@@ -842,7 +845,7 @@ document.addEventListener('click', function(e){
   else if (a === 'open') { S.open = S.open === t.dataset.id ? null : t.dataset.id; render(); var b = document.querySelector('[data-act="open"][data-id="' + t.dataset.id + '"]'); if (b) b.focus(); }
   else if (a === 'more') { S.more[t.dataset.id] = true; render(); }
   else if (a === 'all') { var y = dr.persone[+t.dataset.i], v = t.dataset.v, k = y.allergie.indexOf(v); if (k >= 0) y.allergie.splice(k, 1); else y.allergie.push(v); S.sent = false; render(); var c2 = document.querySelector('[data-act="all"][data-i="' + t.dataset.i + '"][data-v="' + v + '"]'); if (c2) c2.focus(); }
-  else if (a === 'entra') { store.set('landing-vista', '1'); S.landing = false; S.view = 'home'; render(); window.scrollTo(0, 0); }
+  else if (a === 'entra') { store.set('landing-vista', '1'); S.landing = false; S.view = 'home'; if (!riprovaVecchio()) render(); window.scrollTo(0, 0); }
   else if (a === 'giu') { var lb = document.querySelector('.land-body'); if (lb) lb.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}); }
   else if (a === 'landing') { S.landing = true; render(); window.scrollTo(0, 0); }
   else if (a === 'esci') { esci(); render(); }

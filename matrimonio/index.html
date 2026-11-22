@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2ECDF">
-<meta name="app-version" content="20261122111500">
+<meta name="app-version" content="20261122124500">
 <title>Alice &amp; Leandro</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -278,7 +278,12 @@ function api(params){
     if (params.a === 'invito') res(params.c === 'PROVA1' ? {ok:true, invito:demoGet()} : {ok:false, motivo:'codice'});
     else if (params.a === 'cerca') res(/^carla$|^mario$|^luca$/i.test(params.nome.trim()) && /^(rossi)?$/i.test((params.cognome || '').trim()) ? {ok:true, invito:demoGet()} : {ok:false, motivo:'nontrovato'});
     else res({ok:false}); }, 350); });
-  return viaRete(params);
+  // Se la rete del telefono perde la richiesta (succede appena l'app si apre o torna in primo piano),
+  // riprovo da solo una volta dopo 3 secondi prima di mostrare l'errore. Non dopo un'attesa di 12 secondi.
+  return viaRete(params).catch(function(e){
+    if (/12 secondi/.test(String(e && e.message || e))) throw e;
+    return new Promise(function(ok){ setTimeout(ok, 3000); }).then(function(){ return viaRete(params); });
+  });
 }
 // Ogni richiesta aspetta al massimo 12 secondi. Se la richiesta diretta fallisce (browser che blocca, pagina di Google al posto dei dati)
 // si usa il canale di riserva: la cassetta risponde come script (JSONP). Se il canale di riserva funziona, lo si usa da subito.

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2ECDF">
-<meta name="app-version" content="20261122110000">
+<meta name="app-version" content="20261122111500">
 <title>Alice &amp; Leandro</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -265,7 +265,14 @@ function demoGet(){ try { var r = JSON.parse(store.get('invito-demo-risposta') |
 
 /* ---------- cassetta ---------- */
 var lastErr = '';
-function errTxt(base, retry){ S.retry = retry || null; return base + (lastErr ? ' <span style="opacity:.7;font-size:13px">(' + esc(lastErr) + ')</span>' : '') + (retry ? '<button class="btn retry" type="button" data-act="riprova">Riprova</button>' : ''); }
+// Il dettaglio tecnico diventa una frase chiara; il testo originale resta piccolo, per chi deve capire il guasto.
+function errSpiega(x){
+  if (/fetch|load failed|networkerror|riserva bloccato|secondo tentativo/i.test(x)) return 'Questo telefono non riesce a raggiungere Google: prova con un’altra rete (Wi‑Fi o dati) o senza VPN o blocco pubblicità.';
+  if (/12 secondi/.test(x)) return 'Google non ha risposto in tempo: riprova tra poco.';
+  if (/da aggiornare/.test(x)) return 'Google ha risposto con una pagina invece dei dati: gli sposi devono controllare la cassetta.';
+  return '';
+}
+function errTxt(base, retry){ S.retry = retry || null; var sp = lastErr ? errSpiega(lastErr) : ''; return base + (sp ? '<br><span style="font-size:14px">' + esc(sp) + '</span>' : '') + (lastErr ? ' <span style="opacity:.6;font-size:12px">(' + esc(lastErr.replace('canale di riserva bloccato', 'secondo tentativo non riuscito')) + ')</span>' : '') + (retry ? '<button class="btn retry" type="button" data-act="riprova">Riprova</button>' : ''); }
 function api(params){
   if (DEMO) return new Promise(function(res){ setTimeout(function(){
     if (params.a === 'invito') res(params.c === 'PROVA1' ? {ok:true, invito:demoGet()} : {ok:false, motivo:'codice'});
@@ -294,7 +301,7 @@ function jsonp(params){
     var fine = function(){ fatto = true; clearTimeout(t); window[cb] = function(){}; s.remove(); }; // resta una funzione vuota: se la risposta arriva tardi non dà errore
     var t = setTimeout(function(){ if (!fatto) { fine(); rej(new Error('nessuna risposta in 12 secondi')); } }, 12000);
     window[cb] = function(o){ if (!fatto) { fine(); res(o); } };
-    s.onerror = function(){ if (!fatto) { fine(); rej(new Error('canale di riserva bloccato')); } };
+    s.onerror = function(){ if (!fatto) { fine(); rej(new Error('secondo tentativo non riuscito')); } };
     s.onload = function(){ setTimeout(function(){ if (!fatto) { fine(); rej(new Error('cassetta da aggiornare')); } }, 0); };
     s.src = CONFIG.cassetta + '?' + new URLSearchParams(Object.assign({}, params, {callback:cb})).toString();
     document.head.appendChild(s);

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2ECDF">
-<meta name="app-version" content="20261122203000">
+<meta name="app-version" content="20261122203500">
 <title>Alice &amp; Leandro</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -621,7 +621,7 @@ function chiuso(titolo, testo){
 }
 function sfideFatte(){ var f = {}; M.mie.concat(M.coda).forEach(function(x){ if (x.s || x.sfida) f[x.s || x.sfida] = true; }); return f; }
 // Cose ancora aperte, visibili solo agli sposi in anteprima (regola di Leo: scriverle sulle pagine).
-function aperteTxt(){ return '<div class="msg" style="font-size:14px"><b>Ancora aperto</b><br>· Serve la cassetta versione 7.<br>' + (proveAperte() ? '· <b>Scatta e Galleria sono aperte per le prove</b>: chiudetele dal tool (Altro › Sito) prima di mandare i link.<br>' : '') + '· La proiezione in sala delle foto non c’è ancora.<br>· I video oltre 35 secondi vengono rifiutati, non tagliati.<br>· Il caricamento su Drive va provato da voi: dal cloud non posso.</div>'; }
+function aperteTxt(){ return '<div class="msg" style="font-size:14px"><b>Ancora aperto</b><br>· Serve la cassetta versione 8.<br>' + (proveAperte() ? '· <b>Scatta e Galleria sono aperte per le prove</b>: chiudetele dal tool (Altro › Sito) prima di mandare i link.<br>' : '') + '· La proiezione in sala delle foto non c’è ancora.<br>· I video oltre 35 secondi vengono rifiutati, non tagliati.<br>· Il caricamento su Drive va provato da voi: dal cloud non posso.</div>'; }
 // I campi file stanno fuori dalla pagina disegnata: su iPhone la fotocamera manda l'app in secondo piano e,
 // se al ritorno la pagina si ridisegna, un campo dentro la vista verrebbe sostituito e la foto andrebbe persa.
 function campiFile(){

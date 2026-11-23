@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2ECDF">
-<meta name="app-version" content="20261122203500">
+<meta name="app-version" content="20261123090000">
 <title>Alice &amp; Leandro</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -832,7 +832,7 @@ document.addEventListener('submit', function(e){
   S.sposi = false;
   if (!n) { S.err = 'Scrivi almeno il nome.'; render(); return; }
   // Gli sposi entrano in anteprima: vedono tutto come un invitato, ma la risposta non viene mandata a nessuno.
-  if (CONFIG.firmaSposi.indexOf((n + ' ' + c).toLowerCase().replace(/\s+/g, ' ')) >= 0) { S.err = ''; entra(anteprimaInv(), true); store.set('invito-copia', null); store.set('anteprima-sposi', '1'); S.view = 'home'; render(); window.scrollTo(0, 0); return; }
+  if (CONFIG.firmaSposi.indexOf((n + ' ' + c).toLowerCase().replace(/\s+/g, ' ').trim()) >= 0) { S.err = ''; entra(anteprimaInv(), true); store.set('invito-copia', null); store.set('anteprima-sposi', '1'); S.view = 'home'; render(); window.scrollTo(0, 0); return; }
   S.loading = true; S.err = ''; render();
   api({a:'cerca', nome:n, cognome:c}).then(function(r){
     S.loading = false;

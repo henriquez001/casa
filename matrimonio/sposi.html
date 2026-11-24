@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png?v=4">
 <link rel="icon" type="image/png" href="icon-192.png?v=4">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="app-version" content="20261124220000">
+<meta name="app-version" content="20261124221500">
 <title>Conti del Matrimonio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1089,7 +1089,7 @@ function daysLeft(){ if (!S().data) return null; const d = new Date(S().data + '
 function vRiepilogo(){
   const T = totals(); const c = T.c;
   const dl = daysLeft();
-  const titolo = S().nomeB ? `<span>${esc(nome('A'))}</span><span class="amp">&amp;</span><span>${esc(nome('B'))}</span>` : 'Il nostro matrimonio';
+  const titolo = S().nomeB ? `<span>${esc(nome('A'))}</span><span class="amp">e</span><span>${esc(nome('B'))}</span>` : 'Il nostro matrimonio';
   const dataTxt = S().data ? new Date(S().data + 'T12:00:00').toLocaleDateString('it-IT', {weekday:'long', day:'numeric', month:'long', year:'numeric'}) : '';
   const cats = T.perCat.filter(x => x.t > 0).sort((a, b) => b.t - a.t); const max = cats.length ? cats[0].t : 1;
   const scenA = ui.scen ?? c.adulti; const Ts = totals(counts(scenA));

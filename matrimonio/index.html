@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#FBF8F1">
-<meta name="app-version" content="20261124220000">
-<title>Alice &amp; Leandro</title>
+<meta name="app-version" content="20261124221500">
+<title>Alice e Leandro</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..700&display=swap">
@@ -504,7 +504,7 @@ function mkDraft(inv){
     persone: inv.persone.map(function(p){ var x = r && (r.persone || []).filter(function(y){ return y.id === p.id; })[0];
       return {id:p.id, viene: x ? !!x.viene : true, allergie: x ? (x.allergie || []).slice() : [], note: x ? (x.note || '') : ''}; })};
 }
-function names(row){ var n = CONFIG.sposi; return '<h2 class="names' + (row ? ' row' : '') + '"><span>' + esc(n[0]) + '</span><span class="amp">&amp;</span><span>' + esc(n[1]) + '</span></h2>'; }
+function names(row){ var n = CONFIG.sposi; return '<h2 class="names' + (row ? ' row' : '') + '"><span>' + esc(n[0]) + '</span><span class="amp">e</span><span>' + esc(n[1]) + '</span></h2>'; }
 
 /* ---------- viste ---------- */
 var I = {
